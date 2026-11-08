@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>شاشة المريض - حجز تذكرة</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f1f5f9; margin: 0; padding: 20px; text-align: center; }
+        .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 400px; margin: 30px auto; }
+        h1 { color: #0f172a; font-size: 1.5rem; }
+        input { width: 90%; padding: 12px; margin: 15px 0; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; outline: none; }
+        input:focus { border-color: #3b82f6; }
+        button { background-color: #3b82f6; color: white; border: none; padding: 15px 20px; border-radius: 8px; font-size: 18px; cursor: pointer; width: 100%; font-weight: bold; }
+        button:hover { background-color: #2563eb; }
+        .ticket-info { display: none; } /* مخفية حتى يتم الحجز */
+        .number-box { background: #eff6ff; border: 2px dashed #3b82f6; padding: 20px; margin-top: 20px; border-radius: 10px; }
+        .my-number { font-size: 4rem; color: #1d4ed8; margin: 10px 0; font-weight: bold; }
+        .current-number { font-size: 2.5rem; color: #ef4444; font-weight: bold; margin: 10px 0; }
+        
+        /* رسالة التنبيه عندما يحين الدور */
+        .turn-alert { display: none; background: #22c55e; color: white; padding: 20px; border-radius: 10px; margin-top: 20px; font-size: 1.3rem; font-weight: bold; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+    </style>
+</head>
+<body>
+
+    <!-- قسم إدخال الاسم (يظهر في البداية) -->
+    <div class="card" id="bookingSection">
+        <h1>مرحباً بك في عيادة الشفاء 🏥</h1>
+        <p style="color: #64748b;">الرجاء إدخال اسمك لسحب تذكرة الانتظار</p>
+        <input type="text" id="patientName" placeholder="اكتب اسمك هنا...">
+        <button onclick="bookTicket()">سحب تذكرة الآن</button>
+    </div>
+
+    <!-- قسم عرض التذكرة ومتابعة الدور (يظهر بعد الحجز) -->
+    <div class="card ticket-info" id="ticketSection">
+        <h1 style="color: #10b981;">✅ تم الحجز بنجاح!</h1>
+        <h2 id="welcomeName" style="color: #334155;"></h2>
+        
+        <div class="number-box">
+            <p style="margin: 0; color: #64748b;">رقمك هو</p>
+            <p class="my-number" id="myNumber">0</p>
+        </div>
+
+        <div class="number-box" style="border-color: #ef4444; background: #fef2f2;">
+            <p style="margin: 0; color: #64748b;">الرقم الحالي عند الطبيب</p>
+            <p class="current-number" id="nowServing">0</p>
+        </div>
+
+        <div class="turn-alert" id="turnAlert">
+            🎉 حان دورك الآن! تفضل بالدخول للطبيب.
+        </div>
+    </div>
+
+    <!-- استدعاء مكتبة Socket.io للتحديث المباشر -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let myTicketNumber = 0;
+
+        // دالة سحب التذكرة
+        async function bookTicket() {
+            const name = document.getElementById('patientName').value;
+            if (!name) return alert("الرجاء كتابة اسمك أولاً!");
+
+            try {
+                const response = await fetch('/api/tickets', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ clinic_slug: 'shifa-clinic', patient_name: name })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // استخراج الرقم من الرسالة وإظهار قسم التذكرة
+                    myTicketNumber = parseInt(data.message.match(/\d+/)[0]);
+                    
+                    document.getElementById('bookingSection').style.display = 'none';
+                    document.getElementById('ticketSection').style.display = 'block';
+                    document.getElementById('welcomeName').innerText = `أهلاً بك، ${name}`;
+                    document.getElementById('myNumber').innerText = myTicketNumber;
+                } else {
+                    alert(data.error || "حدث خطأ");
+                }
+            } catch (err) {
+                alert("حدث خطأ في الاتصال بالسيرفر");
+            }
+        }
+
+        // الاستماع المباشر لنداء الطبيب
+        socket.on('call_patient', (data) => {
+            if (data.clinic_slug === 'shifa-clinic') {
+                // تحديث "الرقم الحالي" على شاشة هاتف المريض
+                document.getElementById('nowServing').innerText = data.current_number;
+                
+                // إذا وصل الدور لهذا المريض، أظهر تنبيه الدخول!
+                if (data.current_number === myTicketNumber) {
+                    document.getElementById('turnAlert').style.display = 'block';
+                    // جعل الهاتف يهتز لتنبيه المريض (يعمل على الجوالات)
+                    if(navigator.vibrate) navigator.vibrate([500, 200, 500]);
+                } else {
+                    document.getElementById('turnAlert').style.display = 'none';
+                }
+            }
+        });
+    </script>
+</body>
+</html>
