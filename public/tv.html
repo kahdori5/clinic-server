@@ -2,100 +2,69 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>شاشة الانتظار والاستقبال - عيادة الشفاء</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>شاشة الانتظار</title>
     <style>
         body {
-            margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #0f172a; color: white; display: flex;
-            align-items: center; justify-content: center; height: 100vh; overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
         }
-        .container {
-            display: flex; justify-content: space-around; width: 100%; max-width: 1200px; align-items: center;
+        .ticket-box {
+            background-color: white;
+            padding: 40px 100px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 40px;
         }
-        
-        /* تصميم النصف الأيمن (رقم الانتظار) */
-        .number-section { text-align: center; }
-        .header { font-size: 3.5rem; margin-bottom: 20px; color: #38bdf8; }
-        .number-box {
-            background-color: #1e293b; border: 5px solid #38bdf8; border-radius: 20px;
-            padding: 40px 80px; text-align: center; box-shadow: 0 0 50px rgba(56, 189, 248, 0.3);
-            transition: all 0.3s ease;
+        h1 { color: #333; font-size: 3rem; margin-bottom: 10px; }
+        .number { font-size: 8rem; color: #007bff; font-weight: bold; margin: 0; }
+        .qr-section p { font-size: 1.5rem; color: #555; font-weight: bold; margin-bottom: 15px; }
+        .qr-section img { 
+            width: 250px; 
+            height: 250px; 
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2); 
         }
-        .number-title { font-size: 2.5rem; color: #94a3b8; margin: 0; }
-        .current-number { font-size: 12rem; font-weight: bold; margin: 0; color: #fbbf24; }
-        
-        /* تأثير الوميض عند مناداة المريض */
-        .flash { animation: flashEffect 1.5s ease-in-out 3; border-color: #fbbf24; }
-        @keyframes flashEffect {
-            0%, 100% { background-color: #1e293b; transform: scale(1); }
-            50% { background-color: #334155; transform: scale(1.05); box-shadow: 0 0 100px rgba(251, 191, 36, 0.6); }
-        }
-
-        /* تصميم النصف الأيسر (الـ QR Code) */
-        .qr-section {
-            background: #1e293b; padding: 40px; border-radius: 20px;
-            border: 2px dashed #38bdf8; text-align: center; width: 350px;
-        }
-        .qr-title { color: #38bdf8; font-size: 2rem; margin-bottom: 10px; font-weight: bold; }
-        .qr-desc { color: #94a3b8; margin-bottom: 25px; font-size: 1.2rem; }
-        #qrImage { width: 250px; height: 250px; border-radius: 10px; padding: 15px; background: white; margin: 0 auto; display: none; }
-        .loader { color: #fbbf24; font-size: 1.2rem; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <!-- الجزء الأيمن: رقم الطبيب -->
-        <div class="number-section">
-            <h1 class="header">عيادة الشفاء 🏥</h1>
-            <div class="number-box" id="box">
-                <p class="number-title">تفضل بالدخول رقم</p>
-                <p class="current-number" id="displayNumber">0</p>
-            </div>
-        </div>
-
-        <!-- الجزء الأيسر: كود الـ QR للحجز الذاتي -->
-        <div class="qr-section">
-            <div class="qr-title">احجز تذكرتك 📱</div>
-            <div class="qr-desc">افتح كاميرا هاتفك وامسح الكود لسحب تذكرة ومتابعة دورك</div>
-            
-            <div id="loading" class="loader">⏳ جاري توليد الكود الآمن...</div>
-            <img id="qrImage" src="" alt="QR Code">
-        </div>
+    <div class="ticket-box">
+        <h1>الرقم الحالي</h1>
+        <p class="number" id="currentTicket">--</p>
     </div>
 
-    <!-- استدعاء مكتبة Socket.io للتحديث المباشر -->
+    <div class="qr-section">
+        <p>امسح الكود بهاتفك لسحب تذكرة</p>
+        <!-- كود QR مبرمج مسبقاً على الرابط السحابي الجديد -->
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=https://clinic-server-i00s.onrender.com/patient.html" alt="QR Code">
+    </div>
+
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        // 1. تشغيل تحديث الأرقام المباشر
-        const socket = io();
-        const numberElement = document.getElementById('displayNumber');
-        const boxElement = document.getElementById('box');
-
-        socket.on('call_patient', (data) => {
-            if(data.clinic_slug === 'shifa-clinic') {
-                numberElement.innerText = data.current_number;
-                
-                // تفعيل تأثير الفلاش
-                boxElement.classList.remove('flash');
-                void boxElement.offsetWidth; 
-                boxElement.classList.add('flash');
-            }
-        });
-
-        // 2. جلب وعرض الـ QR Code مباشرة عند تشغيل الشاشة
-        fetch('/api/qr/shifa-clinic')
-            .then(response => response.json())
-            .then(data => {
-                if(data.qr_image) {
-                    document.getElementById('loading').style.display = 'none';
-                    document.getElementById('qrImage').src = data.qr_image;
-                    document.getElementById('qrImage').style.display = 'block';
-                }
-            })
-            .catch(error => {
-                document.getElementById('loading').innerText = "❌ حدث خطأ في تحميل الكود";
+        // الكود البرمجي لجلب الرقم الحالي (يدعم Socket.io أو Fetch العادي)
+        try {
+            const socket = io();
+            socket.on('updateTicket', (data) => {
+                document.getElementById('currentTicket').innerText = data.currentTicket || data;
             });
+        } catch(e) {
+            // بديل في حال عدم استخدام Socket.io
+            setInterval(async () => {
+                try {
+                    const res = await fetch('/current'); // مسار جلب التذكرة
+                    const data = await res.json();
+                    if(data.ticket) document.getElementById('currentTicket').innerText = data.ticket;
+                } catch(err) {}
+            }, 3000);
+        }
     </script>
 </body>
 </html>
