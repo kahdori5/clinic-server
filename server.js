@@ -16,8 +16,6 @@ app.use(express.static('public'));
 // 🚀 البناء الجذري لقاعدة البيانات (مُعالج لخطأ UUID vs Integer)
 const initDB = async () => {
     try {
-        console.log("جاري فحص وبناء قاعدة البيانات...");
-        
         await db.query(`
             CREATE TABLE IF NOT EXISTS clinics (
                 id SERIAL PRIMARY KEY,
@@ -26,7 +24,6 @@ const initDB = async () => {
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         `);
-        
         await db.query(`
             CREATE TABLE IF NOT EXISTS queues (
                 id SERIAL PRIMARY KEY,
@@ -38,7 +35,6 @@ const initDB = async () => {
                 UNIQUE(clinic_id, queue_date)
             );
         `);
-        
         await db.query(`
             CREATE TABLE IF NOT EXISTS tickets (
                 id SERIAL PRIMARY KEY,
@@ -50,7 +46,6 @@ const initDB = async () => {
             );
         `);
 
-        // استخدام TEXT بدلاً من INTEGER لتفادي خطأ UUID
         const newColumns = [
             `ALTER TABLE clinics ADD COLUMN is_main BOOLEAN DEFAULT true;`,
             `ALTER TABLE clinics ADD COLUMN parent_id TEXT DEFAULT NULL;`, 
@@ -58,27 +53,18 @@ const initDB = async () => {
         ];
         
         for (let query of newColumns) {
-            try { await db.query(query); } catch(e) { /* الأعمدة موجودة بالفعل */ }
+            try { await db.query(query); } catch(e) {}
         }
-
-        // تحويل نوع العمود القديم إلى نص لتصحيح خطأ integer = uuid
         try { await db.query(`ALTER TABLE clinics ALTER COLUMN parent_id TYPE TEXT USING parent_id::text;`); } catch(e) {}
-
-        // تحديث القيم القديمة
         try {
             await db.query(`UPDATE clinics SET is_main = true WHERE is_main IS NULL`);
             await db.query(`UPDATE clinics SET subscription_end = CURRENT_DATE + INTERVAL '1 month' WHERE subscription_end IS NULL`);
         } catch(e) {}
-
-        console.log("✅ قاعدة البيانات جاهزة ومكتملة 100%!");
-    } catch (e) {
-        console.error("❌ خطأ في بناء قاعدة البيانات:", e.message);
-    }
+        console.log("✅ قاعدة البيانات جاهزة!");
+    } catch (e) { console.error("❌ خطأ:", e.message); }
 };
-
 initDB();
 
-// 1. إضافة عيادة رئيسية
 app.post('/api/clinics', async (req, res) => {
     try {
         const { name, slug } = req.body; 
@@ -87,32 +73,25 @@ app.post('/api/clinics', async (req, res) => {
             VALUES ($1, $2, true, CURRENT_DATE + INTERVAL '1 month') RETURNING *
         `, [name, slug]);
         res.status(201).json({ message: 'تم إنشاء العيادة بنجاح', clinic: result.rows[0] });
-    } catch (err) { 
-        res.status(500).json({ error: 'الرابط المخصص مستخدم مسبقاً أو يوجد خلل: ' + err.message }); 
-    }
+    } catch (err) { res.status(500).json({ error: 'الرابط المخصص مستخدم مسبقاً.' }); }
 });
 
-// 2. سحب تذكرة (مع إصلاح توافق أنواع البيانات ::text)
 app.post('/api/tickets', async (req, res) => {
     try {
         const { clinic_slug, patient_name } = req.body;
-        
-        // استخدام ::text لتفادي خطأ UUID
         const clinic = await db.query(`
             SELECT c.id, c.is_main, c.subscription_end as doc_sub, p.subscription_end as parent_sub 
             FROM clinics c LEFT JOIN clinics p ON c.parent_id::text = p.id::text 
             WHERE c.slug = $1
         `, [clinic_slug]);
-        
         if(clinic.rows.length === 0) return res.status(404).json({ error: 'الرابط غير صحيح' });
 
         let subEnd = clinic.rows[0].is_main ? clinic.rows[0].doc_sub : clinic.rows[0].parent_sub;
         if(new Date(subEnd) < new Date(new Date().setHours(0,0,0,0))) {
-            return res.status(403).json({ error: 'اشتراك العيادة منتهي. يرجى مراجعة الإدارة.' });
+            return res.status(403).json({ error: 'اشتراك العيادة منتهي.' });
         }
 
         const clinicId = clinic.rows[0].id;
-        
         let queue = await db.query('SELECT * FROM queues WHERE clinic_id = $1 AND queue_date = CURRENT_DATE', [clinicId]);
         if(queue.rows.length === 0) {
             const newQ = await db.query(`INSERT INTO queues (clinic_id, queue_date, status, current_number, last_issued_number) VALUES ($1, CURRENT_DATE, 'active', 0, 0) RETURNING *`, [clinicId]);
@@ -127,10 +106,9 @@ app.post('/api/tickets', async (req, res) => {
 
         io.emit('new_ticket', { clinic_slug, ticket_number: newNumber });
         res.status(201).json({ message: `رقمك هو: ${newNumber}` });
-    } catch (err) { res.status(500).json({ error: 'خطأ داخلي: ' + err.message }); }
+    } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// 3. مناداة المريض
 app.post('/api/call-next', async (req, res) => {
     try {
         const { clinic_slug } = req.body;
@@ -146,29 +124,56 @@ app.post('/api/call-next', async (req, res) => {
 
         io.emit('call_patient', { clinic_slug, current_number: newCurrent });
         res.status(200).json({ message: `الرقم: ${newCurrent}` });
-    } catch (err) { res.status(500).json({ error: 'خطأ في النظام: ' + err.message }); }
+    } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// 4. حالة الطابور للطبيب والمريض
 app.get('/api/queue-status/:clinic_slug', async (req, res) => {
     try {
         const { clinic_slug } = req.params;
         const clinic = await db.query('SELECT id FROM clinics WHERE slug = $1', [clinic_slug]);
         if(clinic.rows.length === 0) return res.json({ current_number: 0, last_issued_number: 0 });
-        
         let queue = await db.query('SELECT current_number, last_issued_number, status FROM queues WHERE clinic_id = $1 AND queue_date = CURRENT_DATE', [clinic.rows[0].id]);
         if(queue.rows.length === 0) return res.json({ current_number: 0, last_issued_number: 0, status: 'active' });
-        
         res.json(queue.rows[0]);
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// 5. جلب كل أطباء العيادة (تم إضافة ::text للمقارنة)
+// 🔥 (جديد) مسار الإحصائيات الأسبوعية والشهرية واليومية للطبيب
+app.get('/api/doctor-stats/:clinic_slug', async (req, res) => {
+    try {
+        const { clinic_slug } = req.params;
+        const clinic = await db.query('SELECT id FROM clinics WHERE slug = $1', [clinic_slug]);
+        if(clinic.rows.length === 0) return res.json({ today:0, waiting:0, weekly:0, monthly:0 });
+
+        const cId = clinic.rows[0].id;
+
+        // مرضى اليوم والانتظار
+        let q = await db.query('SELECT current_number, last_issued_number FROM queues WHERE clinic_id = $1 AND queue_date = CURRENT_DATE', [cId]);
+        let today = 0, waiting = 0;
+        if(q.rows.length > 0) {
+            today = q.rows[0].last_issued_number;
+            waiting = today - q.rows[0].current_number;
+            if(waiting < 0) waiting = 0;
+        }
+
+        // مرضى الأسبوع
+        const weekly = await db.query(`SELECT COUNT(*) FROM tickets t JOIN queues q ON t.queue_id = q.id WHERE q.clinic_id = $1 AND q.queue_date >= CURRENT_DATE - INTERVAL '7 days'`, [cId]);
+        // مرضى الشهر
+        const monthly = await db.query(`SELECT COUNT(*) FROM tickets t JOIN queues q ON t.queue_id = q.id WHERE q.clinic_id = $1 AND q.queue_date >= CURRENT_DATE - INTERVAL '30 days'`, [cId]);
+
+        res.json({
+            today,
+            waiting,
+            weekly: parseInt(weekly.rows[0].count),
+            monthly: parseInt(monthly.rows[0].count)
+        });
+    } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 app.get('/api/clinic-doctors/:main_slug', async (req, res) => {
     try {
         const main = await db.query('SELECT id FROM clinics WHERE slug = $1 AND is_main = true', [req.params.main_slug]);
         if(main.rows.length === 0) return res.json([]);
-        
         const doctors = await db.query('SELECT id, name, slug FROM clinics WHERE parent_id::text = $1::text', [main.rows[0].id]);
         let result = [];
         for(let doc of doctors.rows) {
@@ -180,23 +185,16 @@ app.get('/api/clinic-doctors/:main_slug', async (req, res) => {
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
-// 6. مسار لوحة الإدارة الرئيسي (الإصلاح الجذري لمقارنة UUID هنا)
 app.get('/api/admin/clinics', async (req, res) => {
     try {
         await initDB(); 
-        
-        // استخدام ::text لتفادي خطأ (operator does not exist: integer = uuid)
         const clinics = await db.query(`
             SELECT id, name, slug, subscription_end,
                    (SELECT COUNT(*) FROM clinics d WHERE d.parent_id::text = c.id::text) as doctors_count
-            FROM clinics c 
-            WHERE is_main = true OR parent_id IS NULL 
-            ORDER BY created_at DESC
+            FROM clinics c WHERE is_main = true OR parent_id IS NULL ORDER BY created_at DESC
         `);
         res.json(clinics.rows);
-    } catch (err) { 
-        res.status(500).json({ error: err.message }); 
-    }
+    } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.post('/api/admin/add-doctor', async (req, res) => {
@@ -206,30 +204,26 @@ app.post('/api/admin/add-doctor', async (req, res) => {
         res.json({ message: 'تم إضافة الطبيب بنجاح' });
     } catch (err) { res.status(500).json({ error: 'الرابط مستخدم مسبقاً' }); }
 });
-
 app.post('/api/admin/renew', async (req, res) => {
     try {
         const { clinic_id, months } = req.body;
         await db.query(`UPDATE clinics SET subscription_end = GREATEST(subscription_end, CURRENT_DATE) + INTERVAL '${months} month' WHERE id::text = $1::text`, [clinic_id]);
-        res.json({ message: 'تم تجديد الاشتراك بنجاح' });
+        res.json({ message: 'تم' });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
-
 app.delete('/api/admin/clinics/:id', async (req, res) => {
     try {
         await db.query('DELETE FROM clinics WHERE parent_id::text = $1::text', [req.params.id]); 
         await db.query('DELETE FROM clinics WHERE id::text = $1::text', [req.params.id]); 
-        res.json({ message: 'تم حذف العيادة' });
+        res.json({ message: 'تم' });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
-
 app.get('/api/admin/clinic-doctors-links/:main_id', async (req, res) => {
     try {
         const docs = await db.query('SELECT name, slug FROM clinics WHERE parent_id::text = $1::text', [req.params.main_id]);
         res.json(docs.rows);
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
-
 app.post('/api/tickets/status', async (req, res) => {
     const { clinic_slug, ticket_number, status } = req.body; 
     const clinic = await db.query('SELECT id FROM clinics WHERE slug = $1', [clinic_slug]);
@@ -237,18 +231,14 @@ app.post('/api/tickets/status', async (req, res) => {
     await db.query('UPDATE tickets SET status = $1 WHERE queue_id = $2 AND ticket_number = $3', [status, queue.rows[0].id, ticket_number]);
     res.json({ message: `تم` });
 });
-
 app.post('/api/queues/toggle', async (req, res) => {
     const { clinic_slug, status } = req.body; 
     const clinic = await db.query('SELECT id FROM clinics WHERE slug = $1', [clinic_slug]);
     await db.query('UPDATE queues SET status = $1 WHERE clinic_id = $2 AND queue_date = CURRENT_DATE', [status, clinic.rows[0].id]);
     io.emit('queue_status_changed', { clinic_slug, status }); 
-    res.json({ message: `تم التغيير` });
+    res.json({ message: `تم` });
 });
-
-app.get('/api/export/:clinic_slug', async (req, res) => {
-    res.send('تصدير البيانات جاهز');
-});
+app.get('/api/export/:clinic_slug', async (req, res) => { res.send('تصدير'); });
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
