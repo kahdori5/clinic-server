@@ -8,42 +8,22 @@
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f0f2f5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            text-align: center;
+            display: flex; justify-content: center; align-items: center;
+            height: 100vh; margin: 0; text-align: center;
         }
         .container {
-            background-color: white;
-            padding: 40px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            width: 90%;
-            max-width: 400px;
+            background-color: white; padding: 40px; border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 90%; max-width: 400px;
         }
         h2 { color: #333; margin-bottom: 25px; }
         input {
-            width: 100%;
-            padding: 15px;
-            margin-bottom: 20px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            font-size: 16px;
-            box-sizing: border-box;
+            width: 100%; padding: 15px; margin-bottom: 20px;
+            border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box;
         }
         button {
-            width: 100%;
-            padding: 15px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s;
+            width: 100%; padding: 15px; background-color: #007bff;
+            color: white; border: none; border-radius: 8px; font-size: 18px;
+            font-weight: bold; cursor: pointer; transition: 0.3s;
         }
         button:hover { background-color: #0056b3; }
     </style>
@@ -67,22 +47,27 @@
             }
 
             try {
-                // إرسال الطلب للسيرفر السحابي مباشرة
-                const response = await fetch('https://clinic-server-i00s.onrender.com/ticket', {
+                // تم تصحيح المسار ليتطابق مع السيرفر: /api/tickets
+                const response = await fetch('https://clinic-server-i00s.onrender.com/api/tickets', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name: name })
+                    body: JSON.stringify({ 
+                        clinic_slug: 'default-clinic', // تم إضافته لأن سيرفرك يطلبه
+                        patient_name: name // تم تصحيح اسم المتغير
+                    })
                 });
 
+                const data = await response.json();
+
                 if (response.ok) {
-                    alert('تم سحب التذكرة بنجاح! تفضل بالانتظار.');
-                    nameInput.value = ''; // تفريغ الحقل بعد النجاح
+                    alert('تم السحب بنجاح! ' + data.message);
+                    nameInput.value = ''; 
                 } else {
-                    alert('حدث خطأ أثناء تسجيل التذكرة، يرجى المحاولة مجدداً.');
+                    alert('خطأ من السيرفر: ' + (data.error || data.message));
                 }
             } catch (error) {
                 console.error(error);
-                alert('خطأ في الاتصال بالسيرفر. يرجى التأكد من الإنترنت.');
+                alert('خطأ في الاتصال بالسيرفر.');
             }
         }
     </script>
