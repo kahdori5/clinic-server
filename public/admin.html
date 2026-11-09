@@ -157,9 +157,13 @@
             try {
                 const res = await fetch('https://clinic-server-i00s.onrender.com/api/admin/clinics');
                 const clinics = await res.json();
+                
                 const table = document.getElementById('clinicsTable');
                 table.innerHTML = '';
                 
+                // حماية من الأخطاء: إذا لم تكن البيانات مصفوفة، أوقف العملية
+                if(!Array.isArray(clinics)) return;
+
                 document.getElementById('totalClinics').innerText = clinics.length;
 
                 clinics.forEach(c => {
@@ -244,14 +248,12 @@
         async function showLinks(mainId, mainSlug) {
             const base = 'https://clinic-server-i00s.onrender.com';
             
-            // روابط العيادة الرئيسية (استقبال + تلفاز)
             const urlRec = `${base}/reception.html?clinic=${mainSlug}`;
             const urlTv = `${base}/tv.html?clinic=${mainSlug}`;
             
             document.getElementById('linkRec').href = urlRec; document.getElementById('linkRec').innerText = urlRec;
             document.getElementById('linkTv').href = urlTv; document.getElementById('linkTv').innerText = urlTv;
 
-            // جلب الأطباء التابعين للعيادة لعرض روابطهم
             const res = await fetch(`https://clinic-server-i00s.onrender.com/api/admin/clinic-doctors-links/${mainId}`);
             const doctors = await res.json();
             

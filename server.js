@@ -13,14 +13,25 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// تهيئة قاعدة البيانات تلقائياً لاشتراكات الـ SaaS
+// تهيئة قاعدة البيانات تلقائياً لاشتراكات الـ SaaS (الإصلاح الجذري)
 const setupDB = async () => {
+    const queries = [
+        `ALTER TABLE clinics ADD COLUMN IF NOT EXISTS is_main BOOLEAN DEFAULT true;`,
+        `ALTER TABLE clinics ADD COLUMN IF NOT EXISTS parent_id INTEGER DEFAULT NULL;`,
+        `ALTER TABLE clinics ADD COLUMN IF NOT EXISTS subscription_end DATE DEFAULT (CURRENT_DATE + INTERVAL '1 month');`
+    ];
+    
+    // تنفيذ كل استعلام على حدة لضمان عدم توقف السيرفر إذا كان أحدها موجوداً
+    for (let q of queries) {
+        try { await db.query(q); } catch (e) { /* تجاهل الخطأ */ }
+    }
+    
+    // تحديث العيادات القديمة التي لا تملك تاريخ اشتراك
     try {
-        await db.query(`ALTER TABLE clinics ADD COLUMN IF NOT EXISTS is_main BOOLEAN DEFAULT true`);
-        await db.query(`ALTER TABLE clinics ADD COLUMN IF NOT EXISTS parent_id INTEGER DEFAULT NULL`);
-        await db.query(`ALTER TABLE clinics ADD COLUMN IF NOT EXISTS subscription_end DATE DEFAULT (CURRENT_DATE + INTERVAL '1 month')`);
+        await db.query(`UPDATE clinics SET is_main = true WHERE is_main IS NULL`);
+        await db.query(`UPDATE clinics SET subscription_end = CURRENT_DATE + INTERVAL '1 month' WHERE subscription_end IS NULL`);
         console.log("Database SaaS structure ready.");
-    } catch(e) { console.log('Database already updated.'); }
+    } catch(e) { console.log(e); }
 };
 setupDB();
 
@@ -28,9 +39,14 @@ setupDB();
 app.post('/api/clinics', async (req, res) => {
     try {
         const { name, slug } = req.body; 
-        const result = await db.query('INSERT INTO clinics (name, slug, is_main) VALUES ($1, $2, true) RETURNING *', [name, slug]);
+        const result = await db.query(`
+            INSERT INTO clinics (name, slug, is_main, subscription_end) 
+            VALUES ($1, $2, true, CURRENT_DATE + INTERVAL '1 month') RETURNING *
+        `, [name, slug]);
         res.status(201).json({ message: 'تم إنشاء العيادة بنجاح', clinic: result.rows[0] });
-    } catch (err) { res.status(500).json({ error: 'الرابط المخصص (Slug) مستخدم مسبقاً.' }); }
+    } catch (err) { 
+        res.status(500).json({ error: 'الرابط المخصص (Slug) مستخدم مسبقاً أو حدث خطأ.' }); 
+    }
 });
 
 // 2. سحب تذكرة (مع إصلاح خطأ undefined وفحص الاشتراك)
@@ -38,7 +54,6 @@ app.post('/api/tickets', async (req, res) => {
     try {
         const { clinic_slug, patient_name } = req.body;
         
-        // جلب بيانات العيادة (الطبيب) والعيادة الرئيسية (لفحص الاشتراك)
         const clinic = await db.query(`
             SELECT c.id, c.is_main, c.subscription_end as doc_sub, p.subscription_end as parent_sub 
             FROM clinics c 
@@ -48,7 +63,6 @@ app.post('/api/tickets', async (req, res) => {
         
         if(clinic.rows.length === 0) return res.status(404).json({ error: 'الرابط غير صحيح' });
 
-        // فحص الاشتراك
         let subEnd = clinic.rows[0].is_main ? clinic.rows[0].doc_sub : clinic.rows[0].parent_sub;
         if(new Date(subEnd) < new Date(new Date().setHours(0,0,0,0))) {
             return res.status(403).json({ error: 'اشتراك العيادة منتهي. يرجى مراجعة الإدارة.' });
@@ -56,7 +70,6 @@ app.post('/api/tickets', async (req, res) => {
 
         const clinicId = clinic.rows[0].id;
         
-        // حل مشكلة undefined: التأكد من وجود طابور اليوم، وإنشاءه إن لم يوجد
         let queue = await db.query('SELECT * FROM queues WHERE clinic_id = $1 AND queue_date = CURRENT_DATE', [clinicId]);
         if(queue.rows.length === 0) {
             const newQ = await db.query(`INSERT INTO queues (clinic_id, queue_date, status, current_number, last_issued_number) VALUES ($1, CURRENT_DATE, 'active', 0, 0) RETURNING *`, [clinicId]);
@@ -137,7 +150,10 @@ app.get('/api/admin/clinics', async (req, res) => {
             FROM clinics c WHERE is_main = true ORDER BY id DESC
         `);
         res.json(clinics.rows);
-    } catch (err) { res.status(500).json({ error: 'خطأ' }); }
+    } catch (err) { 
+        console.error(err);
+        res.status(500).json([]); // إعادة مصفوفة فارغة لتجنب تعطل الواجهة
+    }
 });
 
 app.post('/api/admin/add-doctor', async (req, res) => {
@@ -158,8 +174,8 @@ app.post('/api/admin/renew', async (req, res) => {
 
 app.delete('/api/admin/clinics/:id', async (req, res) => {
     try {
-        await db.query('DELETE FROM clinics WHERE parent_id = $1', [req.params.id]); // حذف الأطباء التابعين
-        await db.query('DELETE FROM clinics WHERE id = $1', [req.params.id]); // حذف العيادة
+        await db.query('DELETE FROM clinics WHERE parent_id = $1', [req.params.id]); 
+        await db.query('DELETE FROM clinics WHERE id = $1', [req.params.id]); 
         res.json({ message: 'تم حذف العيادة' });
     } catch (err) { res.status(500).json({ error: 'حدث خطأ أثناء الحذف' }); }
 });
@@ -171,7 +187,6 @@ app.get('/api/admin/clinic-doctors-links/:main_id', async (req, res) => {
     } catch(e) { res.status(500).json({ error: 'error' }); }
 });
 
-// مسارات إضافية (تصدير، وتغيير الحالة)
 app.post('/api/tickets/status', async (req, res) => {
     const { clinic_slug, ticket_number, status } = req.body; 
     const clinic = await db.query('SELECT id FROM clinics WHERE slug = $1', [clinic_slug]);
