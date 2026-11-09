@@ -6,68 +6,43 @@
     <title>ClinicFlow - Super Admin</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
     <style>
-        :root { 
-            --bg: #0f172a; --card: #1e293b; --text: #f8fafc; 
-            --accent: #38bdf8; --border: #334155; --muted: #94a3b8; 
-            --success: #10b981; --danger: #ef4444; --warning: #f59e0b; 
-        }
+        :root { --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --accent: #38bdf8; --border: #334155; --muted: #94a3b8; --success: #10b981; --danger: #ef4444; --warning: #f59e0b; }
         body { font-family: 'Tajawal', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; display: flex; height: 100vh; overflow: hidden; }
-        
-        /* شريط التنقل الجانبي */
         .sidebar { width: 280px; background: var(--card); border-left: 1px solid var(--border); display: flex; flex-direction: column; padding: 25px 0; box-shadow: -5px 0 25px rgba(0,0,0,0.2); z-index: 10; }
         .logo { font-size: 1.8rem; font-weight: 800; text-align: center; margin-bottom: 40px; color: var(--text); letter-spacing: 1px; }
         .logo span { color: var(--accent); }
         .nav-item { padding: 16px 30px; color: var(--muted); text-decoration: none; display: flex; align-items: center; gap: 10px; font-weight: 500; transition: 0.3s; cursor: pointer; border-right: 4px solid transparent; font-size: 1.05rem; }
         .nav-item:hover, .nav-item.active { background: rgba(56, 189, 248, 0.08); color: var(--accent); border-color: var(--accent); }
-        
-        /* المحتوى الرئيسي */
         .main-content { flex: 1; padding: 40px 50px; overflow-y: auto; scroll-behavior: smooth; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
         .header h1 { margin: 0; font-size: 2.2rem; font-weight: 800; }
         .admin-badge { background: rgba(255,255,255,0.05); padding: 12px 25px; border-radius: 30px; border: 1px solid var(--border); display: flex; align-items: center; gap: 10px; font-weight: bold; }
-        
-        /* الإحصائيات */
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 25px; margin-bottom: 40px; }
         .stat-card { background: linear-gradient(145deg, var(--card), #172033); padding: 30px; border-radius: 24px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.1); transition: 0.3s; }
-        .stat-card:hover { transform: translateY(-5px); border-color: var(--accent); }
         .stat-card span { color: var(--muted); font-size: 1rem; display: block; margin-bottom: 15px; font-weight: 500; }
         .stat-card strong { font-size: 3rem; color: var(--text); line-height: 1; display: block; }
-        
-        /* اللوحات والجداول */
         .card-panel { background: var(--card); border-radius: 24px; border: 1px solid var(--border); padding: 35px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
         .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
         .panel-header h2 { margin: 0; font-size: 1.5rem; }
-        
         .btn { background: var(--accent); color: #0f172a; border: none; padding: 12px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; font-family: inherit; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.95rem; }
         .btn:hover { filter: brightness(1.1); transform: scale(1.02); }
-        
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 18px 15px; text-align: right; border-bottom: 1px solid var(--border); }
-        th { color: var(--muted); font-size: 0.95rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        th { color: var(--muted); font-size: 0.95rem; font-weight: 700; text-transform: uppercase; }
         tr:hover td { background: rgba(255,255,255,0.02); }
         .badge { padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: bold; }
         .badge-success { background: rgba(16, 185, 129, 0.15); color: var(--success); }
         .badge-danger { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
-        
-        /* النوافذ المنبثقة */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(8px); }
-        .modal-content { background: var(--card); padding: 40px; border-radius: 24px; width: 100%; max-width: 500px; border: 1px solid var(--border); max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 50px rgba(0,0,0,0.25); animation: zoomIn 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-        @keyframes zoomIn { from { opacity: 0; transform: scale(0.95) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-        
+        .modal-content { background: var(--card); padding: 40px; border-radius: 24px; width: 100%; max-width: 500px; border: 1px solid var(--border); max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 50px rgba(0,0,0,0.25); }
         .modal-content h2 { margin-top: 0; margin-bottom: 25px; font-size: 1.6rem; display: flex; align-items: center; gap: 10px; }
         .modal-content label { display: block; margin-bottom: 8px; color: var(--muted); font-size: 0.9rem; font-weight: bold; }
         .modal-content input, .modal-content select { width: 100%; padding: 16px; margin-bottom: 20px; background: rgba(15, 23, 42, 0.5); border: 1px solid var(--border); color: var(--text); border-radius: 12px; box-sizing: border-box; font-family: inherit; font-size: 1rem; transition: 0.3s; outline: none; }
-        .modal-content input:focus, .modal-content select:focus { border-color: var(--accent); background: var(--bg); box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1); }
-        
-        /* روابط العيادات */
         .link-group { background: rgba(56, 189, 248, 0.05); padding: 20px; border-radius: 16px; border: 1px solid var(--border); margin-bottom: 20px; }
         .link-group label { display: block; color: var(--text); font-weight: 800; margin-bottom: 12px; font-size: 1.05rem; }
         .clickable-link { color: var(--accent); text-decoration: none; word-break: break-all; font-size: 0.95rem; font-weight: 500; display: inline-block; padding: 8px 12px; background: rgba(56, 189, 248, 0.1); border-radius: 8px; transition: 0.2s; }
-        .clickable-link:hover { background: var(--accent); color: #0f172a; }
-
         .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeIn 0.4s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        .tab-content.active { display: block; }
     </style>
 </head>
 <body>
@@ -86,7 +61,6 @@
             <div class="admin-badge">👑 المدير العام للشبكة</div>
         </div>
 
-        <!-- تبويب العيادات -->
         <div id="clinics" class="tab-content active">
             <div class="card-panel">
                 <div class="panel-header">
@@ -110,29 +84,14 @@
             </div>
         </div>
 
-        <!-- تبويب الإحصائيات -->
         <div id="stats" class="tab-content">
             <div class="stats-grid">
-                <div class="stat-card">
-                    <span>إجمالي العيادات النشطة</span>
-                    <strong id="totalClinics">0</strong>
-                </div>
-                <div class="stat-card">
-                    <span>إجمالي الأطباء في النظام</span>
-                    <strong id="totalDoctors" style="color: var(--accent);">0</strong>
-                </div>
-                <div class="stat-card">
-                    <span>حالة الخادم (Server)</span>
-                    <strong style="color: var(--success); font-size: 2.2rem; margin-top: 10px;">متصل ومستقر</strong>
-                </div>
-            </div>
-            <div class="card-panel">
-                <h2>تقارير النظام</h2>
-                <p style="color: var(--muted); line-height: 1.8;">النظام يعمل بأحدث بنية سحابية (SaaS). الطوابير تُدار بشكل مستقل لكل عيادة ويتم تصفير الأرقام برمجياً كل منتصف ليل بتوقيت السيرفر المحلي. لا يوجد أي تدخل يدوي مطلوب لضمان استمرارية العمل.</p>
+                <div class="stat-card"><span>إجمالي العيادات النشطة</span><strong id="totalClinics">0</strong></div>
+                <div class="stat-card"><span>إجمالي الأطباء في النظام</span><strong id="totalDoctors" style="color: var(--accent);">0</strong></div>
+                <div class="stat-card"><span>حالة الخادم (Server)</span><strong id="serverStatus" style="color: var(--success); font-size: 2.2rem; margin-top: 10px;">متصل ومستقر</strong></div>
             </div>
         </div>
 
-        <!-- تبويب الإعدادات -->
         <div id="settings" class="tab-content">
             <div class="card-panel" style="max-width: 600px;">
                 <h2>إعدادات حساب المسؤول (Super Admin)</h2>
@@ -194,32 +153,26 @@
         </div>
     </div>
 
-    <!-- 4. نافذة عرض الروابط (منسقة وقابلة للضغط مباشرة) -->
+    <!-- 4. نافذة عرض الروابط -->
     <div class="modal" id="linksModal">
         <div class="modal-content" style="max-width: 650px;">
             <h2>🔗 لوحة تحكم الروابط</h2>
-            
             <div class="link-group" style="background: rgba(255,255,255,0.02);">
                 <label>📌 الروابط المشتركة للعيادة المركزية:</label>
                 <p style="font-size: 0.9rem; color: var(--muted); margin-top: 0;">هذه الروابط خاصة بصالة الاستقبال الرئيسية وتتحكم بكافة أطباء العيادة.</p>
-                
                 <span style="font-size: 0.85rem; color: var(--muted); display: block; margin-bottom: 5px;">🖥️ مكتب الاستقبال (السكرتير):</span>
                 <a id="linkRec" href="#" target="_blank" class="clickable-link" style="margin-bottom: 15px;"></a>
-                
                 <span style="font-size: 0.85rem; color: var(--muted); display: block; margin-bottom: 5px;">📺 شاشة التلفاز الذكية (عرض الانتظار):</span>
                 <a id="linkTv" href="#" target="_blank" class="clickable-link"></a>
             </div>
-            
             <hr style="border: 1px dashed var(--border); margin: 25px 0;">
             <h3 style="margin-top: 0; font-size: 1.2rem;">👨‍⚕️ الروابط المستقلة للأطباء:</h3>
             <div id="doctorsLinksContainer"></div>
-            
             <button class="btn" style="width: 100%; margin-top: 20px; padding: 15px; background: var(--bg); color: var(--text); border: 1px solid var(--border);" onclick="document.getElementById('linksModal').style.display='none'">إغلاق النافذة</button>
         </div>
     </div>
 
     <script>
-        // تغيير التبويبات
         function switchTab(tabId, el) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -228,20 +181,25 @@
             document.getElementById('pageTitle').innerText = el.innerText.replace(/[🏢📊⚙️]/g, '').trim();
         }
 
-        // جلب قائمة العيادات برمجياً مع حماية كاملة من الأخطاء
         async function fetchClinics() {
             const table = document.getElementById('clinicsTable');
-            table.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--muted); padding: 40px;">جاري معالجة وجلب البيانات السحابية...</td></tr>';
-            
             try {
                 const res = await fetch('https://clinic-server-i00s.onrender.com/api/admin/clinics');
                 const data = await res.json();
                 
-                if (!res.ok || !Array.isArray(data)) {
+                // هنا التغيير الجذري: إظهار رسالة الخطأ القادمة من السيرفر مباشرةً!
+                if (!res.ok || data.error) {
+                    document.getElementById('serverStatus').innerText = 'يوجد خطأ';
+                    document.getElementById('serverStatus').style.color = 'var(--danger)';
                     table.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 40px;">
-                        <div style="color: var(--warning); font-size: 1.2rem; margin-bottom: 10px;">⚠️ لم يتم العثور على عيادات أو قاعدة البيانات فارغة.</div>
-                        <div style="color: var(--muted); font-size: 0.95rem;">اضغط على "إضافة عيادة رئيسية جديدة" للبدء.</div>
+                        <div style="color: var(--danger); font-size: 1.2rem; font-weight: bold; margin-bottom: 10px;">⚠️ خطأ في قاعدة البيانات:</div>
+                        <div style="color: var(--muted); font-size: 1rem;">${data.error || 'رسالة غير معروفة من الخادم'}</div>
                     </td></tr>`;
+                    return;
+                }
+
+                if (!Array.isArray(data) || data.length === 0) {
+                    table.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--muted); padding: 40px;">لا توجد عيادات مسجلة حالياً في النظام.</td></tr>`;
                     return;
                 }
 
@@ -249,26 +207,15 @@
                 let totalDocs = 0;
                 table.innerHTML = '';
 
-                if (data.length === 0) {
-                    table.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--muted); padding: 40px;">لا توجد عيادات مسجلة حالياً في النظام.</td></tr>`;
-                    return;
-                }
-
                 data.forEach(c => {
                     totalDocs += parseInt(c.doctors_count || 0);
-                    
-                    // حساب أيام الاشتراك المتبقية
                     const subDate = new Date(c.subscription_end || new Date());
                     const daysLeft = Math.ceil((subDate - new Date()) / (1000 * 60 * 60 * 24));
                     
                     let subHtml = '';
-                    if (daysLeft > 10) {
-                        subHtml = `<span class="badge badge-success">فعال (${daysLeft} يوم)</span>`;
-                    } else if (daysLeft > 0) {
-                        subHtml = `<span class="badge" style="background: rgba(245, 158, 11, 0.15); color: var(--warning);">سينتهي قريباً (${daysLeft} يوم)</span>`;
-                    } else {
-                        subHtml = `<span class="badge badge-danger">منتهي الصلاحية</span>`;
-                    }
+                    if (daysLeft > 10) subHtml = `<span class="badge badge-success">فعال (${daysLeft} يوم)</span>`;
+                    else if (daysLeft > 0) subHtml = `<span class="badge" style="background: rgba(245, 158, 11, 0.15); color: var(--warning);">سينتهي قريباً (${daysLeft} يوم)</span>`;
+                    else subHtml = `<span class="badge badge-danger">منتهي الصلاحية</span>`;
                     
                     table.innerHTML += `
                         <tr>
@@ -287,33 +234,30 @@
                         </tr>
                     `;
                 });
-                
                 document.getElementById('totalDoctors').innerText = totalDocs;
+                document.getElementById('serverStatus').innerText = 'متصل ومستقر';
+                document.getElementById('serverStatus').style.color = 'var(--success)';
 
             } catch (e) { 
-                table.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--danger); padding: 40px; font-weight: bold;">تعذر الاتصال بالسيرفر السحابي. يرجى التحقق من اتصالك بالإنترنت.</td></tr>`;
+                table.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--danger); padding: 40px; font-weight: bold;">تعذر الاتصال بالسيرفر السحابي: ${e.message}</td></tr>`;
             }
         }
 
-        // الوظائف البرمجية للإدارة
         async function addClinic() {
             const name = document.getElementById('clinicName').value.trim();
             const slug = document.getElementById('clinicSlug').value.trim();
-            if(!name || !slug) return alert('يرجى تعبئة كافة الحقول الإلزامية.');
-            
+            if(!name || !slug) return alert('يرجى تعبئة كافة الحقول.');
             try {
                 const res = await fetch('https://clinic-server-i00s.onrender.com/api/clinics', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, slug })
                 });
+                const data = await res.json();
                 if(res.ok) {
                     document.getElementById('addModal').style.display='none';
                     document.getElementById('clinicName').value = ''; document.getElementById('clinicSlug').value = '';
                     fetchClinics();
-                } else {
-                    const data = await res.json();
-                    alert(data.error || 'فشلت عملية الإضافة.');
-                }
-            } catch (e) { alert('خطأ في الاتصال بالشبكة.'); }
+                } else alert(data.error || 'فشلت الإضافة');
+            } catch (e) { alert('خطأ في الاتصال.'); }
         }
 
         function openDocModal(parentId) { document.getElementById('dParent').value = parentId; document.getElementById('addDocModal').style.display='flex'; }
@@ -323,17 +267,17 @@
             const name = document.getElementById('dName').value.trim();
             const slug = document.getElementById('dSlug').value.trim();
             if(!name || !slug) return alert('يرجى تعبئة الحقول.');
-            
             try {
                 const res = await fetch('https://clinic-server-i00s.onrender.com/api/admin/add-doctor', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ parent_id, name, slug })
                 });
+                const data = await res.json();
                 if(res.ok) {
                     document.getElementById('addDocModal').style.display='none';
                     document.getElementById('dName').value = ''; document.getElementById('dSlug').value = '';
                     fetchClinics();
-                } else alert('حدث خطأ. قد يكون الرابط المختصر مستخدماً مسبقاً.');
-            } catch (e) { alert('خطأ في الاتصال بالشبكة.'); }
+                } else alert(data.error || 'حدث خطأ.');
+            } catch (e) { alert('خطأ اتصال.'); }
         }
 
         function openRenewModal(id) { document.getElementById('rId').value = id; document.getElementById('renewModal').style.display='flex'; }
@@ -341,40 +285,35 @@
         async function renewSub() {
             const id = document.getElementById('rId').value;
             const months = document.getElementById('rMonths').value;
-            
             try {
                 await fetch('https://clinic-server-i00s.onrender.com/api/admin/renew', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ clinic_id: id, months })
                 });
                 document.getElementById('renewModal').style.display='none';
                 fetchClinics();
-            } catch (e) { alert('خطأ في الاتصال بالشبكة.'); }
+            } catch (e) { alert('خطأ اتصال.'); }
         }
 
         async function deleteClinic(id) {
-            if(confirm('إجراء لا يمكن التراجع عنه: هل أنت متأكد من رغبتك في حذف العيادة نهائياً بكافة أطبائها وسجلاتها؟')) {
+            if(confirm('هل أنت متأكد من رغبتك في حذف العيادة نهائياً بكافة أطبائها؟')) {
                 try {
                     await fetch(`https://clinic-server-i00s.onrender.com/api/admin/clinics/${id}`, { method: 'DELETE' });
                     fetchClinics();
-                } catch (e) { alert('خطأ في الاتصال بالشبكة.'); }
+                } catch (e) { alert('خطأ اتصال.'); }
             }
         }
 
         async function showLinks(mainId, mainSlug) {
             const base = 'https://clinic-server-i00s.onrender.com';
-            
-            // روابط الاستقبال والتلفاز للعيادة الرئيسية
             const urlRec = `${base}/reception.html?clinic=${mainSlug}`;
             const urlTv = `${base}/tv.html?clinic=${mainSlug}`;
             
             document.getElementById('linkRec').href = urlRec; document.getElementById('linkRec').innerText = urlRec;
             document.getElementById('linkTv').href = urlTv; document.getElementById('linkTv').innerText = urlTv;
 
-            // جلب الأطباء التابعين
             try {
                 const res = await fetch(`https://clinic-server-i00s.onrender.com/api/admin/clinic-doctors-links/${mainId}`);
                 const doctors = await res.json();
-                
                 const docsContainer = document.getElementById('doctorsLinksContainer');
                 docsContainer.innerHTML = '';
                 
@@ -384,28 +323,21 @@
                     doctors.forEach(doc => {
                         const urlDoc = `${base}/doctor.html?clinic=${doc.slug}`;
                         const urlPat = `${base}/patient.html?clinic=${doc.slug}`;
-                        
                         docsContainer.innerHTML += `
                             <div class="link-group" style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.15);">
                                 <label style="color: var(--success); display: flex; align-items: center; gap: 8px;">👨‍⚕️ ${doc.name}</label>
-                                
                                 <span style="font-size: 0.85rem; color: var(--muted); display: block; margin-bottom: 5px;">لوحة تحكم الطبيب المعالج:</span>
                                 <a href="${urlDoc}" target="_blank" class="clickable-link" style="background: rgba(16, 185, 129, 0.1); color: var(--success); margin-bottom: 15px;">${urlDoc}</a>
-                                
                                 <span style="font-size: 0.85rem; color: var(--muted); display: block; margin-bottom: 5px;">رابط حجز المرضى الخاص بالطبيب (QR):</span>
                                 <a href="${urlPat}" target="_blank" class="clickable-link" style="background: rgba(16, 185, 129, 0.1); color: var(--success);">${urlPat}</a>
                             </div>
                         `;
                     });
                 }
-                
                 document.getElementById('linksModal').style.display = 'flex';
-            } catch(e) {
-                alert('فشل جلب بيانات الأطباء.');
-            }
+            } catch(e) { alert('فشل جلب بيانات الأطباء.'); }
         }
 
-        // تشغيل التحميل التلقائي عند فتح الصفحة
         window.onload = fetchClinics;
     </script>
 </body>
