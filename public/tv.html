@@ -4,39 +4,99 @@
     <meta charset="UTF-8">
     <title>ClinicFlow - Smart TV</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@700;900&display=swap" rel="stylesheet">
-    <style>:root{--bg:#f4f7f6;--card:#ffffff;--text:#2d3748;--accent:#40757d;--border:#e2e8f0;--muted:#718096;}[data-theme="dark"]{--bg:#0f172a;--card:#1e293b;--text:#f8fafc;--accent:#38bdf8;--border:#334155;}body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);margin:0;height:100vh;display:flex;flex-direction:column;} .controls{padding:15px; display:flex; gap:10px; background:var(--card); border-bottom:1px solid var(--border);} .btn-sound{background:#10b981;color:white;border:none;padding:10px 15px;border-radius:10px;font-weight:bold;cursor:pointer;} .grid-container{flex:1; display:grid; grid-template-columns:repeat(auto-fit, minmax(400px, 1fr)); gap:20px; padding:20px; align-items:center; justify-content:center;} .doc-card{background:var(--card); padding:40px; border-radius:30px; text-align:center; border:1px solid var(--border); box-shadow:0 10px 30px rgba(0,0,0,0.05); transition:0.3s;} .doc-name{font-size:2rem; margin-bottom:20px; color:var(--text);} .number{font-size:8rem; font-weight:900; color:var(--accent); line-height:1;} .qr-img{width:150px; height:150px; border-radius:10px; margin-top:20px;} </style>
+    <style>
+        :root { --bg: #f4f7f6; --card: #ffffff; --text: #2d3748; --accent: #40757d; --border: #e2e8f0; --muted: #718096; --success: #10b981; }
+        [data-theme="dark"] { --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --accent: #38bdf8; --border: #334155; --muted: #94a3b8; }
+        body { font-family: 'Tajawal', sans-serif; background: var(--bg); color: var(--text); margin: 0; height: 100vh; display: flex; flex-direction: column; transition: 0.3s; }
+        .controls-bar { padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; background: var(--card); border-bottom: 1px solid var(--border); }
+        .btn-sound, .theme-btn { background: var(--success); color: white; border: none; padding: 10px 20px; border-radius: 12px; font-family: inherit; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 1.1rem; }
+        .theme-btn { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+        .grid-container { flex: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 30px; padding: 40px; align-items: center; justify-content: center; overflow-y: auto; }
+        .doc-card { background: var(--card); padding: 40px; border-radius: 40px; text-align: center; border: 2px solid var(--border); box-shadow: 0 20px 50px rgba(0,0,0,0.05); transition: 0.3s; }
+        .doc-name { font-size: 2.2rem; margin-bottom: 10px; color: var(--text); }
+        .number { font-size: 9rem; font-weight: 900; color: var(--accent); line-height: 1; margin-bottom: 20px; text-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .qr-wrapper { background: white; display: inline-block; padding: 15px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .qr-img { width: 160px; height: 160px; border-radius: 10px; display: block; }
+    </style>
 </head>
 <body>
-    <div class="controls">
-        <button class="btn-sound" onclick="enableSound(this)">🔔 تفعيل التنبيه الصوتي</button>
-        <button class="btn-sound" style="background:var(--bg); color:var(--text);" onclick="document.body.setAttribute('data-theme', document.body.getAttribute('data-theme')==='dark'?'light':'dark')">🌓</button>
+    <div class="controls-bar">
+        <div style="font-size: 1.5rem; font-weight: 900;">ClinicFlow <span style="font-weight: 400; color: var(--muted); font-size: 1rem;">| شاشة الانتظار</span></div>
+        <div style="display: flex; gap: 15px;">
+            <button class="btn-sound" id="soundBtn" onclick="enableSound(this)">🔔 تفعيل التنبيه الصوتي</button>
+            <button class="theme-btn" onclick="toggleTheme()">🌓 الوضع الليلي</button>
+        </div>
     </div>
+    
     <div class="grid-container" id="doctorsGrid">
-        <!-- سيتم توليد الأطباء هنا -->
+        <h2 style="grid-column: 1 / -1; text-align: center; color: var(--muted);">جاري تحميل الأطباء...</h2>
     </div>
     
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const MAIN_SLUG = new URLSearchParams(window.location.search).get('clinic');
-        let soundEnabled = false; let audioCtx;
-        function playChime() { if(!soundEnabled) return; if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)(); if(audioCtx.state === 'suspended') audioCtx.resume(); const osc1 = audioCtx.createOscillator(), osc2 = audioCtx.createOscillator(), gain = audioCtx.createGain(); osc1.frequency.value = 880; osc2.frequency.value = 1108.73; gain.gain.setValueAtTime(0, audioCtx.currentTime); gain.gain.linearRampToValueAtTime(0.5, audioCtx.currentTime + 0.05); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.5); osc1.connect(gain); osc2.connect(gain); gain.connect(audioCtx.destination); osc1.start(); osc2.start(); osc1.stop(audioCtx.currentTime + 1.5); osc2.stop(audioCtx.currentTime + 1.5); }
-        function enableSound(btn) { soundEnabled = true; btn.innerText = '✔️ التنبيه مفعل'; btn.style.background = 'gray'; playChime(); }
+        
+        let soundEnabled = false; 
+        let audioCtx;
+
+        function playChime() { 
+            if(!soundEnabled) return; 
+            if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)(); 
+            if(audioCtx.state === 'suspended') audioCtx.resume(); 
+            const osc1 = audioCtx.createOscillator(), osc2 = audioCtx.createOscillator(), gain = audioCtx.createGain(); 
+            osc1.frequency.value = 880; osc2.frequency.value = 1108.73; 
+            gain.gain.setValueAtTime(0, audioCtx.currentTime); gain.gain.linearRampToValueAtTime(0.5, audioCtx.currentTime + 0.05); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.5); 
+            osc1.connect(gain); osc2.connect(gain); gain.connect(audioCtx.destination); 
+            osc1.start(); osc2.start(); 
+            osc1.stop(audioCtx.currentTime + 1.5); osc2.stop(audioCtx.currentTime + 1.5); 
+        }
+
+        function enableSound(btn) { 
+            soundEnabled = true; 
+            btn.innerText = '✔️ التنبيه مفعل'; 
+            btn.style.background = 'gray'; 
+            playChime(); 
+        }
+
+        const toggleTheme = () => {
+            const isDark = document.body.getAttribute('data-theme') !== 'dark';
+            document.body.setAttribute('data-theme', isDark ? 'dark' : 'light');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        };
 
         let doctorsSlugs = [];
+
         window.onload = async () => {
-            if(localStorage.getItem('theme')==='dark') document.body.setAttribute('data-theme', 'dark');
+            if(localStorage.getItem('theme') === 'dark') document.body.setAttribute('data-theme', 'dark');
+            
+            if(!MAIN_SLUG) {
+                document.getElementById('doctorsGrid').innerHTML = '<h2 style="color: var(--muted); text-align: center;">الرجاء تحديد العيادة من الرابط</h2>';
+                return;
+            }
+
             const res = await fetch(`https://clinic-server-i00s.onrender.com/api/clinic-doctors/${MAIN_SLUG}`);
             const docs = await res.json();
             const grid = document.getElementById('doctorsGrid');
-            if(docs.length === 0) grid.innerHTML = '<h2>الرجاء إضافة أطباء لهذه العيادة من لوحة الأدمن</h2>';
+            
+            if(docs.length === 0) {
+                grid.innerHTML = '<h2 style="grid-column: 1 / -1; text-align: center; color: var(--muted);">لم تقم بإضافة أطباء لهذه العيادة من لوحة الأدمن بعد.</h2>';
+                return;
+            }
+            
+            grid.innerHTML = '';
             docs.forEach(d => {
                 doctorsSlugs.push(d.slug);
-                grid.innerHTML += `<div class="doc-card" id="card-${d.slug}">
-                    <div class="doc-name">${d.name}</div>
-                    <div class="number" id="num-${d.slug}">${d.current}</div>
-                    <img class="qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://clinic-server-i00s.onrender.com/patient.html?clinic=${d.slug}">
-                    <p style="color:var(--muted); font-size:0.9rem;">امسح الكود لتأخذ دورك</p>
-                </div>`;
+                const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://clinic-server-i00s.onrender.com/patient.html?clinic=${d.slug}`;
+                grid.innerHTML += `
+                    <div class="doc-card" id="card-${d.slug}">
+                        <div class="doc-name">${d.name}</div>
+                        <div class="number" id="num-${d.slug}">${d.current}</div>
+                        <div class="qr-wrapper">
+                            <img class="qr-img" src="${qrUrl}" alt="QR Code">
+                        </div>
+                        <p style="color:var(--muted); font-size:1.1rem; margin-top: 15px; font-weight: bold;">اسحب لتأخذ دورك</p>
+                    </div>
+                `;
             });
         };
 
@@ -44,11 +104,19 @@
         socket.on('call_patient', (data) => {
             if(doctorsSlugs.includes(data.clinic_slug)) {
                 const numEl = document.getElementById(`num-${data.clinic_slug}`);
-                numEl.innerText = data.current_number;
-                const card = document.getElementById(`card-${data.clinic_slug}`);
-                card.style.transform = 'scale(1.05)'; card.style.border = '2px solid var(--success)';
-                setTimeout(() => { card.style.transform = 'scale(1)'; card.style.border = '1px solid var(--border)'; }, 1000);
-                playChime();
+                if(numEl) {
+                    numEl.innerText = data.current_number;
+                    const card = document.getElementById(`card-${data.clinic_slug}`);
+                    card.style.transform = 'scale(1.08)'; 
+                    card.style.borderColor = 'var(--success)';
+                    card.style.boxShadow = '0 20px 50px rgba(16, 185, 129, 0.2)';
+                    setTimeout(() => { 
+                        card.style.transform = 'scale(1)'; 
+                        card.style.borderColor = 'var(--border)'; 
+                        card.style.boxShadow = '0 20px 50px rgba(0,0,0,0.05)';
+                    }, 1000);
+                    playChime();
+                }
             }
         });
     </script>
