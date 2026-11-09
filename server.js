@@ -13,7 +13,6 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// 🚀 البناء الجذري لقاعدة البيانات (مُعالج لخطأ UUID vs Integer)
 const initDB = async () => {
     try {
         await db.query(`
@@ -138,35 +137,21 @@ app.get('/api/queue-status/:clinic_slug', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// 🔥 (جديد) مسار الإحصائيات الأسبوعية والشهرية واليومية للطبيب
 app.get('/api/doctor-stats/:clinic_slug', async (req, res) => {
     try {
         const { clinic_slug } = req.params;
         const clinic = await db.query('SELECT id FROM clinics WHERE slug = $1', [clinic_slug]);
         if(clinic.rows.length === 0) return res.json({ today:0, waiting:0, weekly:0, monthly:0 });
-
         const cId = clinic.rows[0].id;
-
-        // مرضى اليوم والانتظار
         let q = await db.query('SELECT current_number, last_issued_number FROM queues WHERE clinic_id = $1 AND queue_date = CURRENT_DATE', [cId]);
         let today = 0, waiting = 0;
         if(q.rows.length > 0) {
             today = q.rows[0].last_issued_number;
-            waiting = today - q.rows[0].current_number;
-            if(waiting < 0) waiting = 0;
+            waiting = Math.max(0, today - q.rows[0].current_number);
         }
-
-        // مرضى الأسبوع
         const weekly = await db.query(`SELECT COUNT(*) FROM tickets t JOIN queues q ON t.queue_id = q.id WHERE q.clinic_id = $1 AND q.queue_date >= CURRENT_DATE - INTERVAL '7 days'`, [cId]);
-        // مرضى الشهر
         const monthly = await db.query(`SELECT COUNT(*) FROM tickets t JOIN queues q ON t.queue_id = q.id WHERE q.clinic_id = $1 AND q.queue_date >= CURRENT_DATE - INTERVAL '30 days'`, [cId]);
-
-        res.json({
-            today,
-            waiting,
-            weekly: parseInt(weekly.rows[0].count),
-            monthly: parseInt(monthly.rows[0].count)
-        });
+        res.json({ today, waiting, weekly: parseInt(weekly.rows[0].count), monthly: parseInt(monthly.rows[0].count) });
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -204,6 +189,7 @@ app.post('/api/admin/add-doctor', async (req, res) => {
         res.json({ message: 'تم إضافة الطبيب بنجاح' });
     } catch (err) { res.status(500).json({ error: 'الرابط مستخدم مسبقاً' }); }
 });
+
 app.post('/api/admin/renew', async (req, res) => {
     try {
         const { clinic_id, months } = req.body;
@@ -211,19 +197,38 @@ app.post('/api/admin/renew', async (req, res) => {
         res.json({ message: 'تم' });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
+
+// 🔥 تعديل: حذف العيادة الرئيسية بذكاء (الحذف العميق لتفادي رفض القاعدة)
 app.delete('/api/admin/clinics/:id', async (req, res) => {
     try {
+        const docs = await db.query('SELECT id FROM clinics WHERE parent_id::text = $1::text OR id::text = $1::text', [req.params.id]);
+        for(let doc of docs.rows) {
+            await db.query('DELETE FROM tickets WHERE queue_id IN (SELECT id FROM queues WHERE clinic_id::text = $1::text)', [doc.id]);
+            await db.query('DELETE FROM queues WHERE clinic_id::text = $1::text', [doc.id]);
+        }
         await db.query('DELETE FROM clinics WHERE parent_id::text = $1::text', [req.params.id]); 
         await db.query('DELETE FROM clinics WHERE id::text = $1::text', [req.params.id]); 
         res.json({ message: 'تم' });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
+
+// 🔥 تعديل: حذف طبيب واحد بذكاء (يتم مسح تذاكره وطوابيره أولاً)
+app.delete('/api/admin/doctors/:id', async (req, res) => {
+    try {
+        await db.query('DELETE FROM tickets WHERE queue_id IN (SELECT id FROM queues WHERE clinic_id::text = $1::text)', [req.params.id]);
+        await db.query('DELETE FROM queues WHERE clinic_id::text = $1::text', [req.params.id]);
+        await db.query('DELETE FROM clinics WHERE id::text = $1::text', [req.params.id]); 
+        res.json({ message: 'تم حذف الطبيب بنجاح' });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 app.get('/api/admin/clinic-doctors-links/:main_id', async (req, res) => {
     try {
-        const docs = await db.query('SELECT name, slug FROM clinics WHERE parent_id::text = $1::text', [req.params.main_id]);
+        const docs = await db.query('SELECT id, name, slug FROM clinics WHERE parent_id::text = $1::text', [req.params.main_id]);
         res.json(docs.rows);
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
+
 app.post('/api/tickets/status', async (req, res) => {
     const { clinic_slug, ticket_number, status } = req.body; 
     const clinic = await db.query('SELECT id FROM clinics WHERE slug = $1', [clinic_slug]);
@@ -231,6 +236,7 @@ app.post('/api/tickets/status', async (req, res) => {
     await db.query('UPDATE tickets SET status = $1 WHERE queue_id = $2 AND ticket_number = $3', [status, queue.rows[0].id, ticket_number]);
     res.json({ message: `تم` });
 });
+
 app.post('/api/queues/toggle', async (req, res) => {
     const { clinic_slug, status } = req.body; 
     const clinic = await db.query('SELECT id FROM clinics WHERE slug = $1', [clinic_slug]);
@@ -238,7 +244,6 @@ app.post('/api/queues/toggle', async (req, res) => {
     io.emit('queue_status_changed', { clinic_slug, status }); 
     res.json({ message: `تم` });
 });
-app.get('/api/export/:clinic_slug', async (req, res) => { res.send('تصدير'); });
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
