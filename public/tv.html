@@ -3,48 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>شاشة الانتظار</title>
+    <title>شاشة الانتظار - ClinicFlow</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f2f5;
-            display: flex; flex-direction: column; justify-content: center;
-            align-items: center; height: 100vh; margin: 0; text-align: center;
+        :root {
+            --bg-color: #f4f7f6; --card-bg: #ffffff; --text-main: #2d3748; 
+            --accent: #40757d; --border: #e2e8f0;
         }
-        .ticket-box {
-            background-color: white; padding: 40px 100px;
-            border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            margin-bottom: 40px;
+        [data-theme="dark"] {
+            --bg-color: #0f172a; --card-bg: #1e293b; --text-main: #f8fafc; 
+            --accent: #38bdf8; --border: #334155;
         }
-        h1 { color: #333; font-size: 3rem; margin-bottom: 10px; }
-        .number { font-size: 8rem; color: #007bff; font-weight: bold; margin: 0; }
-        .qr-section p { font-size: 1.5rem; color: #555; font-weight: bold; margin-bottom: 15px; }
-        .qr-section img { 
-            width: 250px; height: 250px; border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2); 
-        }
+        body { font-family: 'Tajawal', sans-serif; background: var(--bg-color); color: var(--text-main); margin: 0; height: 100vh; display: flex; transition: 0.3s; }
+        
+        .left-panel { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 50px; }
+        .number-box { background: var(--card-bg); padding: 60px 120px; border-radius: 40px; box-shadow: 0 20px 50px rgba(0,0,0,0.05); border: 1px solid var(--border); text-align: center; }
+        .number-box h1 { margin: 0; font-size: 2.5rem; color: var(--text-main); opacity: 0.8; }
+        .number { font-size: 12rem; font-weight: 900; color: var(--accent); margin: 20px 0 0; line-height: 1; }
+        
+        .right-panel { width: 350px; background: var(--card-bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 40px; text-align: center; }
+        .right-panel h2 { font-size: 1.8rem; margin-bottom: 30px; }
+        .qr-wrapper { background: white; padding: 15px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .qr-wrapper img { width: 220px; height: 220px; border-radius: 10px; display: block; }
+        
+        .theme-btn { position: absolute; top: 20px; left: 20px; background: var(--card-bg); border: 1px solid var(--border); color: var(--text-main); padding: 10px; border-radius: 50%; cursor: pointer; }
     </style>
 </head>
 <body>
-
-    <div class="ticket-box">
-        <h1>الرقم الحالي</h1>
-        <p class="number" id="currentTicket">--</p>
+    <button class="theme-btn" onclick="toggleTheme()">🌓</button>
+    
+    <div class="left-panel">
+        <div class="number-box">
+            <h1>الرقم الحالي</h1>
+            <div class="number" id="currentTicket">--</div>
+        </div>
     </div>
 
-    <div class="qr-section">
-        <p>امسح الكود بهاتفك لسحب تذكرة</p>
-        <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=https://clinic-server-i00s.onrender.com/patient.html" alt="QR Code">
+    <div class="right-panel">
+        <h2>اسحب تذكرتك الآن</h2>
+        <div class="qr-wrapper">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=https://clinic-server-i00s.onrender.com/patient.html" alt="QR Code">
+        </div>
+        <p style="color: var(--text-main); opacity: 0.7; font-size: 1.1rem;">قم بتوجيه كاميرا هاتفك نحو الكود لتأخذ دورك فوراً.</p>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        // الاتصال بالسيرفر السحابي
-        const socket = io('https://clinic-server-i00s.onrender.com');
+        const toggleTheme = () => {
+            const isDark = document.body.getAttribute('data-theme') === 'dark';
+            document.body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+            localStorage.setItem('theme', isDark ? 'light' : 'dark');
+        };
+        if(localStorage.getItem('theme') === 'dark') document.body.setAttribute('data-theme', 'dark');
 
-        // استقبال إشارة "مناداة مريض" من الطبيب وتحديث الرقم فوراً
+        const socket = io('https://clinic-server-i00s.onrender.com');
         socket.on('call_patient', (data) => {
             document.getElementById('currentTicket').innerText = data.current_number;
+            
+            // تأثير وميض عند تغير الرقم
+            const numBox = document.querySelector('.number-box');
+            numBox.style.transform = 'scale(1.05)';
+            numBox.style.transition = '0.2s';
+            setTimeout(() => { numBox.style.transform = 'scale(1)'; }, 200);
         });
     </script>
 </body>
