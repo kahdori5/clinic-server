@@ -20,7 +20,7 @@
         .stat-card span { color: var(--muted); font-size: 0.95rem; display:block; margin-bottom: 10px; }
         .stat-card strong { font-size: 2.5rem; color: var(--text); }
         .card-panel { background: var(--card); border-radius: 20px; border: 1px solid var(--border); padding: 25px; }
-        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
         .btn { background: var(--accent); color: #0f172a; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: inherit; transition: 0.2s; }
         .btn:hover { filter: brightness(1.1); }
         table { width: 100%; border-collapse: collapse; }
@@ -48,21 +48,27 @@
 
     <div class="main-content">
         <div class="header">
-            <h1 id="pageTitle">إدارة العيادات</h1>
-            <div style="background: var(--card); padding: 10px 20px; border-radius: 30px; border: 1px solid var(--border);">مرحباً، المدير العام 👑</div>
+            <h1 id="pageTitle">إدارة العيادات والاشتراكات</h1>
+            <div style="background: var(--card); padding: 10px 20px; border-radius: 30px; border: 1px solid var(--border);">المدير العام 👑</div>
         </div>
 
         <div id="clinics" class="tab-content active">
             <div class="card-panel">
                 <div class="panel-header">
-                    <h2>العيادات المشتركة</h2>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <h2 style="margin: 0;">العيادات المشتركة</h2>
+                        <!-- الزر السحري الجديد لإصلاح قاعدة البيانات -->
+                        <button class="btn" style="background: var(--danger); color: white; padding: 5px 15px; font-size: 0.85rem;" onclick="fixDatabase()">🛠️ إصلاح ومزامنة قاعدة البيانات</button>
+                    </div>
                     <button class="btn" onclick="document.getElementById('addModal').style.display='flex'">+ إضافة عيادة رئيسية جديدة</button>
                 </div>
                 <table>
                     <thead>
                         <tr><th>العيادة</th><th>الرابط المخصص</th><th>الأطباء</th><th>الاشتراك</th><th>إجراءات الإدارة</th></tr>
                     </thead>
-                    <tbody id="clinicsTable"></tbody>
+                    <tbody id="clinicsTable">
+                        <tr><td colspan="5" style="text-align: center; color: var(--muted);">جاري تحميل البيانات...</td></tr>
+                    </tbody>
                 </table>
             </div>
         </div>
@@ -70,7 +76,7 @@
         <div id="stats" class="tab-content">
             <div class="stats-grid">
                 <div class="stat-card"><span>إجمالي العيادات النشطة</span><strong id="totalClinics">0</strong></div>
-                <div class="stat-card"><span>النظام</span><strong style="color: var(--success);">يعمل بكفاءة</strong></div>
+                <div class="stat-card"><span>النظام</span><strong id="systemStatus" style="color: var(--success);">يعمل بكفاءة</strong></div>
             </div>
         </div>
 
@@ -153,20 +159,47 @@
             document.getElementById('pageTitle').innerText = el.innerText.substring(2);
         }
 
+        // الأداة السحرية لإصلاح قاعدة البيانات
+        async function fixDatabase() {
+            try {
+                const res = await fetch('https://clinic-server-i00s.onrender.com/api/admin/fix-db');
+                const data = await res.json();
+                if(res.ok) {
+                    alert(data.message);
+                    location.reload(); // إعادة تحميل الصفحة لرؤية البيانات
+                } else {
+                    alert('تعذر الإصلاح: ' + data.error);
+                }
+            } catch (e) {
+                alert('فشل الاتصال بالسيرفر! ' + e.message);
+            }
+        }
+
         async function fetchClinics() {
             try {
                 const res = await fetch('https://clinic-server-i00s.onrender.com/api/admin/clinics');
-                const clinics = await res.json();
-                
+                const data = await res.json();
                 const table = document.getElementById('clinicsTable');
-                table.innerHTML = '';
                 
-                // حماية من الأخطاء: إذا لم تكن البيانات مصفوفة، أوقف العملية
-                if(!Array.isArray(clinics)) return;
+                // حماية: إذا رجع خطأ بدلاً من مصفوفة العيادات
+                if (!res.ok || !Array.isArray(data)) {
+                    document.getElementById('systemStatus').innerText = 'يوجد خطأ في قاعدة البيانات';
+                    document.getElementById('systemStatus').style.color = 'var(--danger)';
+                    table.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--danger); font-weight: bold; padding: 30px;">
+                        حدث خطأ في قراءة قاعدة البيانات: <br><br> ${data.error || 'يرجى الضغط على زر "إصلاح ومزامنة قاعدة البيانات" بالأعلى 🛠️'}
+                    </td></tr>`;
+                    return;
+                }
+                
+                table.innerHTML = '';
+                document.getElementById('totalClinics').innerText = data.length;
 
-                document.getElementById('totalClinics').innerText = clinics.length;
+                if (data.length === 0) {
+                    table.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--muted);">لا توجد عيادات مسجلة حتى الآن.</td></tr>`;
+                    return;
+                }
 
-                clinics.forEach(c => {
+                data.forEach(c => {
                     const daysLeft = Math.ceil((new Date(c.subscription_end) - new Date()) / (1000 * 60 * 60 * 24));
                     const subHtml = daysLeft > 0 ? `<span style="color:var(--success); font-weight:bold;">متبقي ${daysLeft} يوم</span>` : `<span style="color:var(--danger); font-weight:bold;">منتهي</span>`;
                     
@@ -177,7 +210,7 @@
                             <td>${c.doctors_count} أطباء</td>
                             <td>${subHtml}</td>
                             <td>
-                                <button class="btn" style="font-size: 0.8rem; padding: 6px 12px; margin-left: 5px;" onclick="openDocModal(${c.id})">➕ إضافة طبيب</button>
+                                <button class="btn" style="font-size: 0.8rem; padding: 6px 12px; margin-left: 5px;" onclick="openDocModal(${c.id})">➕ طبيب</button>
                                 <button class="btn" style="font-size: 0.8rem; padding: 6px 12px; margin-left: 5px; background: var(--warning);" onclick="openRenewModal(${c.id})">💳 تجديد</button>
                                 <button class="btn" style="font-size: 0.8rem; padding: 6px 12px; margin-left: 5px; background: var(--card); color: var(--accent); border: 1px solid var(--accent);" onclick="showLinks(${c.id}, '${c.slug}')">🔗 الروابط</button>
                                 <button class="btn" style="font-size: 0.8rem; padding: 6px 12px; background: var(--danger);" onclick="deleteClinic(${c.id})">🗑️ حذف</button>
@@ -185,7 +218,9 @@
                         </tr>
                     `;
                 });
-            } catch (e) { console.error(e); }
+            } catch (e) { 
+                document.getElementById('clinicsTable').innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--danger);">خطأ في الاتصال بالسيرفر: ${e.message}</td></tr>`;
+            }
         }
 
         async function addClinic() {
@@ -196,13 +231,13 @@
                 const res = await fetch('https://clinic-server-i00s.onrender.com/api/clinics', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, slug })
                 });
+                const data = await res.json();
                 if(res.ok) {
                     document.getElementById('addModal').style.display='none';
                     document.getElementById('clinicName').value = ''; document.getElementById('clinicSlug').value = '';
                     fetchClinics();
                 } else {
-                    const error = await res.json();
-                    alert(error.error || 'خطأ في الإضافة');
+                    alert(data.error || 'خطأ في الإضافة');
                 }
             } catch (e) { alert('خطأ في الاتصال'); }
         }
@@ -218,12 +253,13 @@
                 const res = await fetch('https://clinic-server-i00s.onrender.com/api/admin/add-doctor', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ parent_id, name, slug })
                 });
+                const data = await res.json();
                 if(res.ok) {
                     document.getElementById('addDocModal').style.display='none';
                     document.getElementById('dName').value = ''; document.getElementById('dSlug').value = '';
                     fetchClinics();
-                } else alert('حدث خطأ، قد يكون الرابط مستخدماً.');
-            } catch (e) {}
+                } else alert(data.error || 'حدث خطأ.');
+            } catch (e) { alert('خطأ اتصال'); }
         }
 
         function openRenewModal(id) { document.getElementById('rId').value = id; document.getElementById('renewModal').style.display='flex'; }
