@@ -8,28 +8,19 @@
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f0f2f5;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            text-align: center;
+            display: flex; flex-direction: column; justify-content: center;
+            align-items: center; height: 100vh; margin: 0; text-align: center;
         }
         .ticket-box {
-            background-color: white;
-            padding: 40px 100px;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            background-color: white; padding: 40px 100px;
+            border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             margin-bottom: 40px;
         }
         h1 { color: #333; font-size: 3rem; margin-bottom: 10px; }
         .number { font-size: 8rem; color: #007bff; font-weight: bold; margin: 0; }
         .qr-section p { font-size: 1.5rem; color: #555; font-weight: bold; margin-bottom: 15px; }
         .qr-section img { 
-            width: 250px; 
-            height: 250px; 
-            border-radius: 15px;
+            width: 250px; height: 250px; border-radius: 15px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.2); 
         }
     </style>
@@ -43,28 +34,18 @@
 
     <div class="qr-section">
         <p>امسح الكود بهاتفك لسحب تذكرة</p>
-        <!-- كود QR مبرمج مسبقاً على الرابط السحابي الجديد -->
         <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=https://clinic-server-i00s.onrender.com/patient.html" alt="QR Code">
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        // الكود البرمجي لجلب الرقم الحالي (يدعم Socket.io أو Fetch العادي)
-        try {
-            const socket = io();
-            socket.on('updateTicket', (data) => {
-                document.getElementById('currentTicket').innerText = data.currentTicket || data;
-            });
-        } catch(e) {
-            // بديل في حال عدم استخدام Socket.io
-            setInterval(async () => {
-                try {
-                    const res = await fetch('/current'); // مسار جلب التذكرة
-                    const data = await res.json();
-                    if(data.ticket) document.getElementById('currentTicket').innerText = data.ticket;
-                } catch(err) {}
-            }, 3000);
-        }
+        // الاتصال بالسيرفر السحابي
+        const socket = io('https://clinic-server-i00s.onrender.com');
+
+        // استقبال إشارة "مناداة مريض" من الطبيب وتحديث الرقم فوراً
+        socket.on('call_patient', (data) => {
+            document.getElementById('currentTicket').innerText = data.current_number;
+        });
     </script>
 </body>
 </html>
