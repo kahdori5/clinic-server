@@ -2,43 +2,147 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ClinicFlow - TV Display</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@700;900&display=swap" rel="stylesheet">
-    <style>:root{--bg:#f4f7f6;--card:#ffffff;--text:#2d3748;--accent:#40757d;--border:#e2e8f0;--muted:#718096;}body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);margin:0;height:100vh;display:flex;overflow:hidden;}.controls-bar{position:absolute;top:20px;left:20px;display:flex;gap:15px;z-index:10;}.btn-sound{background:#10b981;color:white;border:none;padding:10px 15px;border-radius:12px;font-family:inherit;font-weight:bold;cursor:pointer;}.left-panel{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;}.number-box{background:var(--card);padding:50px 100px;border-radius:40px;border:1px solid var(--border);text-align:center;}.number-box h1{margin:0;font-size:3rem;opacity:0.8;}.number{font-size:15rem;font-weight:900;color:var(--accent);margin:0;line-height:1;}.right-panel{width:350px;background:var(--card);border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;align-items:center;padding:40px;text-align:center;}.qr-wrapper img{width:250px;height:250px;border-radius:10px;}.overlay-paused{display:none;position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,0.95);color:white;justify-content:center;align-items:center;font-size:4rem;z-index:1000;text-align:center;}</style>
+    <style>
+        :root { --bg: #f4f7f6; --card: #ffffff; --text: #2d3748; --accent: #40757d; --border: #e2e8f0; --muted: #718096; }
+        [data-theme="dark"] { --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --accent: #38bdf8; --border: #334155; --muted: #94a3b8; }
+        body { font-family: 'Tajawal', sans-serif; background: var(--bg); color: var(--text); margin: 0; height: 100vh; display: flex; transition: 0.3s; overflow: hidden; }
+        .controls-bar { position: absolute; top: 20px; left: 20px; display: flex; gap: 15px; z-index: 10; }
+        select, .theme-btn, .btn-sound { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 10px 15px; border-radius: 12px; cursor: pointer; font-family: inherit; font-weight: bold; outline: none; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: 0.2s; }
+        .btn-sound { background: #10b981; color: white; border: none; }
+        .left-panel { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; }
+        .number-box { background: var(--card); padding: 50px 100px; border-radius: 40px; box-shadow: 0 20px 50px rgba(0,0,0,0.05); border: 1px solid var(--border); text-align: center; transition: 0.3s; }
+        .number-box h1 { margin: 0; font-size: 3rem; opacity: 0.8; color: var(--text); }
+        .number { font-size: 15rem; font-weight: 900; color: var(--accent); margin: 0; line-height: 1; text-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .right-panel { width: 350px; background: var(--card); border-right: 1px solid var(--border); display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 40px; text-align: center; z-index: 5; }
+        .right-panel h2 { font-size: 1.8rem; margin-bottom: 30px; color: var(--text); }
+        .qr-wrapper { background: white; padding: 15px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .qr-wrapper img { width: 250px; height: 250px; border-radius: 10px; display: block; }
+        .right-panel p { color: var(--muted); font-size: 1.1rem; line-height: 1.5; }
+        .overlay-paused { display: none; position: absolute; top:0; left:0; right:0; bottom:0; background: rgba(15, 23, 42, 0.95); color: white; justify-content: center; align-items: center; font-size: 4rem; z-index: 1000; text-align: center; padding: 40px; backdrop-filter: blur(10px); }
+    </style>
 </head>
 <body>
-    <div class="controls-bar"><button class="btn-sound" onclick="enableSound(this)">🔔 تفعيل الجرس</button></div>
-    <div class="left-panel"><div class="number-box"><h1>الرقم الحالي</h1><div class="number" id="currentTicket">--</div></div></div>
-    <div class="right-panel"><h2>اسحب تذكرتك الآن</h2><div class="qr-wrapper"><img id="qrImage" src=""></div><p>قم بتوجيه كاميرا هاتفك</p></div>
-    <div class="overlay-paused" id="pausedMsg">الاستقبال مغلق مؤقتاً</div>
+
+    <div class="controls-bar">
+        <button class="btn-sound" id="soundBtn" onclick="enableSound(this)" data-i18n="enableVoice">🔔 تفعيل جرس التنبيه</button>
+        <select id="langSelect" onchange="changeLang(this.value)">
+            <option value="ar">العربية</option>
+            <option value="fr">Français</option>
+            <option value="en">English</option>
+        </select>
+        <button class="theme-btn" onclick="toggleTheme()">🌓</button>
+    </div>
+
+    <div class="left-panel">
+        <div class="number-box">
+            <h1 data-i18n="currentNum">الرقم الحالي</h1>
+            <div class="number" id="currentTicket">--</div>
+        </div>
+    </div>
+    
+    <div class="right-panel">
+        <h2 data-i18n="scanQr">اسحب تذكرتك الآن</h2>
+        <div class="qr-wrapper">
+            <img id="qrImage" src="" alt="QR Code">
+        </div>
+        <p data-i18n="scanDesc">قم بتوجيه كاميرا هاتفك نحو الكود لتأخذ دورك فوراً.</p>
+    </div>
+
+    <div class="overlay-paused" id="pausedMsg" data-i18n="pausedMsg">الاستقبال مغلق مؤقتاً، يرجى الانتظار</div>
+
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const CLINIC_SLUG = new URLSearchParams(window.location.search).get('clinic') || 'default-clinic';
+        // كود الـ QR الخاص بهذه العيادة
         document.getElementById('qrImage').src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=https://clinic-server-i00s.onrender.com/patient.html?clinic=${CLINIC_SLUG}`;
-        
-        let soundEnabled = false; let audioCtx;
+
+        const dict = {
+            ar: { enableVoice: "🔔 تفعيل جرس التنبيه", voiceActive: "✔️ الجرس مفعل", currentNum: "الرقم الحالي", scanQr: "اسحب تذكرتك الآن", scanDesc: "قم بتوجيه كاميرا هاتفك نحو الكود لتأخذ دورك فوراً.", pausedMsg: "الاستقبال مغلق مؤقتاً، يرجى الانتظار..." },
+            fr: { enableVoice: "🔔 Activer la Sonnette", voiceActive: "✔️ Sonnette Activée", currentNum: "Numéro Actuel", scanQr: "Prenez votre ticket", scanDesc: "Scannez ce code QR avec votre téléphone pour prendre votre tour.", pausedMsg: "Réception fermée temporairement, veuillez patienter..." },
+            en: { enableVoice: "🔔 Enable Chime", voiceActive: "✔️ Chime Active", currentNum: "Current Number", scanQr: "Take your ticket", scanDesc: "Scan this QR code with your phone to join the queue.", pausedMsg: "Reception temporarily closed, please wait..." }
+        };
+
+        let currentLang = 'ar';
+        let soundEnabled = false;
+        let audioCtx;
+
+        // توليد رنة الجرس برمجياً
         function playChime() {
-            if(!soundEnabled) return;
-            if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            if(audioCtx.state === 'suspended') audioCtx.resume();
-            const osc1 = audioCtx.createOscillator(); const osc2 = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-            osc1.frequency.value = 880; osc2.frequency.value = 1108.73;
-            gain.gain.setValueAtTime(0, audioCtx.currentTime); gain.gain.linearRampToValueAtTime(0.5, audioCtx.currentTime + 0.05); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.5);
+            if (!soundEnabled) return;
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            const osc1 = audioCtx.createOscillator();
+            const osc2 = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc1.frequency.value = 880; 
+            osc2.frequency.value = 1108.73;
+
+            gain.gain.setValueAtTime(0, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.5, audioCtx.currentTime + 0.05);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.5);
+
             osc1.connect(gain); osc2.connect(gain); gain.connect(audioCtx.destination);
-            osc1.start(); osc2.start(); osc1.stop(audioCtx.currentTime + 1.5); osc2.stop(audioCtx.currentTime + 1.5);
+            osc1.start(); osc2.start(); 
+            osc1.stop(audioCtx.currentTime + 1.5); osc2.stop(audioCtx.currentTime + 1.5);
         }
-        function enableSound(btn) { soundEnabled = true; btn.innerText = '✔️ الجرس مفعل'; btn.style.background = 'gray'; playChime(); }
+
+        function enableSound(btn) {
+            soundEnabled = true;
+            btn.style.background = 'var(--card)';
+            btn.style.color = 'var(--text)';
+            btn.innerText = dict[currentLang].voiceActive;
+            playChime();
+        }
+
+        function changeLang(lang) {
+            currentLang = lang; localStorage.setItem('tv_lang', lang);
+            document.documentElement.lang = lang; document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+            document.getElementById('langSelect').value = lang;
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (key === 'enableVoice' && soundEnabled) el.innerText = dict[lang].voiceActive;
+                else el.innerText = dict[lang][key];
+            });
+        }
+
+        const toggleTheme = () => {
+            const isDark = document.body.getAttribute('data-theme') !== 'dark';
+            document.body.setAttribute('data-theme', isDark ? 'dark' : 'light');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        };
 
         window.onload = async () => {
-            const res = await fetch(`https://clinic-server-i00s.onrender.com/api/queue-status/${CLINIC_SLUG}`);
-            const data = await res.json();
-            document.getElementById('currentTicket').innerText = data.current_number || '--';
-            if(data.status === 'paused') document.getElementById('pausedMsg').style.display = 'flex';
+            changeLang(localStorage.getItem('tv_lang') || 'ar');
+            if(localStorage.getItem('theme') === 'dark') document.body.setAttribute('data-theme', 'dark');
+
+            try {
+                const res = await fetch(`https://clinic-server-i00s.onrender.com/api/queue-status/${CLINIC_SLUG}`);
+                const data = await res.json();
+                document.getElementById('currentTicket').innerText = data.current_number || '--';
+                if(data.status === 'paused') document.getElementById('pausedMsg').style.display = 'flex';
+            } catch(e) {}
         };
 
         const socket = io('https://clinic-server-i00s.onrender.com');
-        socket.on('call_patient', (data) => { if(data.clinic_slug === CLINIC_SLUG) { document.getElementById('currentTicket').innerText = data.current_number; playChime(); } });
-        socket.on('queue_status_changed', (data) => { document.getElementById('pausedMsg').style.display = data.status === 'paused' ? 'flex' : 'none'; });
+        
+        socket.on('call_patient', (data) => {
+            if(data.clinic_slug === CLINIC_SLUG) {
+                const numBox = document.querySelector('.number-box');
+                document.getElementById('currentTicket').innerText = data.current_number;
+                numBox.style.transform = 'scale(1.08)';
+                setTimeout(() => { numBox.style.transform = 'scale(1)'; }, 300);
+                playChime();
+            }
+        });
+
+        socket.on('queue_status_changed', (data) => {
+            document.getElementById('pausedMsg').style.display = data.status === 'paused' ? 'flex' : 'none';
+        });
     </script>
 </body>
 </html>
