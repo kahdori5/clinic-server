@@ -20,7 +20,7 @@ app.post('/api/clinics', async (req, res) => {
     try {
         const { name, slug } = req.body; 
         const result = await db.query('INSERT INTO clinics (name, slug) VALUES ($1, $2) RETURNING *', [name, slug]);
-        res.status(201).json({ message: 'تم التسجيل', clinic: result.rows[0] });
+        res.status(201).json({ message: 'تم التسجيل بنجاح', clinic: result.rows[0] });
     } catch (err) { res.status(500).json({ error: 'خطأ' }); }
 });
 
@@ -88,7 +88,7 @@ app.post('/api/tickets/status', async (req, res) => {
 // 6. QR Code
 app.get('/api/qr/:clinic_slug', async (req, res) => {
     try {
-        res.status(200).json({ url: `http://localhost:3000/patient.html` });
+        res.status(200).json({ url: `https://clinic-server-i00s.onrender.com/patient.html` });
     } catch (err) { res.status(500).json({ error: 'خطأ' }); }
 });
 
@@ -106,7 +106,7 @@ app.get('/api/queue-status/:clinic_slug', async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'خطأ' }); }
 });
 
-// 8. الإحصائيات
+// 8. الإحصائيات (للوحة الطبيب)
 app.get('/api/stats/:clinic_slug', async (req, res) => {
     try {
         const { clinic_slug } = req.params;
@@ -118,7 +118,16 @@ app.get('/api/stats/:clinic_slug', async (req, res) => {
         const todayStats = await db.query(`SELECT COUNT(t.id) as total_today, SUM(CASE WHEN t.status = 'waiting' THEN 1 ELSE 0 END) as waiting_today FROM tickets t JOIN queues q ON t.queue_id = q.id WHERE q.clinic_id = $1 AND q.queue_date = CURRENT_DATE`, [clinicId]);
         const weekStats = await db.query(`SELECT COUNT(t.id) as total_week FROM tickets t JOIN queues q ON t.queue_id = q.id WHERE q.clinic_id = $1 AND q.queue_date >= CURRENT_DATE - INTERVAL '7 days'`, [clinicId]);
         
-        res.json({ today: todayStats.rows[0].total_today || 0, waiting: todayStats.rows[0].waiting_today || 0, week: weekStats.rows[0].total_week || 0, breakdown: [] });
+        const dailyBreakdown = await db.query(`
+            SELECT TO_CHAR(q.queue_date, 'YYYY-MM-DD') as date, COUNT(t.id) as count 
+            FROM queues q 
+            LEFT JOIN tickets t ON q.id = t.queue_id 
+            WHERE q.clinic_id = $1 AND q.queue_date >= CURRENT_DATE - INTERVAL '7 days'
+            GROUP BY q.queue_date 
+            ORDER BY q.queue_date DESC
+        `, [clinicId]);
+        
+        res.json({ today: todayStats.rows[0].total_today || 0, waiting: todayStats.rows[0].waiting_today || 0, week: weekStats.rows[0].total_week || 0, breakdown: dailyBreakdown.rows });
     } catch (err) { res.status(500).json({ error: 'خطأ' }); }
 });
 
@@ -157,5 +166,18 @@ app.get('/api/export/:clinic_slug', async (req, res) => {
     } catch (err) { res.status(500).send('خطأ في التصدير'); }
 });
 
+// 11. مسار لوحة تحكم الإدارة (جلب كل العيادات)
+app.get('/api/admin/clinics', async (req, res) => {
+    try {
+        const clinics = await db.query(`
+            SELECT c.id, c.name, c.slug, c.created_at,
+                   COALESCE((SELECT COUNT(*) FROM tickets t JOIN queues q ON t.queue_id = q.id WHERE q.clinic_id = c.id AND q.queue_date = CURRENT_DATE), 0) as patients_today
+            FROM clinics c
+            ORDER BY c.id DESC
+        `);
+        res.json(clinics.rows);
+    } catch (err) { res.status(500).json({ error: 'خطأ في جلب العيادات' }); }
+});
+
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`السيرفر يعمل على ${PORT}`));
+server.listen(PORT, () => console.log(`السيرفر يعمل على المنفذ ${PORT}`));
