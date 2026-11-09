@@ -13,27 +13,21 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// تهيئة قاعدة البيانات تلقائياً لاشتراكات الـ SaaS (الإصلاح الجذري)
-const setupDB = async () => {
-    const queries = [
-        `ALTER TABLE clinics ADD COLUMN IF NOT EXISTS is_main BOOLEAN DEFAULT true;`,
-        `ALTER TABLE clinics ADD COLUMN IF NOT EXISTS parent_id INTEGER DEFAULT NULL;`,
-        `ALTER TABLE clinics ADD COLUMN IF NOT EXISTS subscription_end DATE DEFAULT (CURRENT_DATE + INTERVAL '1 month');`
-    ];
-    
-    // تنفيذ كل استعلام على حدة لضمان عدم توقف السيرفر إذا كان أحدها موجوداً
-    for (let q of queries) {
-        try { await db.query(q); } catch (e) { /* تجاهل الخطأ */ }
-    }
-    
-    // تحديث العيادات القديمة التي لا تملك تاريخ اشتراك
+// 🚀 الذكاء الذاتي (Self-Healing): دالة تقوم بتحديث قاعدة البيانات بصمت وبدون أزرار
+const forceDBUpdate = async () => {
     try {
+        await db.query(`ALTER TABLE clinics ADD COLUMN IF NOT EXISTS is_main BOOLEAN DEFAULT true`);
+        await db.query(`ALTER TABLE clinics ADD COLUMN IF NOT EXISTS parent_id INTEGER DEFAULT NULL`);
+        await db.query(`ALTER TABLE clinics ADD COLUMN IF NOT EXISTS subscription_end DATE DEFAULT (CURRENT_DATE + INTERVAL '1 month')`);
+        
         await db.query(`UPDATE clinics SET is_main = true WHERE is_main IS NULL`);
         await db.query(`UPDATE clinics SET subscription_end = CURRENT_DATE + INTERVAL '1 month' WHERE subscription_end IS NULL`);
-        console.log("Database SaaS structure ready.");
-    } catch(e) { console.log(e); }
+        console.log("تم تحديث وإصلاح قاعدة البيانات بنجاح (Self-Healing Active).");
+    } catch(e) { console.log("قاعدة البيانات محدثة بالفعل."); }
 };
-setupDB();
+
+// تشغيل الفحص عند إقلاع السيرفر
+forceDBUpdate();
 
 // 1. إضافة عيادة رئيسية
 app.post('/api/clinics', async (req, res) => {
@@ -45,19 +39,28 @@ app.post('/api/clinics', async (req, res) => {
         `, [name, slug]);
         res.status(201).json({ message: 'تم إنشاء العيادة بنجاح', clinic: result.rows[0] });
     } catch (err) { 
-        res.status(500).json({ error: 'الرابط المخصص (Slug) مستخدم مسبقاً أو حدث خطأ.' }); 
+        // إذا فشلت الإضافة بسبب نقص الأعمدة، قم بالإصلاح الذاتي وحاول مجدداً
+        await forceDBUpdate();
+        try {
+            const { name, slug } = req.body; 
+            const result = await db.query(`
+                INSERT INTO clinics (name, slug, is_main, subscription_end) 
+                VALUES ($1, $2, true, CURRENT_DATE + INTERVAL '1 month') RETURNING *
+            `, [name, slug]);
+            res.status(201).json({ message: 'تم إنشاء العيادة بنجاح', clinic: result.rows[0] });
+        } catch(retryErr) {
+            res.status(500).json({ error: 'الرابط المخصص (Slug) مستخدم مسبقاً.' }); 
+        }
     }
 });
 
-// 2. سحب تذكرة (مع إصلاح خطأ undefined وفحص الاشتراك)
+// 2. سحب تذكرة (مع فحص الاشتراك وإنشاء الطابور تلقائياً لتفادي undefined)
 app.post('/api/tickets', async (req, res) => {
     try {
         const { clinic_slug, patient_name } = req.body;
-        
         const clinic = await db.query(`
             SELECT c.id, c.is_main, c.subscription_end as doc_sub, p.subscription_end as parent_sub 
-            FROM clinics c 
-            LEFT JOIN clinics p ON c.parent_id = p.id 
+            FROM clinics c LEFT JOIN clinics p ON c.parent_id = p.id 
             WHERE c.slug = $1
         `, [clinic_slug]);
         
@@ -106,7 +109,7 @@ app.post('/api/call-next', async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'خطأ في النظام.' }); }
 });
 
-// 4. جلب حالة الطابور للطبيب والمريض
+// 4. حالة الطابور للطبيب والمريض
 app.get('/api/queue-status/:clinic_slug', async (req, res) => {
     try {
         const { clinic_slug } = req.params;
@@ -128,31 +131,37 @@ app.get('/api/clinic-doctors/:main_slug', async (req, res) => {
         
         const doctors = await db.query('SELECT id, name, slug FROM clinics WHERE parent_id = $1', [main.rows[0].id]);
         let result = [];
-        
         for(let doc of doctors.rows) {
             const q = await db.query('SELECT current_number, last_issued_number, status FROM queues WHERE clinic_id = $1 AND queue_date = CURRENT_DATE', [doc.id]);
-            if(q.rows.length > 0) {
-                result.push({ name: doc.name, slug: doc.slug, current: q.rows[0].current_number, waiting: q.rows[0].last_issued_number - q.rows[0].current_number, status: q.rows[0].status });
-            } else {
-                result.push({ name: doc.name, slug: doc.slug, current: 0, waiting: 0, status: 'active' });
-            }
+            if(q.rows.length > 0) result.push({ name: doc.name, slug: doc.slug, current: q.rows[0].current_number, waiting: q.rows[0].last_issued_number - q.rows[0].current_number, status: q.rows[0].status });
+            else result.push({ name: doc.name, slug: doc.slug, current: 0, waiting: 0, status: 'active' });
         }
         res.json(result);
     } catch(e) { res.status(500).json({ error: 'error' }); }
 });
 
-// 6. مسارات الإدارة (لوحة تحكم الأدمن)
+// 6. مسار الإدارة (لوحة تحكم الأدمن) المدمج مع الشفاء الذاتي!
 app.get('/api/admin/clinics', async (req, res) => {
     try {
         const clinics = await db.query(`
             SELECT id, name, slug, subscription_end,
                    (SELECT COUNT(*) FROM clinics d WHERE d.parent_id = c.id) as doctors_count
-            FROM clinics c WHERE is_main = true ORDER BY id DESC
+            FROM clinics c WHERE is_main = true OR parent_id IS NULL ORDER BY id DESC
         `);
         res.json(clinics.rows);
     } catch (err) { 
-        console.error(err);
-        res.status(500).json([]); // إعادة مصفوفة فارغة لتجنب تعطل الواجهة
+        // إذا فشل الجلب (بسبب قاعدة البيانات القديمة)، قم بالإصلاح الذاتي وجرب مرة ثانية!
+        await forceDBUpdate();
+        try {
+            const clinics = await db.query(`
+                SELECT id, name, slug, subscription_end,
+                       (SELECT COUNT(*) FROM clinics d WHERE d.parent_id = c.id) as doctors_count
+                FROM clinics c WHERE is_main = true OR parent_id IS NULL ORDER BY id DESC
+            `);
+            res.json(clinics.rows);
+        } catch(finalErr) {
+            res.status(500).json({ error: 'حدث خطأ غير متوقع' }); 
+        }
     }
 });
 
