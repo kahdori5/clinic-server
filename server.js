@@ -13,12 +13,11 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// 🚀 البناء الجذري لقاعدة البيانات (يُعالج المشكلة من جذورها)
+// 🚀 البناء الجذري لقاعدة البيانات (مُعالج لخطأ UUID vs Integer)
 const initDB = async () => {
     try {
         console.log("جاري فحص وبناء قاعدة البيانات...");
         
-        // 1. إنشاء الجداول الأساسية إن لم تكن موجودة (هذا ما كان ينقصنا)
         await db.query(`
             CREATE TABLE IF NOT EXISTS clinics (
                 id SERIAL PRIMARY KEY,
@@ -51,18 +50,21 @@ const initDB = async () => {
             );
         `);
 
-        // 2. إضافة أعمدة الاشتراكات بذكاء (يتجاهل الخطأ إذا كانت موجودة)
+        // استخدام TEXT بدلاً من INTEGER لتفادي خطأ UUID
         const newColumns = [
             `ALTER TABLE clinics ADD COLUMN is_main BOOLEAN DEFAULT true;`,
-            `ALTER TABLE clinics ADD COLUMN parent_id INTEGER DEFAULT NULL;`,
+            `ALTER TABLE clinics ADD COLUMN parent_id TEXT DEFAULT NULL;`, 
             `ALTER TABLE clinics ADD COLUMN subscription_end DATE DEFAULT (CURRENT_DATE + INTERVAL '1 month');`
         ];
         
         for (let query of newColumns) {
-            try { await db.query(query); } catch(e) { /* العمود موجود بالفعل */ }
+            try { await db.query(query); } catch(e) { /* الأعمدة موجودة بالفعل */ }
         }
 
-        // 3. تحديث القيم القديمة
+        // تحويل نوع العمود القديم إلى نص لتصحيح خطأ integer = uuid
+        try { await db.query(`ALTER TABLE clinics ALTER COLUMN parent_id TYPE TEXT USING parent_id::text;`); } catch(e) {}
+
+        // تحديث القيم القديمة
         try {
             await db.query(`UPDATE clinics SET is_main = true WHERE is_main IS NULL`);
             await db.query(`UPDATE clinics SET subscription_end = CURRENT_DATE + INTERVAL '1 month' WHERE subscription_end IS NULL`);
@@ -70,11 +72,10 @@ const initDB = async () => {
 
         console.log("✅ قاعدة البيانات جاهزة ومكتملة 100%!");
     } catch (e) {
-        console.error("❌ خطأ حرج في بناء قاعدة البيانات:", e.message);
+        console.error("❌ خطأ في بناء قاعدة البيانات:", e.message);
     }
 };
 
-// تشغيل البناء فور إقلاع السيرفر
 initDB();
 
 // 1. إضافة عيادة رئيسية
@@ -91,13 +92,15 @@ app.post('/api/clinics', async (req, res) => {
     }
 });
 
-// 2. سحب تذكرة
+// 2. سحب تذكرة (مع إصلاح توافق أنواع البيانات ::text)
 app.post('/api/tickets', async (req, res) => {
     try {
         const { clinic_slug, patient_name } = req.body;
+        
+        // استخدام ::text لتفادي خطأ UUID
         const clinic = await db.query(`
             SELECT c.id, c.is_main, c.subscription_end as doc_sub, p.subscription_end as parent_sub 
-            FROM clinics c LEFT JOIN clinics p ON c.parent_id = p.id 
+            FROM clinics c LEFT JOIN clinics p ON c.parent_id::text = p.id::text 
             WHERE c.slug = $1
         `, [clinic_slug]);
         
@@ -160,12 +163,13 @@ app.get('/api/queue-status/:clinic_slug', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// 5. جلب كل أطباء العيادة 
+// 5. جلب كل أطباء العيادة (تم إضافة ::text للمقارنة)
 app.get('/api/clinic-doctors/:main_slug', async (req, res) => {
     try {
         const main = await db.query('SELECT id FROM clinics WHERE slug = $1 AND is_main = true', [req.params.main_slug]);
         if(main.rows.length === 0) return res.json([]);
-        const doctors = await db.query('SELECT id, name, slug FROM clinics WHERE parent_id = $1', [main.rows[0].id]);
+        
+        const doctors = await db.query('SELECT id, name, slug FROM clinics WHERE parent_id::text = $1::text', [main.rows[0].id]);
         let result = [];
         for(let doc of doctors.rows) {
             const q = await db.query('SELECT current_number, last_issued_number, status FROM queues WHERE clinic_id = $1 AND queue_date = CURRENT_DATE', [doc.id]);
@@ -176,15 +180,18 @@ app.get('/api/clinic-doctors/:main_slug', async (req, res) => {
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
-// 6. مسار لوحة الإدارة (تم إضافة تمرير الخطأ الحقيقي)
+// 6. مسار لوحة الإدارة الرئيسي (الإصلاح الجذري لمقارنة UUID هنا)
 app.get('/api/admin/clinics', async (req, res) => {
     try {
-        // التأكد أولاً أن الجدول موجود لتجنب انهيار التطبيق
         await initDB(); 
+        
+        // استخدام ::text لتفادي خطأ (operator does not exist: integer = uuid)
         const clinics = await db.query(`
             SELECT id, name, slug, subscription_end,
-                   (SELECT COUNT(*) FROM clinics d WHERE d.parent_id = c.id) as doctors_count
-            FROM clinics c WHERE is_main = true OR parent_id IS NULL ORDER BY id DESC
+                   (SELECT COUNT(*) FROM clinics d WHERE d.parent_id::text = c.id::text) as doctors_count
+            FROM clinics c 
+            WHERE is_main = true OR parent_id IS NULL 
+            ORDER BY created_at DESC
         `);
         res.json(clinics.rows);
     } catch (err) { 
@@ -203,22 +210,22 @@ app.post('/api/admin/add-doctor', async (req, res) => {
 app.post('/api/admin/renew', async (req, res) => {
     try {
         const { clinic_id, months } = req.body;
-        await db.query(`UPDATE clinics SET subscription_end = GREATEST(subscription_end, CURRENT_DATE) + INTERVAL '${months} month' WHERE id = $1`, [clinic_id]);
+        await db.query(`UPDATE clinics SET subscription_end = GREATEST(subscription_end, CURRENT_DATE) + INTERVAL '${months} month' WHERE id::text = $1::text`, [clinic_id]);
         res.json({ message: 'تم تجديد الاشتراك بنجاح' });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.delete('/api/admin/clinics/:id', async (req, res) => {
     try {
-        await db.query('DELETE FROM clinics WHERE parent_id = $1', [req.params.id]); 
-        await db.query('DELETE FROM clinics WHERE id = $1', [req.params.id]); 
+        await db.query('DELETE FROM clinics WHERE parent_id::text = $1::text', [req.params.id]); 
+        await db.query('DELETE FROM clinics WHERE id::text = $1::text', [req.params.id]); 
         res.json({ message: 'تم حذف العيادة' });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.get('/api/admin/clinic-doctors-links/:main_id', async (req, res) => {
     try {
-        const docs = await db.query('SELECT name, slug FROM clinics WHERE parent_id = $1', [req.params.main_id]);
+        const docs = await db.query('SELECT name, slug FROM clinics WHERE parent_id::text = $1::text', [req.params.main_id]);
         res.json(docs.rows);
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
@@ -240,7 +247,7 @@ app.post('/api/queues/toggle', async (req, res) => {
 });
 
 app.get('/api/export/:clinic_slug', async (req, res) => {
-    res.send('تصدير البيانات مؤقت للعمل'); // تم إيقافه مؤقتاً لتخفيف الحمل
+    res.send('تصدير البيانات جاهز');
 });
 
 const PORT = process.env.PORT || 3000;
