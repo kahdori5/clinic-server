@@ -20,7 +20,7 @@ app.post('/api/clinics', async (req, res) => {
     try {
         const { name, slug } = req.body; 
         const result = await db.query('INSERT INTO clinics (name, slug) VALUES ($1, $2) RETURNING *', [name, slug]);
-        res.status(201).json({ message: '✅ تم تسجيل العيادة!', clinic: result.rows[0] });
+        res.status(201).json({ message: 'تم التسجيل', clinic: result.rows[0] });
     } catch (err) { res.status(500).json({ error: 'خطأ' }); }
 });
 
@@ -34,7 +34,7 @@ app.post('/api/queues', async (req, res) => {
              ON CONFLICT (clinic_id, queue_date) DO UPDATE SET status = 'active' RETURNING *`,
             [clinic.rows[0].id]
         );
-        res.status(201).json({ message: '✅ تم فتح الطابور!', queue: queue.rows[0] });
+        res.status(201).json({ message: 'تم فتح الطابور', queue: queue.rows[0] });
     } catch (err) { res.status(500).json({ error: 'خطأ' }); }
 });
 
@@ -43,14 +43,16 @@ app.post('/api/tickets', async (req, res) => {
     try {
         const { clinic_slug, patient_name } = req.body;
         const clinic = await db.query('SELECT id FROM clinics WHERE slug = $1', [clinic_slug]);
-        const queue = await db.query('SELECT id, last_issued_number FROM queues WHERE clinic_id = $1 AND queue_date = CURRENT_DATE', [clinic.rows[0].id]);
+        const queue = await db.query('SELECT id, last_issued_number, status FROM queues WHERE clinic_id = $1 AND queue_date = CURRENT_DATE', [clinic.rows[0].id]);
         
+        if(queue.rows[0].status === 'paused') return res.status(400).json({ message: 'الطابور متوقف مؤقتاً' });
+
         const newNumber = queue.rows[0].last_issued_number + 1;
         await db.query('UPDATE queues SET last_issued_number = $1 WHERE id = $2', [newNumber, queue.rows[0].id]);
         await db.query('INSERT INTO tickets (queue_id, patient_name, ticket_number) VALUES ($1, $2, $3)', [queue.rows[0].id, patient_name, newNumber]);
 
         io.emit('new_ticket', { clinic_slug, ticket_number: newNumber });
-        res.status(201).json({ message: `✅ رقمك هو: ${newNumber}` });
+        res.status(201).json({ message: `رقمك هو: ${newNumber}` });
     } catch (err) { res.status(500).json({ error: 'خطأ' }); }
 });
 
@@ -61,17 +63,17 @@ app.post('/api/call-next', async (req, res) => {
         const clinic = await db.query('SELECT id FROM clinics WHERE slug = $1', [clinic_slug]);
         const queue = await db.query('SELECT id, current_number, last_issued_number FROM queues WHERE clinic_id = $1 AND queue_date = CURRENT_DATE', [clinic.rows[0].id]);
         
-        if (queue.rows[0].current_number >= queue.rows[0].last_issued_number) return res.status(400).json({ message: '🛑 لا يوجد مرضى' });
+        if (queue.rows[0].current_number >= queue.rows[0].last_issued_number) return res.status(400).json({ message: 'لا يوجد مرضى' });
         
         const newCurrent = queue.rows[0].current_number + 1;
         await db.query('UPDATE queues SET current_number = $1 WHERE id = $2', [newCurrent, queue.rows[0].id]);
 
         io.emit('call_patient', { clinic_slug, current_number: newCurrent });
-        res.status(200).json({ message: `📢 تفضل بالدخول رقم: ${newCurrent}` });
+        res.status(200).json({ message: `الرقم: ${newCurrent}` });
     } catch (err) { res.status(500).json({ error: 'خطأ' }); }
 });
 
-// 5. إنهاء الكشف أو غياب المريض
+// 5. تحديث حالة المريض (تم الكشف / غائب)
 app.post('/api/tickets/status', async (req, res) => {
     try {
         const { clinic_slug, ticket_number, status } = req.body; 
@@ -79,40 +81,32 @@ app.post('/api/tickets/status', async (req, res) => {
         const queue = await db.query('SELECT id FROM queues WHERE clinic_id = $1 AND queue_date = CURRENT_DATE', [clinic.rows[0].id]);
         
         await db.query('UPDATE tickets SET status = $1 WHERE queue_id = $2 AND ticket_number = $3', [status, queue.rows[0].id, ticket_number]);
-        io.emit('ticket_status_changed', { clinic_slug, ticket_number, status });
-        res.status(200).json({ message: `✅ تم تحويل الحالة إلى: ${status}` });
-    } catch (err) { res.status(500).json({ error: 'خطأ داخلي' }); }
+        res.status(200).json({ message: `تم تحديث الحالة` });
+    } catch (err) { res.status(500).json({ error: 'خطأ' }); }
 });
 
-// 6. توليد كود QR
+// 6. QR Code
 app.get('/api/qr/:clinic_slug', async (req, res) => {
     try {
-        const { clinic_slug } = req.params;
-        const dateString = new Date().toISOString().split('T')[0];
-        const secretString = clinic_slug + dateString + process.env.DB_PASSWORD;
-        const secureToken = crypto.createHash('sha256').update(secretString).digest('hex');
-        const bookingUrl = `http://localhost:3000/book/${clinic_slug}?token=${secureToken}`;
-        const qrImageBase64 = await QRCode.toDataURL(bookingUrl);
-
-        res.status(200).json({ message: '✅ تم توليد كود QR بنجاح!', url: bookingUrl, qr_image: qrImageBase64 });
-    } catch (err) { res.status(500).json({ error: 'حدث خطأ أثناء توليد الـ QR' }); }
+        res.status(200).json({ url: `http://localhost:3000/patient.html` });
+    } catch (err) { res.status(500).json({ error: 'خطأ' }); }
 });
 
-// 7. حالة الطابور المباشرة
+// 7. حالة الطابور
 app.get('/api/queue-status/:clinic_slug', async (req, res) => {
     try {
         const { clinic_slug } = req.params;
         const clinic = await db.query('SELECT id FROM clinics WHERE slug = $1', [clinic_slug]);
         if(clinic.rows.length === 0) return res.json({ current_number: 0, last_issued_number: 0 });
         
-        const queue = await db.query('SELECT current_number, last_issued_number FROM queues WHERE clinic_id = $1 AND queue_date = CURRENT_DATE', [clinic.rows[0].id]);
+        const queue = await db.query('SELECT current_number, last_issued_number, status FROM queues WHERE clinic_id = $1 AND queue_date = CURRENT_DATE', [clinic.rows[0].id]);
         if(queue.rows.length === 0) return res.json({ current_number: 0, last_issued_number: 0 });
         
         res.json(queue.rows[0]);
     } catch (err) { res.status(500).json({ error: 'خطأ' }); }
 });
 
-// 8. جلب إحصائيات العيادة (للطبيب)
+// 8. الإحصائيات
 app.get('/api/stats/:clinic_slug', async (req, res) => {
     try {
         const { clinic_slug } = req.params;
@@ -121,39 +115,47 @@ app.get('/api/stats/:clinic_slug', async (req, res) => {
         
         const clinicId = clinic.rows[0].id;
 
-        const todayStats = await db.query(`
-            SELECT 
-                COUNT(t.id) as total_today,
-                SUM(CASE WHEN t.status = 'waiting' THEN 1 ELSE 0 END) as waiting_today
-            FROM tickets t 
-            JOIN queues q ON t.queue_id = q.id 
-            WHERE q.clinic_id = $1 AND q.queue_date = CURRENT_DATE
-        `, [clinicId]);
+        const todayStats = await db.query(`SELECT COUNT(t.id) as total_today, SUM(CASE WHEN t.status = 'waiting' THEN 1 ELSE 0 END) as waiting_today FROM tickets t JOIN queues q ON t.queue_id = q.id WHERE q.clinic_id = $1 AND q.queue_date = CURRENT_DATE`, [clinicId]);
+        const weekStats = await db.query(`SELECT COUNT(t.id) as total_week FROM tickets t JOIN queues q ON t.queue_id = q.id WHERE q.clinic_id = $1 AND q.queue_date >= CURRENT_DATE - INTERVAL '7 days'`, [clinicId]);
+        
+        res.json({ today: todayStats.rows[0].total_today || 0, waiting: todayStats.rows[0].waiting_today || 0, week: weekStats.rows[0].total_week || 0, breakdown: [] });
+    } catch (err) { res.status(500).json({ error: 'خطأ' }); }
+});
 
-        const weekStats = await db.query(`
-            SELECT COUNT(t.id) as total_week 
-            FROM tickets t 
-            JOIN queues q ON t.queue_id = q.id 
-            WHERE q.clinic_id = $1 AND q.queue_date >= CURRENT_DATE - INTERVAL '7 days'
-        `, [clinicId]);
+// 9. إيقاف/استئناف الطابور (لشاشة الاستقبال)
+app.post('/api/queues/toggle', async (req, res) => {
+    try {
+        const { clinic_slug, status } = req.body; 
+        const clinic = await db.query('SELECT id FROM clinics WHERE slug = $1', [clinic_slug]);
+        await db.query('UPDATE queues SET status = $1 WHERE clinic_id = $2 AND queue_date = CURRENT_DATE', [status, clinic.rows[0].id]);
+        io.emit('queue_status_changed', { status });
+        res.json({ message: `تم التغيير` });
+    } catch (err) { res.status(500).json({ error: 'خطأ' }); }
+});
 
-        const dailyBreakdown = await db.query(`
-            SELECT TO_CHAR(q.queue_date, 'YYYY-MM-DD') as date, COUNT(t.id) as count 
-            FROM queues q 
-            LEFT JOIN tickets t ON q.id = t.queue_id 
-            WHERE q.clinic_id = $1 AND q.queue_date >= CURRENT_DATE - INTERVAL '7 days'
-            GROUP BY q.queue_date 
-            ORDER BY q.queue_date DESC
-        `, [clinicId]);
+// 10. تصدير ملف Excel / CSV
+app.get('/api/export/:clinic_slug', async (req, res) => {
+    try {
+        const { clinic_slug } = req.params;
+        const clinic = await db.query('SELECT id FROM clinics WHERE slug = $1', [clinic_slug]);
+        const tickets = await db.query(`
+            SELECT t.ticket_number, t.patient_name, t.status, q.queue_date 
+            FROM tickets t JOIN queues q ON t.queue_id = q.id 
+            WHERE q.clinic_id = $1 ORDER BY q.queue_date DESC, t.ticket_number ASC
+        `, [clinic.rows[0].id]);
 
-        res.json({
-            today: todayStats.rows[0].total_today || 0,
-            waiting: todayStats.rows[0].waiting_today || 0,
-            week: weekStats.rows[0].total_week || 0,
-            breakdown: dailyBreakdown.rows
+        let csv = '\uFEFFالتاريخ,رقم التذكرة,اسم المريض,الحالة\n';
+        tickets.rows.forEach(row => {
+            const date = row.queue_date.toISOString().split('T')[0];
+            const status = row.status === 'waiting' ? 'انتظار' : row.status === 'completed' ? 'تم الكشف' : row.status === 'absent' ? 'غائب' : row.status;
+            csv += `${date},${row.ticket_number},${row.patient_name},${status}\n`;
         });
-    } catch (err) { res.status(500).json({ error: 'خطأ في جلب الإحصائيات' }); }
+
+        res.header('Content-Type', 'text/csv; charset=utf-8');
+        res.attachment('Clinic_Report.csv');
+        return res.send(csv);
+    } catch (err) { res.status(500).send('خطأ في التصدير'); }
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`🚀 السيرفر يعمل على المنفذ ${PORT}`));
+server.listen(PORT, () => console.log(`السيرفر يعمل على ${PORT}`));
