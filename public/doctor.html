@@ -2,50 +2,32 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ClinicFlow - Doctor</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet">
-    <style>
-        :root { --bg: #f4f7f6; --card: #ffffff; --text: #2d3748; --accent: #10b981; --border: #e2e8f0; --muted: #718096; }
-        [data-theme="dark"] { --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --accent: #10b981; --border: #334155; --muted: #94a3b8; }
-        body { font-family: 'Tajawal', sans-serif; background: var(--bg); color: var(--text); margin: 0; min-height: 100vh; display: flex; flex-direction: column; }
-        header { display: flex; justify-content: space-between; padding: 15px 30px; border-bottom: 1px solid var(--border); background: var(--card); }
-        .dashboard { flex: 1; display: flex; justify-content: center; gap: 30px; padding: 30px; }
-        .control-card { background: var(--card); padding: 40px; border-radius: 24px; text-align: center; border: 1px solid var(--border); width: 400px;}
-        .number-display { font-size: 7rem; font-weight: 800; margin: 10px 0; line-height: 1; }
-        .btn { padding: 15px; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: bold; cursor: pointer; color: white; width: 100%; margin-bottom: 10px; font-family: inherit;}
-        .btn-call { background: var(--accent); font-size: 1.3rem; }
-        .status-btns { display: flex; gap: 10px; margin-bottom: 20px; }
-        .btn-done { background: #3b82f6; flex: 1; }
-        .btn-absent { background: #ef4444; flex: 1; }
-        .btn-export { background: #2d3748; }
-    </style>
+    <style>:root{--bg:#f4f7f6;--card:#ffffff;--text:#2d3748;--accent:#10b981;--border:#e2e8f0;--muted:#718096;}[data-theme="dark"]{--bg:#0f172a;--card:#1e293b;--text:#f8fafc;--accent:#10b981;--border:#334155;--muted:#94a3b8;}body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);margin:0;min-height:100vh;display:flex;flex-direction:column;}header{display:flex;justify-content:space-between;padding:15px 30px;border-bottom:1px solid var(--border);background:var(--card);}.dashboard{flex:1;display:flex;justify-content:center;gap:30px;padding:30px;}.control-card{background:var(--card);padding:40px;border-radius:24px;text-align:center;border:1px solid var(--border);width:400px;}.number-display{font-size:7rem;font-weight:800;margin:10px 0;line-height:1;}.btn{padding:15px;border:none;border-radius:12px;font-size:1.1rem;font-weight:bold;cursor:pointer;color:white;width:100%;margin-bottom:10px;font-family:inherit;}.btn-call{background:var(--accent);font-size:1.3rem;}.status-btns{display:flex;gap:10px;margin-bottom:20px;}.btn-done{background:#3b82f6;flex:1;}.btn-absent{background:#ef4444;flex:1;}.btn-export{background:#2d3748;}</style>
 </head>
 <body>
-    <header>
-        <div style="font-weight: 800; font-size: 1.2rem;">👨‍⚕️ لوحة الطبيب</div>
-    </header>
+    <header><div style="font-weight: 800; font-size: 1.2rem;">👨‍⚕️ لوحة الطبيب <span id="clinicNameDisplay" style="color:var(--muted); font-size:1rem;"></span></div></header>
     <div class="dashboard">
         <div class="control-card">
             <h2 style="margin:0; opacity:0.7;">رقم المريض بالداخل</h2>
             <div class="number-display" id="currentNumber">--</div>
-            
             <div class="status-btns">
                 <button class="btn btn-done" onclick="setStatus('completed')">✔️ تم الكشف</button>
                 <button class="btn btn-absent" onclick="setStatus('absent')">❌ غائب</button>
             </div>
-            
             <button class="btn btn-call" onclick="callNextPatient()">📢 مناداة التالي</button>
             <hr style="border-color: var(--border); margin: 20px 0;">
             <button class="btn btn-export" onclick="exportData()">📊 تحميل الإحصائيات (Excel)</button>
         </div>
     </div>
-
     <script>
+        const CLINIC_SLUG = new URLSearchParams(window.location.search).get('clinic') || 'default-clinic';
+        document.getElementById('clinicNameDisplay').innerText = `(${CLINIC_SLUG})`;
         let currentNum = 0;
         
         async function fetchStatus() {
-            const res = await fetch('https://clinic-server-i00s.onrender.com/api/queue-status/default-clinic');
+            const res = await fetch(`https://clinic-server-i00s.onrender.com/api/queue-status/${CLINIC_SLUG}`);
             const data = await res.json();
             currentNum = data.current_number || 0;
             document.getElementById('currentNumber').innerText = currentNum === 0 ? '--' : currentNum;
@@ -55,27 +37,22 @@
         async function callNextPatient() {
             const res = await fetch('https://clinic-server-i00s.onrender.com/api/call-next', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ clinic_slug: 'default-clinic' })
+                body: JSON.stringify({ clinic_slug: CLINIC_SLUG })
             });
             const data = await res.json();
-            if (res.ok) {
-                currentNum = parseInt(data.message.match(/\d+/)[0]);
-                document.getElementById('currentNumber').innerText = currentNum;
-            } else { alert(data.message); }
+            if (res.ok) { currentNum = parseInt(data.message.match(/\d+/)[0]); document.getElementById('currentNumber').innerText = currentNum; } 
+            else alert(data.message);
         }
 
         async function setStatus(statusType) {
             if(currentNum === 0) return alert('لا يوجد مريض حالياً');
             await fetch('https://clinic-server-i00s.onrender.com/api/tickets/status', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ clinic_slug: 'default-clinic', ticket_number: currentNum, status: statusType })
+                body: JSON.stringify({ clinic_slug: CLINIC_SLUG, ticket_number: currentNum, status: statusType })
             });
             alert('تم تسجيل حالة المريض بنجاح!');
         }
-
-        function exportData() {
-            window.location.href = 'https://clinic-server-i00s.onrender.com/api/export/default-clinic';
-        }
+        function exportData() { window.location.href = `https://clinic-server-i00s.onrender.com/api/export/${CLINIC_SLUG}`; }
     </script>
 </body>
 </html>
