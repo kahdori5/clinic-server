@@ -13,7 +13,7 @@ const io = new Server(server, { cors: { origin: "*", methods: ["GET", "POST"] } 
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public')); // 👈 هذا هو السطر الجديد لعرض الشاشات
+app.use(express.static('public')); // لعرض الشاشات
 
 // 1. تسجيل عيادة
 app.post('/api/clinics', async (req, res) => {
@@ -96,6 +96,20 @@ app.get('/api/qr/:clinic_slug', async (req, res) => {
 
         res.status(200).json({ message: '✅ تم توليد كود QR بنجاح!', url: bookingUrl, qr_image: qrImageBase64 });
     } catch (err) { res.status(500).json({ error: 'حدث خطأ أثناء توليد الـ QR' }); }
+});
+
+// 7. المسار الجديد: جلب حالة الطابور قبل سحب التذكرة (للمريض والطبيب)
+app.get('/api/queue-status/:clinic_slug', async (req, res) => {
+    try {
+        const { clinic_slug } = req.params;
+        const clinic = await db.query('SELECT id FROM clinics WHERE slug = $1', [clinic_slug]);
+        if(clinic.rows.length === 0) return res.json({ current_number: 0, last_issued_number: 0 });
+        
+        const queue = await db.query('SELECT current_number, last_issued_number FROM queues WHERE clinic_id = $1 AND queue_date = CURRENT_DATE', [clinic.rows[0].id]);
+        if(queue.rows.length === 0) return res.json({ current_number: 0, last_issued_number: 0 });
+        
+        res.json(queue.rows[0]);
+    } catch (err) { res.status(500).json({ error: 'خطأ' }); }
 });
 
 const PORT = process.env.PORT || 3000;
