@@ -76,6 +76,7 @@
         
         <div class="support-box">
             <span>تواجه مشكلة تقنية؟</span>
+            <!-- تم تجهيز الرابط للاتصال الفوري -->
             <a href="tel:+213555000000" class="support-btn" id="supportPhoneLink">📞 اتصال بالمتحكم</a>
         </div>
     </div>
@@ -141,10 +142,7 @@
                         <div class="prescription-area">
                             <h4 style="margin-top:0; color:var(--text);">💊 الوصفة الطبية (Ordonnance)</h4>
                             <div class="input-group">
-                                <textarea id="mPrescription" placeholder="اكتب الأدوية هنا، كل دواء في سطر...
-مثال:
-1. Paracetamol 1g - 3 fois/jour
-2. Amoxicilline 500mg - 2 fois/jour"></textarea>
+                                <textarea id="mPrescription" placeholder="اكتب الأدوية هنا، كل دواء في سطر..."></textarea>
                             </div>
                             <button class="btn" style="background:var(--text); color:var(--bg);" onclick="printPrescription()">🖨️ طباعة الوصفة الطبية</button>
                         </div>
@@ -183,6 +181,10 @@
     <script>
         const CLINIC_SLUG = new URLSearchParams(window.location.search).get('clinic') || 'default-clinic';
         if(CLINIC_SLUG !== 'default-clinic') document.getElementById('clinicNameDisplay').innerText = `(${CLINIC_SLUG})`;
+
+        // يمكنك تغيير الرقم هنا ليظهر للطبيب للاتصال بك
+        const ADMIN_PHONE = "+213555000000"; 
+        document.getElementById('supportPhoneLink').href = `tel:${ADMIN_PHONE}`;
 
         const toggleTheme = () => {
             const isDark = document.body.getAttribute('data-theme') !== 'dark';
@@ -250,12 +252,11 @@
                     
                     document.getElementById('currentNumber').innerText = currentNum;
                     document.getElementById('currentPatientName').innerText = `👤 المريض: ${activePatientName}`;
-                    document.getElementById('medicalCard').style.display = 'block'; // إظهار الملف الطبي
+                    document.getElementById('medicalCard').style.display = 'block'; 
                     
                     showToast(`📢 تم مناداة الرقم: ${currentNum}`, 'success');
                     fetchStats(); 
                     
-                    // جلب بيانات المريض إن كانت مسجلة مسبقاً
                     await loadMedicalRecord();
                 } else { showToast('⚠️ لا يوجد أي مريض في الانتظار حالياً.', 'warning'); }
             } catch(e) { showToast('خطأ في الاتصال', 'error'); }
@@ -273,7 +274,7 @@
                 document.getElementById('mAllergy').value = data.allergies || '';
                 document.getElementById('mChronic').value = data.chronic_diseases || '';
                 document.getElementById('mNotes').value = data.notes || '';
-                document.getElementById('mPrescription').value = ''; // تفريغ الوصفة لزيارة اليوم
+                document.getElementById('mPrescription').value = ''; 
             } catch (e) {}
         }
 
@@ -297,16 +298,16 @@
             } catch(e) { showToast('خطأ أثناء الحفظ', 'error'); }
         }
 
-        // طباعة الوصفة الطبية بضغطة زر
+        // طباعة الوصفة الطبية بضغطة زر (مع سحب العمر تلقائياً)
         function printPrescription() {
             if(!activePatientName) return showToast('⚠️ يجب مناداة المريض أولاً', 'warning');
             const prescriptionText = document.getElementById('mPrescription').value.trim();
             if(!prescriptionText) return showToast('⚠️ الوصفة فارغة، يرجى كتابة الأدوية أولاً', 'warning');
 
+            const ageText = document.getElementById('mAge').value.trim() || 'غير محدد';
             const dateStr = new Date().toLocaleDateString('ar-DZ');
             const printWindow = window.open('', '', 'width=800,height=600');
             
-            // تصميم ورقة الوصفة الطبية (Ordonnance)
             printWindow.document.write(`
                 <html dir="rtl" lang="ar">
                 <head>
@@ -316,7 +317,7 @@
                         .header { display: flex; justify-content: space-between; border-bottom: 2px solid #10b981; padding-bottom: 20px; margin-bottom: 30px; }
                         .clinic-info { font-size: 1.2rem; font-weight: bold; color: #10b981; }
                         .date-info { font-size: 1rem; color: #555; }
-                        .patient-name { font-size: 1.4rem; font-weight: bold; margin-bottom: 40px; }
+                        .patient-info { font-size: 1.4rem; font-weight: bold; margin-bottom: 40px; display: flex; justify-content: space-between; background: #f9f9f9; padding: 15px; border-radius: 10px; }
                         .prescription-body { font-size: 1.2rem; line-height: 2; white-space: pre-wrap; min-height: 300px; }
                         .footer { margin-top: 50px; text-align: left; font-size: 1.2rem; font-weight: bold; color: #555; }
                         @media print { @page { size: A5; margin: 10mm; } }
@@ -327,7 +328,11 @@
                         <div class="clinic-info">العيادة الطبية<br>${activeDoctorName}</div>
                         <div class="date-info">التاريخ: ${dateStr}</div>
                     </div>
-                    <div class="patient-name">المريض: ${activePatientName}</div>
+                    
+                    <div class="patient-info">
+                        <span>المريض: ${activePatientName}</span>
+                        <span>العمر: ${ageText}</span>
+                    </div>
                     
                     <div class="prescription-body">${prescriptionText}</div>
                     
@@ -348,7 +353,6 @@
                     body: JSON.stringify({ clinic_slug: CLINIC_SLUG, ticket_number: currentNum, status: statusType })
                 });
                 showToast('✔️ تم تسجيل حالة المريض.', 'success');
-                // إخفاء الملف الطبي وتفريغ البيانات بعد انتهاء الكشف
                 document.getElementById('medicalCard').style.display = 'none';
                 document.getElementById('currentPatientName').innerText = '--';
                 activePatientName = '';
