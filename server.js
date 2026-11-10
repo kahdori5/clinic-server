@@ -63,7 +63,7 @@ const initDB = async () => {
                 UNIQUE(clinic_id, patient_name)
             );
         `);
-        console.log("✅ قاعدة البيانات جاهزة!");
+        console.log("✅ قاعدة البيانات جاهزة ومحدثة بالكامل!");
     } catch (e) { console.error("❌ خطأ:", e.message); }
 };
 initDB();
@@ -120,6 +120,7 @@ app.post('/api/call-next', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// مسار جلب الملف الطبي للمريض الفردي
 app.post('/api/patient/get', async (req, res) => {
     try {
         const { clinic_slug, patient_name } = req.body;
@@ -130,6 +131,7 @@ app.post('/api/patient/get', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// مسار حفظ/تحديث الملف الطبي للمريض
 app.post('/api/patient/save', async (req, res) => {
     try {
         const { clinic_slug, patient_name, age, blood_type, allergies, chronic, notes } = req.body;
@@ -141,6 +143,17 @@ app.post('/api/patient/save', async (req, res) => {
             DO UPDATE SET age = $3, blood_type = $4, allergies = $5, chronic_diseases = $6, notes = $7, updated_at = CURRENT_TIMESTAMP;
         `, [clinic.rows[0].id, patient_name, age, blood_type, allergies, chronic, notes]);
         res.json({ message: 'تم حفظ الملف الطبي بنجاح' });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// 🔥 (الجديد) مسار جلب أرشيف جميع المرضى الخاص بالطبيب
+app.get('/api/patients/all/:clinic_slug', async (req, res) => {
+    try {
+        const clinic = await db.query('SELECT id FROM clinics WHERE slug = $1', [req.params.clinic_slug]);
+        if(clinic.rows.length === 0) return res.json([]);
+        
+        const patientsList = await db.query('SELECT patient_name, age, chronic_diseases, updated_at FROM patients WHERE clinic_id = $1 ORDER BY updated_at DESC', [clinic.rows[0].id]);
+        res.json(patientsList.rows);
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -165,7 +178,7 @@ app.get('/api/doctor-stats/:clinic_slug', async (req, res) => {
             today = q.rows[0].last_issued_number;
             waiting = Math.max(0, today - q.rows[0].current_number);
         }
-        res.json({ today, waiting, weekly: 0, monthly: 0 }); // تم تبسيط الإحصائيات لضمان السرعة
+        res.json({ today, waiting, weekly: 0, monthly: 0 }); 
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -206,7 +219,7 @@ app.post('/api/admin/renew', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// 🔥 الحل الجذري لمشكلة الحذف: حذف الأطباء أولاً، وقاعدة البيانات ستحذف كل الطوابير والتذاكر تلقائياً (CASCADE)
+// الحذف الآمن والعميق
 app.delete('/api/admin/clinics/:id', async (req, res) => {
     try {
         await db.query('DELETE FROM clinics WHERE parent_id::text = $1::text', [req.params.id]); 
