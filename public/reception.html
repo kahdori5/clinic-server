@@ -6,7 +6,7 @@
     <title>الاستقبال - ClinicFlow</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #f4f7f6; --card: #ffffff; --text: #2d3748; --accent: #10b981; --border: #e2e8f0; }
+        :root { --bg: #f4f7f6; --card: #ffffff; --text: #2d3748; --accent: #10b981; --border: #e2e8f0; --warning: #f59e0b; --danger: #ef4444; }
         [data-theme="dark"] { --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --accent: #10b981; --border: #334155; }
         body { font-family: 'Tajawal', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; transition: 0.3s; display: flex; flex-direction: column; align-items: center; }
         
@@ -20,11 +20,16 @@
         select.doc-select, input { width: 100%; padding: 15px; margin-bottom: 20px; border-radius: 12px; border: 2px solid var(--border); background: var(--bg); color: var(--text); font-family: inherit; font-size: 1.1rem; box-sizing: border-box; outline: none; }
         select.doc-select:focus, input:focus { border-color: var(--accent); }
         
-        .btn { background: var(--accent); color: white; padding: 18px; border: none; border-radius: 12px; font-size: 1.2rem; font-weight: bold; cursor: pointer; width: 100%; transition: 0.2s; }
+        /* صندوق المعاينة الخاص بالممرضة */
+        .preview-box { background: rgba(245, 158, 11, 0.05); border: 1px dashed var(--warning); padding: 15px; border-radius: 16px; margin-bottom: 20px; display: none; text-align: right; }
+        .preview-box p { margin: 8px 0; font-size: 0.95rem; color: var(--text); font-weight: bold; }
+        .preview-box strong { color: var(--warning); font-size: 1.2rem; margin-right: 5px; }
+
+        .btn { background: var(--accent); color: white; padding: 18px; border: none; border-radius: 12px; font-size: 1.2rem; font-weight: bold; cursor: pointer; width: 100%; transition: 0.2s; font-family: inherit; }
         .btn:hover { filter: brightness(1.1); transform: translateY(-2px); }
         
         .ticket-result { margin-top: 25px; padding: 20px; background: rgba(16, 185, 129, 0.1); border-radius: 16px; border: 2px dashed var(--accent); display: none; }
-        .ticket-result h2 { margin: 0; color: var(--accent); font-size: 3rem; }
+        .ticket-result h2 { margin: 0; color: var(--accent); font-size: 4rem; }
     </style>
 </head>
 <body>
@@ -45,9 +50,16 @@
         <h1 data-i18n="title">مكتب الاستقبال والتسجيل</h1>
         
         <label style="display: block; text-align: start; margin-bottom: 10px; font-weight: bold;" data-i18n="selectDoc">اختر الطبيب المعالج:</label>
-        <select id="doctorSelect" class="doc-select">
+        <select id="doctorSelect" class="doc-select" onchange="previewNurseStats()">
             <option value="" data-i18n="loadingDocs">جاري تحميل الأطباء...</option>
         </select>
+
+        <!-- معلومات ما قبل الحجز لتخبر الممرضة المريض بها -->
+        <div class="preview-box" id="previewNurseBox">
+            <p data-i18n="prevInside">الرقم الحالي بالداخل: <strong id="prevNurseInside">--</strong></p>
+            <p data-i18n="prevExpected">التذكرة القادمة رقم: <strong id="prevNurseExpected">--</strong></p>
+            <p data-i18n="prevAhead">عدد المنتظرين حالياً: <strong id="prevNurseAhead">--</strong></p>
+        </div>
 
         <label style="display: block; text-align: start; margin-bottom: 10px; font-weight: bold;" data-i18n="enterName">اسم المريض:</label>
         <input type="text" id="patientName" placeholder="أدخل اسم المريض هنا...">
@@ -55,20 +67,21 @@
         <button class="btn" onclick="bookTicket()" data-i18n="btnBook">سحب تذكرة جديدة</button>
 
         <div class="ticket-result" id="ticketResult">
-            <span style="font-size: 1.2rem; font-weight: bold;" data-i18n="ticketMsg">رقم تذكرتك هو:</span>
+            <span style="font-size: 1.2rem; font-weight: bold;" data-i18n="ticketMsg">رقم التذكرة:</span>
             <h2 id="ticketNumberDisplay">0</h2>
             <button class="btn" style="margin-top: 15px; background: var(--text); color: var(--bg); padding: 10px;" onclick="window.print()" data-i18n="btnPrint">🖨️ طباعة التذكرة</button>
         </div>
     </div>
 
+    <script src="/socket.io/socket.io.js"></script>
     <script>
         const CLINIC_SLUG = new URLSearchParams(window.location.search).get('clinic');
         if(CLINIC_SLUG) document.getElementById('clinicTitle').innerText = `- ${CLINIC_SLUG}`;
 
         const dict = {
-            ar: { btnTheme: "🌓 الوضع الليلي", title: "مكتب الاستقبال والتسجيل", selectDoc: "اختر الطبيب المعالج:", loadingDocs: "اختر الطبيب...", enterName: "اسم المريض (اختياري):", btnBook: "سحب تذكرة", ticketMsg: "رقم التذكرة:", btnPrint: "🖨️ طباعة التذكرة", errSelect: "يرجى اختيار طبيب", errNet: "خطأ في الاتصال" },
-            fr: { btnTheme: "🌓 Mode Sombre", title: "Réception", selectDoc: "Choisir le médecin:", loadingDocs: "Choisir...", enterName: "Nom du patient :", btnBook: "Prendre un ticket", ticketMsg: "Numéro de ticket:", btnPrint: "🖨️ Imprimer", errSelect: "Veuillez choisir un médecin", errNet: "Erreur de connexion" },
-            en: { btnTheme: "🌓 Dark Mode", title: "Reception Desk", selectDoc: "Select Doctor:", loadingDocs: "Select...", enterName: "Patient Name:", btnBook: "Get Ticket", ticketMsg: "Ticket Number:", btnPrint: "🖨️ Print Ticket", errSelect: "Please select a doctor", errNet: "Connection error" }
+            ar: { btnTheme: "🌓 الوضع الليلي", title: "مكتب الاستقبال والتسجيل", selectDoc: "اختر الطبيب المعالج:", loadingDocs: "اختر الطبيب...", enterName: "اسم المريض (اختياري):", btnBook: "سحب تذكرة", ticketMsg: "رقم التذكرة:", btnPrint: "🖨️ طباعة التذكرة", errSelect: "يرجى اختيار طبيب", errNet: "خطأ في الاتصال", prevInside: "الرقم الحالي بالداخل:", prevExpected: "التذكرة القادمة رقم:", prevAhead: "عدد المنتظرين حالياً:" },
+            fr: { btnTheme: "🌓 Mode Sombre", title: "Réception", selectDoc: "Choisir le médecin:", loadingDocs: "Choisir...", enterName: "Nom du patient :", btnBook: "Prendre un ticket", ticketMsg: "Numéro de ticket:", btnPrint: "🖨️ Imprimer", errSelect: "Veuillez choisir un médecin", errNet: "Erreur de connexion", prevInside: "Patient actuel:", prevExpected: "Prochain ticket:", prevAhead: "En attente:" },
+            en: { btnTheme: "🌓 Dark Mode", title: "Reception Desk", selectDoc: "Select Doctor:", loadingDocs: "Select...", enterName: "Patient Name:", btnBook: "Get Ticket", ticketMsg: "Ticket Number:", btnPrint: "🖨️ Print Ticket", errSelect: "Please select a doctor", errNet: "Connection error", prevInside: "Current Inside:", prevExpected: "Expected Ticket:", prevAhead: "Waiting Now:" }
         };
 
         let currentLang = localStorage.getItem('rec_lang') || 'ar';
@@ -76,7 +89,7 @@
             currentLang = lang; localStorage.setItem('rec_lang', lang);
             document.documentElement.lang = lang; document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
             document.getElementById('langSelect').value = lang;
-            document.querySelectorAll('[data-i18n]').forEach(el => el.innerText = dict[lang][el.getAttribute('data-i18n')]);
+            document.querySelectorAll('[data-i18n]').forEach(el => el.innerHTML = dict[lang][el.getAttribute('data-i18n')] + (el.innerHTML.includes('<strong') ? el.innerHTML.substring(el.innerHTML.indexOf('<strong')) : ''));
             document.getElementById('patientName').placeholder = dict[lang].enterName;
         }
 
@@ -96,12 +109,27 @@
                     const doctors = await res.json();
                     const select = document.getElementById('doctorSelect');
                     select.innerHTML = `<option value="">-- ${dict[currentLang].loadingDocs} --</option>`;
-                    doctors.forEach(doc => {
-                        select.innerHTML += `<option value="${doc.slug}">${doc.name}</option>`;
-                    });
+                    doctors.forEach(doc => { select.innerHTML += `<option value="${doc.slug}">${doc.name}</option>`; });
                 } catch(e) { }
             }
         };
+
+        async function previewNurseStats() {
+            const docSlug = document.getElementById('doctorSelect').value;
+            const previewBox = document.getElementById('previewNurseBox');
+            if(!docSlug) { previewBox.style.display = 'none'; return; }
+            try {
+                const res = await fetch(`https://clinic-server-i00s.onrender.com/api/queue-status/${docSlug}`);
+                const data = await res.json();
+                const currentNum = data.current_number || 0;
+                const lastIssued = data.last_issued_number || 0;
+                
+                document.getElementById('prevNurseInside').innerText = currentNum === 0 ? '--' : currentNum;
+                document.getElementById('prevNurseExpected').innerText = lastIssued + 1;
+                document.getElementById('prevNurseAhead').innerText = Math.max(0, lastIssued - currentNum);
+                previewBox.style.display = 'block';
+            } catch (e) { }
+        }
 
         async function bookTicket() {
             const docSlug = document.getElementById('doctorSelect').value;
@@ -120,9 +148,14 @@
                     document.getElementById('ticketNumberDisplay').innerText = num;
                     document.getElementById('ticketResult').style.display = 'block';
                     document.getElementById('patientName').value = '';
+                    previewNurseStats(); // تحديث أرقام الممرضة تلقائياً
                 } else { alert(data.error); }
             } catch(e) { alert(dict[currentLang].errNet); }
         }
+
+        const socket = io('https://clinic-server-i00s.onrender.com');
+        socket.on('call_patient', () => { if(document.getElementById('doctorSelect').value) previewNurseStats(); });
+        socket.on('new_ticket', () => { if(document.getElementById('doctorSelect').value) previewNurseStats(); });
     </script>
 </body>
 </html>

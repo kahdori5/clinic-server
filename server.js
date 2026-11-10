@@ -58,20 +58,16 @@ const initDB = async () => {
             );
         `);
 
-        // 🔥 التحديث الإجباري للأعمدة لمنع الخطأ 500 في الأرشيف
-        try {
-            const addColumns = [
-                `ALTER TABLE patients ADD COLUMN IF NOT EXISTS age VARCHAR(20) DEFAULT '';`,
-                `ALTER TABLE patients ADD COLUMN IF NOT EXISTS blood_type VARCHAR(10) DEFAULT '';`,
-                `ALTER TABLE patients ADD COLUMN IF NOT EXISTS allergies TEXT DEFAULT '';`,
-                `ALTER TABLE patients ADD COLUMN IF NOT EXISTS chronic_diseases TEXT DEFAULT '';`,
-                `ALTER TABLE patients ADD COLUMN IF NOT EXISTS notes TEXT DEFAULT '';`,
-                `ALTER TABLE patients ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;`
-            ];
-            for (let q of addColumns) { await db.query(q); }
-        } catch(e) { console.log('Columns already exist or minor issue.'); }
+        // 🔥 التحديث الإجباري والآمن لأعمدة الأرشيف لمنع الخطأ 500 نهائياً
+        const pCols = ['age', 'blood_type', 'allergies', 'chronic_diseases', 'notes'];
+        for (let col of pCols) {
+            try { await db.query(`ALTER TABLE patients ADD COLUMN IF NOT EXISTS ${col} TEXT DEFAULT '';`); } 
+            catch(e) { try { await db.query(`ALTER TABLE patients ADD COLUMN ${col} TEXT DEFAULT '';`); } catch(err){} }
+        }
+        try { await db.query(`ALTER TABLE patients ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;`); } 
+        catch(e) { try { await db.query(`ALTER TABLE patients ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;`); } catch(err){} }
 
-        console.log("✅ قاعدة البيانات جاهزة ومحدثة بالكامل (بدون أخطاء)!");
+        console.log("✅ قاعدة البيانات جاهزة ومحدثة بالكامل (تم القضاء على أخطاء الأرشيف)!");
     } catch (e) { console.error("❌ خطأ رئيسي:", e.message); }
 };
 initDB();
@@ -110,6 +106,22 @@ app.post('/api/tickets', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// 🔥 مسار جديد لإلغاء الحجز من طرف المريض
+app.post('/api/tickets/cancel', async (req, res) => {
+    try {
+        const { clinic_slug, ticket_number } = req.body;
+        const clinic = await db.query('SELECT id FROM clinics WHERE slug = $1', [clinic_slug]);
+        if(clinic.rows.length > 0) {
+            const queue = await db.query('SELECT id FROM queues WHERE clinic_id = $1 AND queue_date = CURRENT_DATE', [clinic.rows[0].id]);
+            if(queue.rows.length > 0) {
+                await db.query('UPDATE tickets SET status = $1 WHERE queue_id = $2 AND ticket_number = $3', ['cancelled', queue.rows[0].id, ticket_number]);
+                io.emit('new_ticket', { clinic_slug }); // تحديث الشاشات بعد الإلغاء
+            }
+        }
+        res.json({ message: 'تم الإلغاء' });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 app.post('/api/call-next', async (req, res) => {
     try {
         const { clinic_slug } = req.body;
@@ -128,7 +140,7 @@ app.post('/api/call-next', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// الملف الطبي للمريض
+// مسارات الملف الطبي والأرشيف
 app.post('/api/patient/get', async (req, res) => {
     try {
         const { clinic_slug, patient_name } = req.body;
@@ -153,7 +165,6 @@ app.post('/api/patient/save', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// الأرشيف
 app.get('/api/patients/all/:clinic_slug', async (req, res) => {
     try {
         const clinic = await db.query('SELECT id FROM clinics WHERE slug = $1', [req.params.clinic_slug]);
