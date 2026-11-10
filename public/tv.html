@@ -16,7 +16,6 @@
         .controls { display: flex; flex-direction: column; gap: 10px; align-items: flex-end; }
         select, .theme-btn { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: bold; outline: none; font-size: 1rem; }
         
-        /* تكبير صندوق الكود كيو ار */
         .qr-container { display: flex; align-items: center; gap: 20px; background: rgba(16, 185, 129, 0.1); padding: 15px 30px; border-radius: 20px; border: 3px dashed var(--accent); }
         .qr-text { text-align: center; }
         .qr-text strong { display: block; font-size: 1.5rem; color: var(--accent); margin-bottom: 8px; font-weight: 900; }
@@ -36,11 +35,8 @@
     </style>
 </head>
 <body>
-
     <div class="top-bar">
         <div class="logo">ClinicFlow <span style="font-size: 1.2rem; color: var(--text);" id="clinicTitle"></span></div>
-
-        <!-- الـ QR Code المكبر -->
         <div class="qr-container" id="qrContainer" style="display: none;">
             <div class="qr-text">
                 <strong data-i18n="qrScan">امسح الكود للحجز</strong>
@@ -48,7 +44,6 @@
             </div>
             <div id="qrcode"></div>
         </div>
-
         <div class="controls">
             <select id="langSelect" onchange="changeLang(this.value)">
                 <option value="ar">العربية</option>
@@ -58,7 +53,6 @@
             <button class="theme-btn" onclick="toggleTheme()" data-i18n="btnTheme">🌓 الوضع الليلي</button>
         </div>
     </div>
-
     <div class="doctors-grid" id="doctorsList">
         <h2 style="text-align: center; width: 100%; color: var(--muted);" data-i18n="loading">جاري تحميل البيانات...</h2>
     </div>
@@ -68,9 +62,10 @@
         if(CLINIC_SLUG) {
             document.getElementById('clinicTitle').innerText = `- ${CLINIC_SLUG}`;
             document.getElementById('qrContainer').style.display = 'flex';
-            const bookingUrl = `${window.location.origin}/patient.html?clinic=${CLINIC_SLUG}`;
             
-            // تكبير حجم الـ QR Code إلى 150x150
+            // الرابط تم تصحيحه ليتصل بالسيرفر مباشرة
+            const bookingUrl = `https://clinic-server-i00s.onrender.com/patient.html?clinic=${CLINIC_SLUG}`;
+            
             new QRCode(document.getElementById("qrcode"), {
                 text: bookingUrl,
                 width: 150, 
