@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>شاشة العرض - ClinicFlow</title>
+    <title>شاشة العرض</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
@@ -12,7 +12,7 @@
         body { font-family: 'Tajawal', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 25px; transition: 0.3s; }
         
         .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; background: var(--card); padding: 20px 40px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); flex-wrap: wrap; gap: 20px; }
-        .logo { font-size: 2.8rem; font-weight: 800; color: var(--accent); }
+        .logo { font-size: 2.4rem; font-weight: 800; color: var(--accent); display: flex; align-items: center; gap: 12px; }
         .controls { display: flex; flex-direction: column; gap: 10px; align-items: flex-end; }
         select, .theme-btn, .sound-btn { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: bold; outline: none; font-size: 1rem; font-family: inherit; transition: 0.2s; }
         .sound-btn { background: var(--accent); color: #ffffff !important; border: none; }
@@ -38,7 +38,7 @@
 </head>
 <body>
     <div class="top-bar">
-        <div class="logo">ClinicFlow <span style="font-size: 1.5rem; color: var(--text);" id="clinicTitle"></span></div>
+        <div class="logo">🏥 <span id="clinicTitle"></span></div>
         <div class="qr-container" id="qrContainer" style="display: none;">
             <div class="qr-text">
                 <strong data-i18n="qrScan">امسح الكود للحجز</strong>
@@ -67,7 +67,7 @@
         const bellAudio = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
 
         if (CLINIC_SLUG) {
-            document.getElementById('clinicTitle').innerText = `- ${CLINIC_SLUG}`;
+            document.getElementById('clinicTitle').innerText = CLINIC_SLUG;
             document.getElementById('qrContainer').style.display = 'flex';
             const bookingUrl = `https://clinic-server-i00s.onrender.com/patient.html?clinic=${CLINIC_SLUG}`;
             new QRCode(document.getElementById("qrcode"), {
@@ -151,7 +151,6 @@
             const numEl = document.getElementById(`num-${data.clinic_slug}`);
             if (card && numEl) {
                 numEl.innerText = data.current_number;
-                // لا يرن الجرس ولا تومض الشاشة إذا كانت التذكرة ملغاة
                 if (data.status !== 'cancelled') {
                     bellAudio.currentTime = 0;
                     bellAudio.play().catch(e => console.log('Autoplay blocked'));
