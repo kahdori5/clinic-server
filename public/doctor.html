@@ -56,7 +56,6 @@
         .btn-outline:hover { background: var(--accent) !important; color: #ffffff !important; }
         .status-btns { display: flex; gap: 10px; margin-bottom: 20px; }
         
-        /* 🔥 تصميم لوحة الإحصائيات الاحترافية الجديدة 🔥 */
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 20px; }
         .stat-card { background: var(--card); padding: 25px; border-radius: 20px; border: 1px solid var(--border); display: flex; align-items: center; gap: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.02); transition: 0.3s; }
         .stat-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.05); }
@@ -78,6 +77,12 @@
         .patient-name { font-size: 1.2rem; font-weight: bold; color: var(--text); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
         .patient-details { font-size: 0.9rem; color: var(--muted); line-height: 1.6; margin-bottom: 15px; }
         
+        .archive-actions { display: flex; gap: 10px; }
+        .btn-small { padding: 10px; font-size: 0.9rem; flex: 1; background: rgba(16, 185, 129, 0.1); color: var(--accent); border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; text-align: center; }
+        .btn-small:hover { background: var(--accent); color: white; }
+        .btn-delete { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+        .btn-delete:hover { background: var(--danger); color: white; }
+
         #patientDetailView { display: none; background: var(--card); padding: 35px; border-radius: 24px; border: 1px solid var(--border); max-width: 700px; margin: 0 auto; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
 
         .toast-container { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 10px; z-index: 9999; }
@@ -109,13 +114,13 @@
             <div style="margin-top: 20px; display: flex; flex-direction: column; width: 100%;">
                 <div class="nav-item active" onclick="switchTab('call-tab', this)" data-i18n="menuCall">📢 شاشة النداء</div>
                 <div class="nav-item" onclick="switchTab('patients-tab', this)" data-i18n="menuPatients">📂 أرشيف المرضى</div>
-                <div class="nav-item" onclick="switchTab('stats-tab', this)" data-i18n="menuStats">📊 إحصائيات العيادة</div>
+                <div class="nav-item" onclick="switchTab('stats-tab', this)" data-i18n="menuStats">📊 الإحصائيات</div>
                 <div class="nav-item" onclick="switchTab('settings-tab', this)" data-i18n="menuSettings">⚙️ الإعدادات والحماية</div>
             </div>
         </div>
         
         <button id="installAppBtn" onclick="installApp()">💻 تثبيت التطبيق</button>
-        <div style="padding: 20px; text-align: center; color: var(--muted); font-size: 0.8rem;">ClinicFlow SaaS v3.2</div>
+        <div style="padding: 20px; text-align: center; color: var(--muted); font-size: 0.8rem;">ClinicFlow SaaS v3.3</div>
     </div>
 
     <div class="main-content">
@@ -135,7 +140,6 @@
 
         <div class="content-scroll">
             
-            <!-- 1. شاشة النداء -->
             <div id="call-tab" class="tab-content active">
                 <div class="call-wrapper">
                     <div class="control-card">
@@ -184,7 +188,6 @@
                 </div>
             </div>
 
-            <!-- 2. أرشيف المرضى -->
             <div id="patients-tab" class="tab-content" style="display: none; padding: 0 20px;">
                 <div id="archiveListView">
                     <div class="archive-header">
@@ -223,7 +226,6 @@
                 </div>
             </div>
 
-            <!-- 3. الإحصائيات الاحترافية الجديدة -->
             <div id="stats-tab" class="tab-content" style="display: none;">
                 <h2 style="margin-top: 0; margin-bottom: 30px; color: var(--text);" data-i18n="statsHeader">لوحة الإحصائيات والأداء</h2>
                 
@@ -257,7 +259,6 @@
                         </div>
                     </div>
 
-                    <!-- إضافة قسم "أكثر الأيام ازدحاماً" الاحترافي -->
                     <div class="stat-card wide-card">
                         <div class="stat-icon">🔥</div>
                         <div class="stat-info" style="align-items: center; flex: 1;">
@@ -268,18 +269,22 @@
                 </div>
             </div>
 
-            <!-- 4. الإعدادات -->
+            <!-- 4. تبويبة الإعدادات (تتضمن زر حذف كلمة السر) -->
             <div id="settings-tab" class="tab-content" style="display: none;">
                 <div class="control-card" style="max-width: 600px; margin: 0 auto; text-align: start;">
                     <h2 style="color: var(--text); margin-top: 0;" data-i18n="secTitle">🛡️ إعدادات الحماية والخصوصية</h2>
-                    <p style="color: var(--muted); margin-bottom: 25px; font-weight: bold;" data-i18n="secDesc">لحماية عيادتك وملفات مرضاك من التطفل، يمكنك وضع كلمة سر تمنع أي شخص من الدخول إلى هذه اللوحة بدونها. لتعطيل الحماية، اترك الخانة فارغة واضغط حفظ.</p>
+                    <p style="color: var(--muted); margin-bottom: 25px; font-weight: bold;" data-i18n="secDesc">لحماية عيادتك وملفات مرضاك من التطفل، قم بتعيين كلمة سر تمنع أي شخص من الدخول إلى هذه اللوحة بدونها.</p>
                     
                     <div class="input-group">
                         <label data-i18n="lblNewPass">كلمة السر الجديدة:</label>
-                        <input type="text" id="newSettingsPassword" placeholder="اكتب كلمة السر هنا...">
+                        <input type="text" id="newSettingsPassword" placeholder="اكتب كلمة السر الجديدة هنا...">
                     </div>
                     
-                    <button class="btn" style="margin-top: 15px;" onclick="saveSettingsPassword()" data-i18n="btnSavePass">💾 حفظ إعدادات الحماية</button>
+                    <div style="display: flex; gap: 15px; margin-top: 20px;">
+                        <button class="btn" style="flex: 2; margin-bottom: 0;" onclick="saveSettingsPassword()" data-i18n="btnSavePass">💾 حفظ كلمة السر</button>
+                        <!-- زر حذف كلمة السر الجديد -->
+                        <button class="btn btn-danger" style="flex: 1; margin-bottom: 0;" onclick="deleteSettingsPassword()" data-i18n="btnDeletePass">🗑️ إزالة الحماية</button>
+                    </div>
                 </div>
             </div>
 
@@ -301,7 +306,7 @@
                 archiveTitle: "📂 أرشيف المرضى", btnNewPatient: "+ مريض جديد", searchPlaceholder: "🔍 ابحث...", loading: "تحميل...", noPatients: "لا يوجد مرضى.", 
                 viewBtn: "👁️ التفاصيل والتعديل", deleteBtn: "🗑️ حذف", editTitle: "📄 تفاصيل ملف المريض", backBtn: "⬅️ عودة", saveEditBtn: "💾 حفظ",
                 statsHeader: "لوحة الإحصائيات والأداء", statWaiting: "في الانتظار حالياً", statToday: "إجمالي اليوم", statWeekly: "هذا الأسبوع", statMonthly: "هذا الشهر", busiestDay: "أكثر الأيام استقبالاً للمرضى",
-                secTitle: "🛡️ إعدادات الحماية", secDesc: "قم بوضع كلمة سر لحماية ملفات المرضى. اتركها فارغة لإلغاء الحماية.", lblNewPass: "كلمة السر الجديدة:", btnSavePass: "💾 حفظ الحماية",
+                secTitle: "🛡️ إعدادات الحماية", secDesc: "لحماية عيادتك وملفات مرضاك من التطفل، قم بتعيين كلمة سر تمنع أي شخص من الدخول إلى هذه اللوحة بدونها.", lblNewPass: "كلمة السر الجديدة:", btnSavePass: "💾 حفظ كلمة السر", btnDeletePass: "🗑️ إزالة الحماية",
                 lockDesc: "هذه العيادة محمية بكلمة سر", btnUnlock: "🔓 فتح العيادة",
                 errNoPatient: "⚠️ لا يوجد مريض", errEmpty: "لا يوجد مريض", successStatus: "✔️ تم الحفظ", successCall: "📢 تم مناداة:", errSave: "خطأ"
             },
@@ -311,8 +316,8 @@
                 medicalFileTitle: "📋 Dossier", optional: "Optionnel", lblPatientName: "Nom:", lblAge: "Âge:", lblBlood: "Sang:", lblAllergy: "Allergies:", lblChronic: "Chroniques:", lblNotes: "Notes:", btnSaveFile: "💾 Enregistrer", prescTitle: "💊 Ordonnance", btnPrintPresc: "🖨️ Imprimer",
                 archiveTitle: "📂 Archives", btnNewPatient: "+ Nouveau", searchPlaceholder: "🔍 Chercher...", loading: "Chargement...", noPatients: "Aucun patient.", 
                 viewBtn: "👁️ Détails & Modifier", deleteBtn: "🗑️ Supprimer", editTitle: "📄 Modifier Dossier", backBtn: "⬅️ Retour", saveEditBtn: "💾 Enregistrer",
-                statsHeader: "Performances", statWaiting: "En attente", statToday: "Aujourd'hui", statWeekly: "Semaine", statMonthly: "Mois", busiestDay: "Jour le plus chargé",
-                secTitle: "🛡️ Sécurité", secDesc: "Ajoutez un mot de passe pour protéger les dossiers. Laissez vide pour désactiver.", lblNewPass: "Nouveau MDP:", btnSavePass: "💾 Sauvegarder",
+                statsHeader: "Performances", statWaiting: "En attente", statToday: "Aujourd'hui", statWeekly: "Cette semaine", statMonthly: "Ce mois-ci", busiestDay: "Jour le plus chargé",
+                secTitle: "🛡️ Sécurité", secDesc: "Ajoutez un mot de passe pour protéger les dossiers.", lblNewPass: "Nouveau MDP:", btnSavePass: "💾 Sauvegarder", btnDeletePass: "🗑️ Supprimer MDP",
                 lockDesc: "Cette clinique est protégée par un mot de passe", btnUnlock: "🔓 Déverrouiller",
                 errNoPatient: "⚠️ Aucun patient", errEmpty: "Aucun patient", successStatus: "✔️ Enregistré", successCall: "📢 Appel:", errSave: "Erreur"
             },
@@ -323,7 +328,7 @@
                 archiveTitle: "📂 Archive", btnNewPatient: "+ New", searchPlaceholder: "🔍 Search...", loading: "Loading...", noPatients: "No patients.", 
                 viewBtn: "👁️ Details & Edit", deleteBtn: "🗑️ Delete", editTitle: "📄 Edit Record", backBtn: "⬅️ Back", saveEditBtn: "💾 Save",
                 statsHeader: "Performance Dashboard", statWaiting: "Waiting Now", statToday: "Total Today", statWeekly: "This Week", statMonthly: "This Month", busiestDay: "Busiest Day",
-                secTitle: "🛡️ Security", secDesc: "Set a password to protect records. Leave empty to disable.", lblNewPass: "New Password:", btnSavePass: "💾 Save Security",
+                secTitle: "🛡️ Security", secDesc: "Set a password to protect records.", lblNewPass: "New Password:", btnSavePass: "💾 Save Password", btnDeletePass: "🗑️ Remove Password",
                 lockDesc: "This clinic is password protected", btnUnlock: "🔓 Unlock",
                 errNoPatient: "⚠️ No patient", errEmpty: "No patient", successStatus: "✔️ Saved", successCall: "📢 Called:", errSave: "Error"
             }
@@ -375,9 +380,7 @@
                 const data = await res.json();
                 if (data.hasPassword) {
                     const savedAuth = sessionStorage.getItem(`doc_auth_${CLINIC_SLUG}`);
-                    if (!savedAuth) {
-                        document.getElementById('lockScreen').style.display = 'flex';
-                    }
+                    if (!savedAuth) { document.getElementById('lockScreen').style.display = 'flex'; }
                 }
             } catch(e) {}
         }
@@ -395,22 +398,34 @@
                     sessionStorage.setItem(`doc_auth_${CLINIC_SLUG}`, 'true');
                     document.getElementById('lockScreen').style.display = 'none';
                     showToast('تم تسجيل الدخول بنجاح', 'success');
-                } else {
-                    showToast('كلمة السر خاطئة!', 'error');
-                }
+                } else { showToast('كلمة السر خاطئة!', 'error'); }
             } catch(e) { showToast('خطأ اتصال', 'error'); }
         }
 
         async function saveSettingsPassword() {
-            const newPass = document.getElementById('newSettingsPassword').value;
+            const newPass = document.getElementById('newSettingsPassword').value.trim();
+            if(!newPass) return showToast('يرجى كتابة كلمة السر الجديدة', 'warning');
             try {
                 await fetch('https://clinic-server-i00s.onrender.com/api/doctor/set-password', {
                     method: 'POST', headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ clinic_slug: CLINIC_SLUG, new_password: newPass })
                 });
-                showToast('تم حفظ إعدادات الحماية بنجاح', 'success');
+                showToast('تم تعيين كلمة السر بنجاح', 'success');
                 document.getElementById('newSettingsPassword').value = '';
             } catch(e) { showToast('خطأ في الحفظ', 'error'); }
+        }
+
+        // دالة حذف كلمة السر نهائياً
+        async function deleteSettingsPassword() {
+            if(!confirm('هل أنت متأكد من رغبتك في إزالة كلمة السر وإلغاء الحماية عن العيادة؟')) return;
+            try {
+                await fetch('https://clinic-server-i00s.onrender.com/api/doctor/set-password', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ clinic_slug: CLINIC_SLUG, new_password: "" })
+                });
+                showToast('تم إلغاء الحماية بنجاح', 'success');
+                document.getElementById('newSettingsPassword').value = '';
+            } catch(e) { showToast('خطأ في العملية', 'error'); }
         }
 
         let deferredPrompt;
@@ -424,9 +439,7 @@
             if (deferredPrompt) {
                 deferredPrompt.prompt();
                 deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                        document.getElementById('installAppBtn').style.display = 'none';
-                    }
+                    if (choiceResult.outcome === 'accepted') { document.getElementById('installAppBtn').style.display = 'none'; }
                     deferredPrompt = null;
                 });
             }
@@ -444,10 +457,7 @@
             await checkInitialLock();
             await fetchStatus();
             await fetchStats();
-            
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW failed', err));
-            }
+            if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW failed', err)); }
         };
 
         function displayPatientState(pName, ticketStatus) {
@@ -478,7 +488,6 @@
                 currentNum = data.current_number || 0;
                 if (data.doctor_name) activeDoctorName = data.doctor_name;
                 document.getElementById('currentNumber').innerText = currentNum === 0 ? '--' : currentNum;
-
                 if (currentNum > 0 && data.current_patient_name) {
                     activePatientName = data.current_patient_name;
                     displayPatientState(activePatientName, data.current_ticket_status);
@@ -515,9 +524,7 @@
 
                     if (data.ticket_status === 'cancelled') {
                         showToast(`⚠️ المريض (${activePatientName}) صاحب الرقم ${currentNum} ألغى حجزه!`, 'error');
-                    } else {
-                        showToast(`${dict[currentLang].successCall} ${currentNum}`, 'success');
-                    }
+                    } else { showToast(`${dict[currentLang].successCall} ${currentNum}`, 'success'); }
                     fetchStats(); 
                 } else { showToast(dict[currentLang].errNoPatient, 'warning'); }
             } catch (e) { showToast('خطأ اتصال بالسيرفر', 'error'); }
