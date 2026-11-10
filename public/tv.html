@@ -5,24 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>شاشة العرض - ClinicFlow</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet">
-    <!-- استدعاء مكتبة توليد الـ QR Code -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root { --bg: #f4f7f6; --card: #ffffff; --text: #2d3748; --accent: #10b981; --border: #e2e8f0; --warning: #f59e0b; }
         [data-theme="dark"] { --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --accent: #10b981; --border: #334155; }
         body { font-family: 'Tajawal', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; transition: 0.3s; }
         
-        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; background: var(--card); padding: 15px 30px; border-radius: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
-        .logo { font-size: 1.8rem; font-weight: 800; color: var(--accent); display: flex; align-items: center; gap: 15px; }
-        .controls { display: flex; gap: 10px; }
-        select, .theme-btn { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 8px 15px; border-radius: 12px; cursor: pointer; font-weight: bold; outline: none; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; background: var(--card); padding: 20px 30px; border-radius: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .logo { font-size: 2.2rem; font-weight: 800; color: var(--accent); }
+        .controls { display: flex; flex-direction: column; gap: 10px; align-items: flex-end; }
+        select, .theme-btn { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: bold; outline: none; font-size: 1rem; }
         
-        /* تصميم مربع الـ QR Code في التلفاز */
-        .qr-container { display: flex; align-items: center; gap: 15px; background: rgba(16, 185, 129, 0.1); padding: 10px 20px; border-radius: 15px; border: 2px dashed var(--accent); }
+        /* تكبير صندوق الكود كيو ار */
+        .qr-container { display: flex; align-items: center; gap: 20px; background: rgba(16, 185, 129, 0.1); padding: 15px 30px; border-radius: 20px; border: 3px dashed var(--accent); }
         .qr-text { text-align: center; }
-        .qr-text strong { display: block; font-size: 1.1rem; color: var(--accent); margin-bottom: 5px; }
-        .qr-text span { font-size: 0.85rem; color: var(--muted); }
-        #qrcode { background: white; padding: 5px; border-radius: 8px; }
+        .qr-text strong { display: block; font-size: 1.5rem; color: var(--accent); margin-bottom: 8px; font-weight: 900; }
+        .qr-text span { font-size: 1rem; color: var(--muted); font-weight: bold; }
+        #qrcode { background: white; padding: 10px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        #qrcode img { display: block; margin: 0 auto; }
 
         .doctors-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
         .doc-card { background: var(--card); border-radius: 24px; padding: 40px 20px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 3px solid transparent; transition: 0.3s; }
@@ -38,15 +38,13 @@
 <body>
 
     <div class="top-bar">
-        <div class="logo">
-            ClinicFlow <span style="font-size: 1.2rem; color: var(--text);" id="clinicTitle"></span>
-        </div>
+        <div class="logo">ClinicFlow <span style="font-size: 1.2rem; color: var(--text);" id="clinicTitle"></span></div>
 
-        <!-- إضافة الـ QR Code هنا -->
+        <!-- الـ QR Code المكبر -->
         <div class="qr-container" id="qrContainer" style="display: none;">
             <div class="qr-text">
                 <strong data-i18n="qrScan">امسح الكود للحجز</strong>
-                <span data-i18n="qrSub">بدون الذهاب للاستقبال</span>
+                <span data-i18n="qrSub">احجز تذكرتك من هاتفك</span>
             </div>
             <div id="qrcode"></div>
         </div>
@@ -65,28 +63,28 @@
         <h2 style="text-align: center; width: 100%; color: var(--muted);" data-i18n="loading">جاري تحميل البيانات...</h2>
     </div>
 
-    <script src="/socket.io/socket.io.js"></script>
     <script>
         const CLINIC_SLUG = new URLSearchParams(window.location.search).get('clinic');
         if(CLINIC_SLUG) {
             document.getElementById('clinicTitle').innerText = `- ${CLINIC_SLUG}`;
-            // إظهار وتوليد الـ QR Code الخاص بحجز المرضى
             document.getElementById('qrContainer').style.display = 'flex';
             const bookingUrl = `${window.location.origin}/patient.html?clinic=${CLINIC_SLUG}`;
+            
+            // تكبير حجم الـ QR Code إلى 150x150
             new QRCode(document.getElementById("qrcode"), {
                 text: bookingUrl,
-                width: 80,
-                height: 80,
+                width: 150, 
+                height: 150,
                 colorDark : "#000000",
                 colorLight : "#ffffff",
-                correctLevel : QRCode.CorrectLevel.L
+                correctLevel : QRCode.CorrectLevel.M
             });
         }
 
         const dict = {
-            ar: { btnTheme: "🌓 الوضع الليلي", loading: "جاري تحميل البيانات...", waiting: "في الانتظار:", empty: "لا يوجد أطباء متاحين.", qrScan: "امسح الكود للحجز", qrSub: "بدون الذهاب للاستقبال" },
-            fr: { btnTheme: "🌓 Mode Sombre", loading: "Chargement...", waiting: "En attente:", empty: "Aucun médecin.", qrScan: "Scannez pour réserver", qrSub: "Sans passer par l'accueil" },
-            en: { btnTheme: "🌓 Dark Mode", loading: "Loading...", waiting: "Waiting:", empty: "No doctors available.", qrScan: "Scan to Book", qrSub: "Skip the reception" }
+            ar: { btnTheme: "🌓 الوضع الليلي", loading: "جاري تحميل البيانات...", waiting: "في الانتظار:", empty: "لا يوجد أطباء متاحين.", qrScan: "امسح الكود للحجز", qrSub: "احجز تذكرتك من هاتفك" },
+            fr: { btnTheme: "🌓 Mode Sombre", loading: "Chargement...", waiting: "En attente:", empty: "Aucun médecin.", qrScan: "Scannez pour réserver", qrSub: "Réservez depuis votre téléphone" },
+            en: { btnTheme: "🌓 Dark Mode", loading: "Loading...", waiting: "Waiting:", empty: "No doctors available.", qrScan: "Scan to Book", qrSub: "Book from your phone" }
         };
 
         let currentLang = localStorage.getItem('tv_lang') || 'ar';
@@ -111,15 +109,11 @@
         };
 
         async function fetchDoctors() {
-            if(!CLINIC_SLUG) return document.getElementById('doctorsList').innerHTML = `<h2 style="text-align:center;">يرجى تحديد العيادة في الرابط</h2>`;
+            if(!CLINIC_SLUG) return;
             try {
                 const res = await fetch(`https://clinic-server-i00s.onrender.com/api/clinic-doctors/${CLINIC_SLUG}`);
                 const data = await res.json();
-                
-                if(data.length === 0) {
-                    document.getElementById('doctorsList').innerHTML = `<h2 style="text-align: center; width: 100%;">${dict[currentLang].empty}</h2>`;
-                    return;
-                }
+                if(data.length === 0) return document.getElementById('doctorsList').innerHTML = `<h2 style="text-align: center; width: 100%;">${dict[currentLang].empty}</h2>`;
                 
                 let html = '';
                 data.forEach(doc => {
@@ -132,30 +126,24 @@
                     `;
                 });
                 document.getElementById('doctorsList').innerHTML = html;
-            } catch (e) {
-                document.getElementById('doctorsList').innerHTML = `<h2 style="text-align: center; width: 100%;">خطأ في الاتصال بالخادم</h2>`;
-            }
+            } catch (e) { }
         }
-
+    </script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
         const socket = io('https://clinic-server-i00s.onrender.com');
-        
         socket.on('call_patient', (data) => {
             const card = document.getElementById(`card-${data.clinic_slug}`);
             const numEl = document.getElementById(`num-${data.clinic_slug}`);
             if(card && numEl) {
                 numEl.innerText = data.current_number;
-                
-                // تشغيل جرس التنبيه
                 const audio = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
                 audio.play().catch(e => console.log('Autoplay blocked'));
-                
-                // أنيميشن النبض
                 card.classList.add('active-call');
                 setTimeout(() => card.classList.remove('active-call'), 5000);
                 fetchDoctors(); 
             }
         });
-
         socket.on('new_ticket', () => { fetchDoctors(); });
     </script>
 </body>

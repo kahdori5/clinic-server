@@ -10,54 +10,42 @@
         [data-theme="dark"] { --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --accent: #10b981; --border: #334155; --muted: #94a3b8; }
         body { font-family: 'Tajawal', sans-serif; background: var(--bg); color: var(--text); margin: 0; min-height: 100vh; display: flex; transition: 0.3s; overflow: hidden; }
         
-        .sidebar { width: 260px; background: var(--card); border-inline-end: 1px solid var(--border); display: flex; flex-direction: column; padding: 25px 0; z-index: 10; justify-content: space-between; }
+        .sidebar { width: 260px; background: var(--card); border-inline-end: 1px solid var(--border); display: flex; flex-direction: column; padding: 25px 0; z-index: 10; justify-content: space-between; transition: 0.3s; }
         .logo { font-size: 1.5rem; font-weight: 800; text-align: center; margin-bottom: 20px; color: var(--text); }
-        .nav-item { padding: 16px 25px; color: var(--muted); text-decoration: none; display: flex; align-items: center; gap: 10px; font-weight: 500; cursor: pointer; border-inline-end: 4px solid transparent; }
+        .nav-item { padding: 16px 25px; color: var(--muted); text-decoration: none; display: flex; align-items: center; gap: 10px; font-weight: 500; cursor: pointer; border-inline-end: 4px solid transparent; font-size: 1.05rem; transition: 0.3s; }
         .nav-item:hover, .nav-item.active { background: rgba(16, 185, 129, 0.1); color: var(--accent); border-color: var(--accent); }
-        .support-box { padding: 20px; margin: 15px; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 16px; text-align: center; }
-        .support-box span { font-size: 0.85rem; color: var(--muted); display: block; margin-bottom: 8px; }
-        .support-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: var(--accent); color: white; padding: 10px 15px; border-radius: 10px; text-decoration: none; font-weight: bold; font-size: 0.9rem; width: 100%; box-sizing: border-box; }
         
         .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
         header { display: flex; justify-content: space-between; align-items: center; padding: 15px 30px; border-bottom: 1px solid var(--border); background: var(--card); }
         .controls { display: flex; gap: 10px; }
-        select, .theme-btn { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 8px 15px; border-radius: 12px; cursor: pointer; outline: none; font-weight: bold; }
+        select, .theme-btn { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 8px 15px; border-radius: 12px; cursor: pointer; outline: none; font-weight: bold; font-family: inherit; transition: 0.3s; }
         
-        .content-scroll { padding: 40px; overflow-y: auto; flex: 1; }
+        .content-scroll { padding: 40px; overflow-y: auto; flex: 1; scroll-behavior: smooth; }
         
-        /* شاشة النداء والملف الطبي */
         .call-wrapper { display: flex; gap: 25px; flex-wrap: wrap; align-items: flex-start; justify-content: center; }
         .control-card { background: var(--card); padding: 40px; border-radius: 24px; text-align: center; border: 1px solid var(--border); flex: 1; min-width: 320px; max-width: 450px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
         .number-display { font-size: 7rem; font-weight: 800; margin: 15px 0; line-height: 1; color: var(--text); }
         
-        /* بطاقة الملف الطبي الاختياري */
         .medical-card { background: var(--card); padding: 35px; border-radius: 24px; border: 1px solid var(--border); flex: 2; min-width: 350px; max-width: 600px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); display: none; animation: fadeIn 0.4s ease; }
-        .medical-card h3 { margin-top: 0; color: var(--accent); font-size: 1.4rem; border-bottom: 2px dashed var(--border); padding-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
         .input-group label { display: block; color: var(--muted); font-size: 0.85rem; font-weight: bold; margin-bottom: 5px; }
         .input-group input, .input-group textarea { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); outline: none; font-family: inherit; box-sizing: border-box; }
-        .input-group textarea { resize: vertical; min-height: 80px; }
-        .prescription-area { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); }
         
-        .btn { padding: 16px; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: bold; cursor: pointer; color: white; width: 100%; margin-bottom: 15px; font-family: inherit; transition: 0.2s; }
-        .btn:hover { filter: brightness(1.1); transform: translateY(-2px); }
+        .btn { padding: 16px; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: bold; cursor: pointer; color: white; width: 100%; margin-bottom: 15px; font-family: inherit; }
         .btn-call { background: var(--accent); font-size: 1.3rem; }
         .status-btns { display: flex; gap: 10px; margin-bottom: 20px; }
         .btn-done { background: #3b82f6; flex: 1; }
         .btn-absent { background: var(--danger); flex: 1; }
         .btn-outline { background: transparent; border: 2px solid var(--accent); color: var(--accent); }
         
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 25px; width: 100%; max-width: 900px; margin: 0 auto; }
-        .stat-card { background: var(--card); padding: 30px; border-radius: 24px; border: 1px solid var(--border); text-align: center; }
-        .stat-card span { color: var(--muted); font-size: 1.1rem; display: block; margin-bottom: 15px; }
-        .stat-card strong { font-size: 4rem; color: var(--text); line-height: 1; display: block; }
+        /* أرشيف المرضى */
+        .search-bar { width: 100%; max-width: 600px; padding: 15px 20px; border-radius: 12px; border: 2px solid var(--border); background: var(--card); color: var(--text); font-size: 1.1rem; margin-bottom: 30px; outline: none; }
+        .patients-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .patient-card { background: var(--card); padding: 25px; border-radius: 16px; border: 1px solid var(--border); display: flex; flex-direction: column; justify-content: space-between; }
+        .btn-small { padding: 8px 15px; font-size: 0.9rem; margin-bottom: 0; background: rgba(16, 185, 129, 0.1); color: var(--accent); border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
         
         .toast-container { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 10px; z-index: 9999; }
-        .toast { background: var(--card); color: var(--text); padding: 16px 25px; border-radius: 12px; border-inline-start: 5px solid var(--accent); font-weight: bold; display: flex; align-items: center; gap: 12px; animation: slideUp 0.4s ease; }
-        .toast.warning { border-color: var(--warning); }
-        
-        @keyframes slideUp { from { opacity: 0; transform: translateY(50px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .toast { background: var(--card); color: var(--text); padding: 16px 25px; border-radius: 12px; border-inline-start: 5px solid var(--accent); font-weight: bold; }
         
         .tab-content { display: none; }
         .tab-content.active { display: block; }
@@ -70,22 +58,16 @@
             <div class="logo">Clinic<span>Flow</span><br><span style="font-size: 0.85rem; color: var(--muted); font-weight: 500;" id="clinicNameDisplay">--</span></div>
             <div style="margin-top: 20px; display: flex; flex-direction: column; width: 100%;">
                 <div class="nav-item active" onclick="switchTab('call-tab', this)">📢 شاشة النداء</div>
+                <!-- زر أرشيف المرضى هنا في القائمة -->
+                <div class="nav-item" onclick="switchTab('patients-tab', this)">📂 أرشيف المرضى</div>
                 <div class="nav-item" onclick="switchTab('stats-tab', this)">📊 إحصائيات العيادة</div>
             </div>
-        </div>
-        
-        <div class="support-box">
-            <span>تواجه مشكلة تقنية؟</span>
-            <!-- تم تجهيز الرابط للاتصال الفوري -->
-            <a href="tel:+213555000000" class="support-btn" id="supportPhoneLink">📞 اتصال بالمتحكم</a>
         </div>
     </div>
 
     <div class="main-content">
         <header>
-            <div style="font-weight: 800; font-size: 1.3rem; display: flex; align-items: center; gap: 10px;">
-                👨‍⚕️ لوحة الطبيب
-            </div>
+            <div style="font-weight: 800; font-size: 1.3rem;">👨‍⚕️ لوحة الطبيب</div>
             <div class="controls">
                 <button class="theme-btn" onclick="toggleTheme()">🌓 الوضع الليلي</button>
             </div>
@@ -93,9 +75,9 @@
 
         <div class="content-scroll">
             
+            <!-- التبويبة الأولى: شاشة النداء -->
             <div id="call-tab" class="tab-content active">
                 <div class="call-wrapper">
-                    <!-- لوحة التحكم بالنداء -->
                     <div class="control-card">
                         <h2 style="margin:0; color: var(--muted); font-size: 1.2rem;">رقم المريض بالداخل</h2>
                         <div class="number-display" id="currentNumber">--</div>
@@ -108,83 +90,52 @@
                         <button class="btn btn-call" onclick="callNextPatient()">📢 مناداة المريض التالي</button>
                     </div>
 
-                    <!-- الملف الطبي والوصفة (تظهر فقط عند وجود مريض) -->
                     <div class="medical-card" id="medicalCard">
                         <h3>📋 الملف الطبي <span style="font-size:0.8rem; background:var(--bg); padding:4px 10px; border-radius:10px; color:var(--muted);">اختياري</span></h3>
-                        
                         <div class="form-grid">
-                            <div class="input-group">
-                                <label>العمر:</label>
-                                <input type="text" id="mAge" placeholder="مثال: 34 سنة">
-                            </div>
-                            <div class="input-group">
-                                <label>فصيلة الدم:</label>
-                                <input type="text" id="mBlood" placeholder="مثال: O+">
-                            </div>
+                            <div class="input-group"><label>العمر:</label><input type="text" id="mAge"></div>
+                            <div class="input-group"><label>فصيلة الدم:</label><input type="text" id="mBlood"></div>
                         </div>
                         <div class="form-grid">
-                            <div class="input-group">
-                                <label>حساسية للأدوية:</label>
-                                <input type="text" id="mAllergy" placeholder="لا يوجد">
-                            </div>
-                            <div class="input-group">
-                                <label>أمراض مزمنة:</label>
-                                <input type="text" id="mChronic" placeholder="سكري، ضغط...">
-                            </div>
+                            <div class="input-group"><label>حساسية للأدوية:</label><input type="text" id="mAllergy"></div>
+                            <div class="input-group"><label>أمراض مزمنة:</label><input type="text" id="mChronic"></div>
                         </div>
                         <div class="input-group">
-                            <label>التشخيص والملاحظات (زيارة اليوم):</label>
-                            <textarea id="mNotes" placeholder="أعراض المريض وتشخيص الطبيب..."></textarea>
+                            <label>التشخيص والملاحظات:</label>
+                            <textarea id="mNotes"></textarea>
                         </div>
-                        
                         <button class="btn btn-outline" style="margin-top:10px;" onclick="saveMedicalRecord()">💾 حفظ الملف الطبي للمريض</button>
 
-                        <div class="prescription-area">
-                            <h4 style="margin-top:0; color:var(--text);">💊 الوصفة الطبية (Ordonnance)</h4>
-                            <div class="input-group">
-                                <textarea id="mPrescription" placeholder="اكتب الأدوية هنا، كل دواء في سطر..."></textarea>
-                            </div>
-                            <button class="btn" style="background:var(--text); color:var(--bg);" onclick="printPrescription()">🖨️ طباعة الوصفة الطبية</button>
-                        </div>
+                        <h4 style="margin-top:20px; border-top: 1px solid var(--border); padding-top:20px;">💊 الوصفة الطبية (Ordonnance)</h4>
+                        <div class="input-group"><textarea id="mPrescription" placeholder="اكتب الأدوية هنا..."></textarea></div>
+                        <button class="btn" style="background:var(--text); color:var(--bg);" onclick="printPrescription()">🖨️ طباعة الوصفة الطبية</button>
                     </div>
                 </div>
             </div>
 
-            <!-- صفحة الإحصائيات -->
-            <div id="stats-tab" class="tab-content">
-                <h2 style="margin-top: 0; margin-bottom: 30px; color: var(--text); text-align: center;">نظرة عامة على أداء العيادة</h2>
-                <div class="stats-grid">
-                    <div class="stat-card" style="border: 2px solid var(--accent); background: rgba(16, 185, 129, 0.05);">
-                        <span style="color: var(--accent); font-weight: bold;">المرضى في الانتظار حالياً</span>
-                        <strong id="statWaiting" style="color: var(--accent);">0</strong>
-                    </div>
-                    <div class="stat-card">
-                        <span>إجمالي مرضى اليوم</span>
-                        <strong id="statToday">0</strong>
-                    </div>
-                    <div class="stat-card">
-                        <span>مرضى هذا الأسبوع</span>
-                        <strong id="statWeekly">0</strong>
-                    </div>
-                    <div class="stat-card">
-                        <span>مرضى هذا الشهر</span>
-                        <strong id="statMonthly">0</strong>
-                    </div>
+            <!-- التبويبة الثانية: أرشيف المرضى (تأكد أنها موجودة) -->
+            <div id="patients-tab" class="tab-content" style="display: none; padding: 0 20px;">
+                <h2 style="margin-top: 0; color: var(--text);">📂 أرشيف ومراجعات المرضى</h2>
+                <input type="text" id="searchInput" class="search-bar" placeholder="🔍 ابحث عن مريض بالاسم..." onkeyup="filterPatients()">
+                <div class="patients-list" id="patientsListContainer">
+                    <p style="color: var(--muted); text-align: center; width: 100%;">جاري تحميل البيانات...</p>
                 </div>
             </div>
+
+            <!-- التبويبة الثالثة: الإحصائيات -->
+            <div id="stats-tab" class="tab-content" style="display: none; text-align: center;">
+                <h2 style="margin-top: 0; margin-bottom: 30px;">نظرة عامة على أداء العيادة</h2>
+                <div style="font-size: 2rem; color: var(--accent);">في الانتظار حالياً: <span id="statWaiting">0</span></div>
+            </div>
+
         </div>
     </div>
 
     <div id="toastContainer" class="toast-container"></div>
 
-    <script src="/socket.io/socket.io.js"></script>
     <script>
         const CLINIC_SLUG = new URLSearchParams(window.location.search).get('clinic') || 'default-clinic';
         if(CLINIC_SLUG !== 'default-clinic') document.getElementById('clinicNameDisplay').innerText = `(${CLINIC_SLUG})`;
-
-        // يمكنك تغيير الرقم هنا ليظهر للطبيب للاتصال بك
-        const ADMIN_PHONE = "+213555000000"; 
-        document.getElementById('supportPhoneLink').href = `tel:${ADMIN_PHONE}`;
 
         const toggleTheme = () => {
             const isDark = document.body.getAttribute('data-theme') !== 'dark';
@@ -193,28 +144,31 @@
         };
 
         function switchTab(tabId, el) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
+            document.getElementById(tabId).style.display = 'block';
             el.classList.add('active');
+            
+            // بمجرد الضغط على تبويبة الأرشيف، يتم جلب المرضى من السيرفر
+            if(tabId === 'patients-tab') fetchAllPatients();
         }
 
-        function showToast(message, type = 'success') {
+        function showToast(message) {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            toast.innerText = message;
+            toast.className = `toast`; toast.innerText = message;
             container.appendChild(toast);
-            setTimeout(() => { toast.remove(); }, 3500);
+            setTimeout(() => { toast.remove(); }, 3000);
         }
 
         let currentNum = 0;
         let activePatientName = '';
         let activeDoctorName = 'الطبيب المختص';
+        let allPatientsData = [];
 
         window.onload = async () => {
             if(localStorage.getItem('theme') === 'dark') document.body.setAttribute('data-theme', 'dark');
-            await fetchStatus(); await fetchStats();
+            await fetchStatus();
         };
 
         async function fetchStatus() {
@@ -226,18 +180,6 @@
             } catch(e) {}
         }
 
-        async function fetchStats() {
-            try {
-                const res = await fetch(`https://clinic-server-i00s.onrender.com/api/doctor-stats/${CLINIC_SLUG}`);
-                const data = await res.json();
-                document.getElementById('statWaiting').innerText = data.waiting;
-                document.getElementById('statToday').innerText = data.today;
-                document.getElementById('statWeekly').innerText = data.weekly;
-                document.getElementById('statMonthly').innerText = data.monthly;
-            } catch(e) {}
-        }
-
-        // مناداة المريض وجلب ملفه الطبي
         async function callNextPatient() {
             try {
                 const res = await fetch('https://clinic-server-i00s.onrender.com/api/call-next', {
@@ -251,22 +193,20 @@
                     activeDoctorName = data.doctor_name;
                     
                     document.getElementById('currentNumber').innerText = currentNum;
-                    document.getElementById('currentPatientName').innerText = `👤 المريض: ${activePatientName}`;
+                    document.getElementById('currentPatientName').innerText = `👤 ${activePatientName}`;
                     document.getElementById('medicalCard').style.display = 'block'; 
                     
-                    showToast(`📢 تم مناداة الرقم: ${currentNum}`, 'success');
-                    fetchStats(); 
-                    
-                    await loadMedicalRecord();
-                } else { showToast('⚠️ لا يوجد أي مريض في الانتظار حالياً.', 'warning'); }
-            } catch(e) { showToast('خطأ في الاتصال', 'error'); }
+                    showToast(`تم مناداة الرقم: ${currentNum}`);
+                    await loadMedicalRecord(activePatientName);
+                } else { showToast('لا يوجد مريض في الانتظار'); }
+            } catch(e) { }
         }
 
-        async function loadMedicalRecord() {
+        async function loadMedicalRecord(pName) {
             try {
                 const res = await fetch('https://clinic-server-i00s.onrender.com/api/patient/get', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ clinic_slug: CLINIC_SLUG, patient_name: activePatientName })
+                    body: JSON.stringify({ clinic_slug: CLINIC_SLUG, patient_name: pName })
                 });
                 const data = await res.json();
                 document.getElementById('mAge').value = data.age || '';
@@ -291,78 +231,104 @@
                     notes: document.getElementById('mNotes').value
                 };
                 await fetch('https://clinic-server-i00s.onrender.com/api/patient/save', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
                 });
-                showToast('✔️ تم حفظ الملف الطبي للمريض بنجاح', 'success');
-            } catch(e) { showToast('خطأ أثناء الحفظ', 'error'); }
+                showToast('تم حفظ الملف الطبي بنجاح');
+            } catch(e) { }
         }
 
-        // طباعة الوصفة الطبية بضغطة زر (مع سحب العمر تلقائياً)
         function printPrescription() {
-            if(!activePatientName) return showToast('⚠️ يجب مناداة المريض أولاً', 'warning');
+            if(!activePatientName) return;
             const prescriptionText = document.getElementById('mPrescription').value.trim();
-            if(!prescriptionText) return showToast('⚠️ الوصفة فارغة، يرجى كتابة الأدوية أولاً', 'warning');
-
-            const ageText = document.getElementById('mAge').value.trim() || 'غير محدد';
+            const ageText = document.getElementById('mAge').value.trim() || '--';
             const dateStr = new Date().toLocaleDateString('ar-DZ');
             const printWindow = window.open('', '', 'width=800,height=600');
             
             printWindow.document.write(`
                 <html dir="rtl" lang="ar">
-                <head>
-                    <title>وصفة طبية - ${activePatientName}</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; padding: 40px; color: #333; }
-                        .header { display: flex; justify-content: space-between; border-bottom: 2px solid #10b981; padding-bottom: 20px; margin-bottom: 30px; }
-                        .clinic-info { font-size: 1.2rem; font-weight: bold; color: #10b981; }
-                        .date-info { font-size: 1rem; color: #555; }
-                        .patient-info { font-size: 1.4rem; font-weight: bold; margin-bottom: 40px; display: flex; justify-content: space-between; background: #f9f9f9; padding: 15px; border-radius: 10px; }
-                        .prescription-body { font-size: 1.2rem; line-height: 2; white-space: pre-wrap; min-height: 300px; }
-                        .footer { margin-top: 50px; text-align: left; font-size: 1.2rem; font-weight: bold; color: #555; }
-                        @media print { @page { size: A5; margin: 10mm; } }
-                    </style>
-                </head>
+                <head><style>body{font-family:Arial; padding:40px;} .header{display:flex; justify-content:space-between; border-bottom:2px solid #10b981; padding-bottom:20px;}</style></head>
                 <body>
-                    <div class="header">
-                        <div class="clinic-info">العيادة الطبية<br>${activeDoctorName}</div>
-                        <div class="date-info">التاريخ: ${dateStr}</div>
+                    <div class="header"><div>العيادة الطبية<br>${activeDoctorName}</div><div>التاريخ: ${dateStr}</div></div>
+                    <div style="background:#f9f9f9; padding:15px; margin:20px 0; font-weight:bold; display:flex; justify-content:space-between;">
+                        <span>المريض: ${activePatientName}</span><span>العمر: ${ageText}</span>
                     </div>
-                    
-                    <div class="patient-info">
-                        <span>المريض: ${activePatientName}</span>
-                        <span>العمر: ${ageText}</span>
-                    </div>
-                    
-                    <div class="prescription-body">${prescriptionText}</div>
-                    
-                    <div class="footer">توقيع الطبيب</div>
+                    <div style="font-size:1.2rem; line-height:2; min-height:300px; white-space:pre-wrap;">${prescriptionText}</div>
+                    <div style="margin-top:50px; font-weight:bold;">توقيع الطبيب</div>
                 </body>
                 </html>
             `);
-            printWindow.document.close();
-            printWindow.focus();
+            printWindow.document.close(); printWindow.focus();
             setTimeout(() => { printWindow.print(); printWindow.close(); }, 500);
         }
 
         async function setStatus(statusType) {
-            if(currentNum === 0) return showToast('لا يوجد مريض بالداخل', 'warning');
+            if(currentNum === 0) return;
             try {
                 await fetch('https://clinic-server-i00s.onrender.com/api/tickets/status', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ clinic_slug: CLINIC_SLUG, ticket_number: currentNum, status: statusType })
                 });
-                showToast('✔️ تم تسجيل حالة المريض.', 'success');
+                showToast('تم تسجيل حالة المريض.');
                 document.getElementById('medicalCard').style.display = 'none';
                 document.getElementById('currentPatientName').innerText = '--';
                 activePatientName = '';
-            } catch(e) { showToast('خطأ في الاتصال', 'error'); }
+            } catch(e) { }
         }
 
+        // --- دوال الأرشيف ---
+        async function fetchAllPatients() {
+            try {
+                const res = await fetch(`https://clinic-server-i00s.onrender.com/api/patients/all/${CLINIC_SLUG}`);
+                allPatientsData = await res.json();
+                renderPatientsList(allPatientsData);
+            } catch(e) { document.getElementById('patientsListContainer').innerHTML = `<p style="color:red;">خطأ</p>`; }
+        }
+
+        function renderPatientsList(patientsArray) {
+            const container = document.getElementById('patientsListContainer');
+            if(!patientsArray || patientsArray.length === 0) return container.innerHTML = `<p style="color: var(--muted); text-align: center; width: 100%;">لا يوجد مرضى مسجلين بعد.</p>`;
+            
+            let html = '';
+            patientsArray.forEach(p => {
+                const lastVisit = new Date(p.updated_at).toLocaleDateString('ar-DZ');
+                html += `
+                    <div class="patient-card">
+                        <div style="font-size: 1.2rem; font-weight: bold; margin-bottom: 10px;">👤 ${p.patient_name}</div>
+                        <div style="font-size: 0.9rem; color: var(--muted); margin-bottom: 15px; line-height: 1.6;">
+                            <strong>العمر:</strong> ${p.age || '--'} <br>
+                            <strong>الأمراض:</strong> ${p.chronic_diseases || 'لا يوجد'} <br>
+                            <strong>آخر زيارة:</strong> ${lastVisit}
+                        </div>
+                        <button class="btn-small" onclick="reviewPatient('${p.patient_name}')">✏️ فتح ملف المريض</button>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function filterPatients() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = allPatientsData.filter(p => p.patient_name.toLowerCase().includes(query));
+            renderPatientsList(filtered);
+        }
+
+        function reviewPatient(pName) {
+            activePatientName = pName;
+            document.getElementById('currentPatientName').innerText = `👤 المراجعة: ${pName}`;
+            document.getElementById('medicalCard').style.display = 'block';
+            
+            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById('call-tab').style.display = 'block';
+            document.querySelectorAll('.nav-item')[0].classList.add('active'); 
+            
+            loadMedicalRecord(pName);
+        }
+    </script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
         const socket = io('https://clinic-server-i00s.onrender.com');
-        socket.on('new_ticket', (data) => {
-            if(data.clinic_slug === CLINIC_SLUG) { fetchStats(); }
-        });
+        socket.on('new_ticket', (data) => { if(data.clinic_slug === CLINIC_SLUG) fetchStatus(); });
     </script>
 </body>
 </html>
