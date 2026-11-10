@@ -230,7 +230,6 @@ app.post('/api/patient/save', async (req, res) => {
     }
 });
 
-// 🔥 مسار حذف مريض من الأرشيف
 app.delete('/api/patients/delete/:id', async (req, res) => {
     try {
         await ensureArchiveTable();
@@ -310,11 +309,14 @@ app.get('/api/queue-status/:clinic_slug', async (req, res) => {
     }
 });
 
+// 🔥 تحديث دالة إحصائيات الطبيب لحساب الإحصائيات الأسبوعية والشهرية بدقة
 app.get('/api/doctor-stats/:clinic_slug', async (req, res) => {
     try {
         const clinic = await db.query('SELECT id FROM clinics WHERE slug = $1', [req.params.clinic_slug]);
         if (clinic.rows.length === 0) return res.json({ today: 0, waiting: 0, weekly: 0, monthly: 0 });
         const cId = clinic.rows[0].id;
+        
+        // إحصائيات اليوم والانتظار
         let q = await db.query('SELECT id, current_number, last_issued_number FROM queues WHERE clinic_id = $1 AND queue_date = CURRENT_DATE', [cId]);
         let today = 0, waiting = 0;
         if (q.rows.length > 0) {
@@ -324,7 +326,26 @@ app.get('/api/doctor-stats/:clinic_slug', async (req, res) => {
             const waitRes = await db.query(`SELECT COUNT(*) FROM tickets WHERE queue_id = $1 AND ticket_number > $2 AND status != 'cancelled'`, [q.rows[0].id, q.rows[0].current_number]);
             waiting = parseInt(waitRes.rows[0].count || 0);
         }
-        res.json({ today, waiting, weekly: today, monthly: today });
+
+        // إحصائيات الأسبوع (آخر 7 أيام)
+        const weeklyRes = await db.query(`
+            SELECT COUNT(*) 
+            FROM tickets t
+            JOIN queues q ON t.queue_id = q.id
+            WHERE q.clinic_id = $1 AND q.queue_date >= CURRENT_DATE - INTERVAL '7 days' AND t.status != 'cancelled'
+        `, [cId]);
+        const weekly = parseInt(weeklyRes.rows[0].count || 0);
+
+        // إحصائيات الشهر (آخر 30 يوماً)
+        const monthlyRes = await db.query(`
+            SELECT COUNT(*) 
+            FROM tickets t
+            JOIN queues q ON t.queue_id = q.id
+            WHERE q.clinic_id = $1 AND q.queue_date >= CURRENT_DATE - INTERVAL '30 days' AND t.status != 'cancelled'
+        `, [cId]);
+        const monthly = parseInt(monthlyRes.rows[0].count || 0);
+
+        res.json({ today, waiting, weekly, monthly });
     } catch (e) {
         res.status(500).json({ error: e.message });
     }

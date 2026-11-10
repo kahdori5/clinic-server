@@ -45,9 +45,11 @@
         .btn-absent { background: var(--danger); flex: 1; }
         .btn-outline { background: transparent; border: 2px solid var(--accent); color: var(--accent); }
         
+        /* تصميم أنيق لبطاقات الإحصائيات */
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 25px; width: 100%; max-width: 900px; margin: 0 auto; }
-        .stat-card { background: var(--card); padding: 30px; border-radius: 24px; border: 1px solid var(--border); text-align: center; }
-        .stat-card span { color: var(--muted); font-size: 1.1rem; display: block; margin-bottom: 15px; }
+        .stat-card { background: var(--card); padding: 30px; border-radius: 24px; border: 1px solid var(--border); text-align: center; box-shadow: 0 5px 20px rgba(0,0,0,0.03); transition: 0.3s; }
+        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0,0,0,0.06); }
+        .stat-card span { color: var(--muted); font-size: 1.1rem; display: block; margin-bottom: 15px; font-weight: bold; }
         .stat-card strong { font-size: 4rem; color: var(--text); line-height: 1; display: block; }
         
         .archive-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 25px; }
@@ -56,7 +58,7 @@
         .patients-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
         .patient-card { background: var(--card); padding: 25px; border-radius: 16px; border: 1px solid var(--border); transition: 0.3s; display: flex; flex-direction: column; justify-content: space-between; }
         .patient-card:hover { transform: translateY(-3px); border-color: var(--accent); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
-        .patient-name { font-size: 1.2rem; font-weight: bold; color: var(--text); margin-bottom: 10px; }
+        .patient-name { font-size: 1.2rem; font-weight: bold; color: var(--text); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
         .patient-details { font-size: 0.9rem; color: var(--muted); line-height: 1.6; margin-bottom: 15px; }
         
         .archive-actions { display: flex; gap: 10px; }
@@ -65,7 +67,6 @@
         .btn-delete { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
         .btn-delete:hover { background: var(--danger); color: white; }
 
-        /* صفحة تفاصيل وتعديل المريض المستقلة */
         #patientDetailView { display: none; background: var(--card); padding: 35px; border-radius: 24px; border: 1px solid var(--border); max-width: 700px; margin: 0 auto; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
 
         .toast-container { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 10px; z-index: 9999; }
@@ -180,7 +181,6 @@
             <!-- 2. أرشيف المرضى -->
             <div id="patients-tab" class="tab-content" style="display: none; padding: 0 20px;">
                 
-                <!-- قائمة الأرشيف -->
                 <div id="archiveListView">
                     <div class="archive-header">
                         <h2 style="margin: 0; color: var(--text);" data-i18n="archiveTitle">📂 أرشيف ومراجعات المرضى</h2>
@@ -194,14 +194,12 @@
                     </div>
                 </div>
 
-                <!-- صفحة تفاصيل وتعديل المريض المستقلة (بدون إظهار شاشة النداء والترقيم) -->
                 <div id="patientDetailView">
                     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border); padding-bottom: 15px; margin-bottom: 20px;">
-                        <h2 style="margin:0; color: var(--accent);" data-i18n="editTitle">✏️ تفاصيل وتعديل ملف المريض</h2>
+                        <h2 style="margin:0; color: var(--accent);" data-i18n="editTitle">📄 تفاصيل وتعديل ملف المريض</h2>
                         <button class="btn" style="width: auto; margin:0; padding: 8px 15px; background: var(--muted);" onclick="closePatientDetail()" data-i18n="backBtn">⬅️ العودة للأرشيف</button>
                     </div>
                     
-                    <!-- نموذج التعديل المستقل -->
                     <div class="input-group" style="margin-bottom: 15px;">
                         <label data-i18n="lblPatientName">اسم المريض:</label>
                         <input type="text" id="editName">
@@ -239,17 +237,25 @@
 
             </div>
 
-            <!-- 3. الإحصائيات -->
+            <!-- 3. الإحصائيات (مُحدَّثة) -->
             <div id="stats-tab" class="tab-content" style="display: none; text-align: center;">
                 <h2 style="margin-top: 0; margin-bottom: 30px; color: var(--text);" data-i18n="statsHeader">نظرة عامة على أداء العيادة</h2>
                 <div class="stats-grid">
                     <div class="stat-card" style="border: 2px solid var(--accent); background: rgba(16, 185, 129, 0.05);">
-                        <span style="color: var(--accent); font-weight: bold;" data-i18n="statWaiting">المرضى في الانتظار حالياً</span>
+                        <span style="color: var(--accent);" data-i18n="statWaiting">المرضى في الانتظار حالياً</span>
                         <strong id="statWaiting" style="color: var(--accent);">0</strong>
                     </div>
                     <div class="stat-card">
                         <span data-i18n="statToday">إجمالي مرضى اليوم</span>
                         <strong id="statToday">0</strong>
+                    </div>
+                    <div class="stat-card">
+                        <span data-i18n="statWeekly">مرضى هذا الأسبوع</span>
+                        <strong id="statWeekly">0</strong>
+                    </div>
+                    <div class="stat-card">
+                        <span data-i18n="statMonthly">مرضى هذا الشهر</span>
+                        <strong id="statMonthly">0</strong>
                     </div>
                 </div>
             </div>
@@ -270,8 +276,8 @@
                 insideNow: "رقم المريض بالداخل", callNext: "📢 مناداة المريض التالي", btnDone: "✔️ تم الكشف", btnAbsent: "❌ غائب",
                 medicalFileTitle: "📋 الملف الطبي", optional: "اختياري", lblPatientName: "اسم المريض:", lblAge: "العمر:", lblBlood: "فصيلة الدم:", lblAllergy: "حساسية للأدوية:", lblChronic: "أمراض مزمنة:", lblNotes: "التشخيص والملاحظات:", btnSaveFile: "💾 حفظ الملف الطبي للمريض", prescTitle: "💊 الوصفة الطبية (Ordonnance)", btnPrintPresc: "🖨️ طباعة الوصفة الطبية",
                 archiveTitle: "📂 أرشيف ومراجعات المرضى", btnNewPatient: "+ إضافة ملف مريض جديد", searchPlaceholder: "🔍 ابحث عن مريض بالاسم...", loading: "جاري التحميل...", noPatients: "لا يوجد مرضى مسجلين في الأرشيف بعد.", 
-                viewBtn: "👁️ التفاصيل والتعديل", deleteBtn: "🗑️ حذف", editTitle: "✏️ تفاصيل وتعديل ملف المريض", backBtn: "⬅️ العودة للأرشيف", saveEditBtn: "💾 حفظ التعديلات",
-                statsHeader: "نظرة عامة على أداء العيادة", statWaiting: "المرضى في الانتظار حالياً", statToday: "إجمالي مرضى اليوم",
+                viewBtn: "👁️ التفاصيل والتعديل", deleteBtn: "🗑️ حذف", editTitle: "📄 تفاصيل وتعديل ملف المريض", backBtn: "⬅️ العودة للأرشيف", saveEditBtn: "💾 حفظ التعديلات",
+                statsHeader: "نظرة عامة على أداء العيادة", statWaiting: "المرضى في الانتظار حالياً", statToday: "إجمالي مرضى اليوم", statWeekly: "مرضى هذا الأسبوع", statMonthly: "مرضى هذا الشهر",
                 errNoPatient: "⚠️ لا يوجد أي مريض في الانتظار.", errEmpty: "لا يوجد مريض لتسجيل حالته.", successStatus: "✔️ تم الحفظ بنجاح.", successCall: "📢 تم مناداة الرقم:", errSave: "خطأ أثناء الحفظ"
             },
             fr: { 
@@ -279,8 +285,8 @@
                 insideNow: "Patient Actuel", callNext: "📢 Patient Suivant", btnDone: "✔️ Terminé", btnAbsent: "❌ Absent",
                 medicalFileTitle: "📋 Dossier Médical", optional: "Optionnel", lblPatientName: "Nom du patient:", lblAge: "Âge:", lblBlood: "Groupe Sanguin:", lblAllergy: "Allergies:", lblChronic: "Maladies chroniques:", lblNotes: "Diagnostic / Notes:", btnSaveFile: "💾 Enregistrer le dossier", prescTitle: "💊 Ordonnance", btnPrintPresc: "🖨️ Imprimer l'ordonnance",
                 archiveTitle: "📂 Archives des Patients", btnNewPatient: "+ Nouveau Dossier", searchPlaceholder: "🔍 Rechercher un patient...", loading: "Chargement...", noPatients: "Aucun patient enregistré.", 
-                viewBtn: "👁️ Détails & Modifier", deleteBtn: "🗑️ Supprimer", editTitle: "✏️ Modifier le dossier", backBtn: "⬅️ Retour", saveEditBtn: "💾 Enregistrer",
-                statsHeader: "Aperçu des performances", statWaiting: "Patients en attente", statToday: "Total aujourd'hui",
+                viewBtn: "👁️ Détails & Modifier", deleteBtn: "🗑️ Supprimer", editTitle: "📄 Modifier le dossier", backBtn: "⬅️ Retour", saveEditBtn: "💾 Enregistrer",
+                statsHeader: "Aperçu des performances", statWaiting: "Patients en attente", statToday: "Total aujourd'hui", statWeekly: "Cette semaine", statMonthly: "Ce mois-ci",
                 errNoPatient: "⚠️ Aucun patient en attente.", errEmpty: "Aucun patient.", successStatus: "✔️ Enregistré avec succès.", successCall: "📢 Appel:", errSave: "Erreur"
             },
             en: { 
@@ -288,8 +294,8 @@
                 insideNow: "Current Patient", callNext: "📢 Call Next", btnDone: "✔️ Done", btnAbsent: "❌ Absent",
                 medicalFileTitle: "📋 Medical Record", optional: "Optional", lblPatientName: "Patient Name:", lblAge: "Age:", lblBlood: "Blood Type:", lblAllergy: "Allergies:", lblChronic: "Chronic Diseases:", lblNotes: "Diagnosis & Notes:", btnSaveFile: "💾 Save Medical Record", prescTitle: "💊 Prescription", btnPrintPresc: "🖨️ Print Prescription",
                 archiveTitle: "📂 Patients Archive", btnNewPatient: "+ Add New Patient File", searchPlaceholder: "🔍 Search patient by name...", loading: "Loading...", noPatients: "No patients registered in archive yet.", 
-                viewBtn: "👁️ Details & Edit", deleteBtn: "🗑️ Delete", editTitle: "✏️ Edit Patient File", backBtn: "⬅️ Back", saveEditBtn: "💾 Save Changes",
-                statsHeader: "Clinic Performance", statWaiting: "Patients waiting", statToday: "Total today",
+                viewBtn: "👁️ Details & Edit", deleteBtn: "🗑️ Delete", editTitle: "📄 Edit Patient File", backBtn: "⬅️ Back", saveEditBtn: "💾 Save Changes",
+                statsHeader: "Clinic Performance", statWaiting: "Patients waiting", statToday: "Total today", statWeekly: "This week", statMonthly: "This month",
                 errNoPatient: "⚠️ No patients waiting.", errEmpty: "No patient selected.", successStatus: "✔️ Saved successfully.", successCall: "📢 Called:", errSave: "Error saving"
             }
         };
@@ -303,7 +309,7 @@
                 const key = el.getAttribute('data-i18n');
                 if (dict[lang][key]) el.innerText = dict[lang][key];
             });
-            if (document.getElementById('searchInput')) document.getElementById('searchInput').placeholder = dict[lang][el.getAttribute('data-i18n')];
+            if (document.getElementById('searchInput')) document.getElementById('searchInput').placeholder = dict[lang].searchPlaceholder;
         }
 
         const toggleTheme = () => {
@@ -322,6 +328,8 @@
                 document.getElementById('patientDetailView').style.display = 'none';
                 document.getElementById('archiveListView').style.display = 'block';
                 fetchAllPatients();
+            } else if (tabId === 'stats-tab') {
+                fetchStats(); // جلب الإحصائيات عند فتح التبويبة
             }
         }
 
@@ -389,6 +397,8 @@
                 const data = await res.json();
                 document.getElementById('statWaiting').innerText = data.waiting;
                 document.getElementById('statToday').innerText = data.today;
+                document.getElementById('statWeekly').innerText = data.weekly;
+                document.getElementById('statMonthly').innerText = data.monthly;
             } catch (e) {}
         }
 
@@ -574,7 +584,6 @@
             renderPatientsList(filtered);
         }
 
-        // فتح صفحة التفاصيل والتعديل المستقلة (بدون شاشة النداء والأرقام)
         function viewPatientDetail(id) {
             const p = allPatientsData.find(item => item.id === id);
             if (!p) return;
@@ -597,7 +606,6 @@
             currentSelectedPatientId = null;
         }
 
-        // حفظ التعديلات من صفحة التفاصيل المستقلة
         async function saveEditedPatient() {
             const pName = document.getElementById('editName').value.trim();
             if (!pName) return showToast('اسم المريض مطلوب', 'warning');
@@ -641,12 +649,6 @@
                 }
             } catch (e) {
                 showToast('خطأ في الاتصال', 'error');
-            }
-        }
-
-        function deleteCurrentDetailPatient() {
-            if (currentSelectedPatientId) {
-                deletePatientRecord(currentSelectedPatientId);
             }
         }
 
