@@ -60,12 +60,12 @@
         .patient-details { font-size: 0.9rem; color: var(--muted); line-height: 1.6; margin-bottom: 15px; }
         
         .archive-actions { display: flex; gap: 10px; }
-        .btn-small { padding: 10px; font-size: 0.9rem; flex: 1; background: rgba(16, 185, 129, 0.1); color: var(--accent); border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-small { padding: 10px; font-size: 0.9rem; flex: 1; background: rgba(16, 185, 129, 0.1); color: var(--accent); border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; text-align: center; }
         .btn-small:hover { background: var(--accent); color: white; }
         .btn-delete { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
         .btn-delete:hover { background: var(--danger); color: white; }
 
-        /* صفحة تفاصيل المريض المستقلة في الأرشيف */
+        /* صفحة تفاصيل وتعديل المريض المستقلة */
         #patientDetailView { display: none; background: var(--card); padding: 35px; border-radius: 24px; border: 1px solid var(--border); max-width: 700px; margin: 0 auto; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
 
         .toast-container { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 10px; z-index: 9999; }
@@ -92,7 +92,6 @@
             </div>
         </div>
         
-        <!-- تم إزالة زر الاتصال بالمتحكم نهائياً كما طلبت -->
         <div style="padding: 20px; text-align: center; color: var(--muted); font-size: 0.8rem;">
             ClinicFlow SaaS v2.5
         </div>
@@ -178,10 +177,10 @@
                 </div>
             </div>
 
-            <!-- 2. أرشيف المرضى (مع صفحة تفاصيل وزر حذف) -->
+            <!-- 2. أرشيف المرضى -->
             <div id="patients-tab" class="tab-content" style="display: none; padding: 0 20px;">
                 
-                <!-- قائمة الأرشيف العادية -->
+                <!-- قائمة الأرشيف -->
                 <div id="archiveListView">
                     <div class="archive-header">
                         <h2 style="margin: 0; color: var(--text);" data-i18n="archiveTitle">📂 أرشيف ومراجعات المرضى</h2>
@@ -195,16 +194,46 @@
                     </div>
                 </div>
 
-                <!-- صفحة تفاصيل المريض المستقلة (التي ظهرت بناءً على طلبك) -->
+                <!-- صفحة تفاصيل وتعديل المريض المستقلة (بدون إظهار شاشة النداء والترقيم) -->
                 <div id="patientDetailView">
                     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border); padding-bottom: 15px; margin-bottom: 20px;">
-                        <h2 style="margin:0; color: var(--accent);">📄 تفاصيل الملف الطبي للمريض</h2>
-                        <button class="btn" style="width: auto; margin:0; padding: 8px 15px; background: var(--muted);" onclick="closePatientDetail()">⬅️ العودة للأرشيف</button>
+                        <h2 style="margin:0; color: var(--accent);" data-i18n="editTitle">✏️ تفاصيل وتعديل ملف المريض</h2>
+                        <button class="btn" style="width: auto; margin:0; padding: 8px 15px; background: var(--muted);" onclick="closePatientDetail()" data-i18n="backBtn">⬅️ العودة للأرشيف</button>
                     </div>
-                    <div id="detailContent" style="line-height: 2; font-size: 1.1rem; color: var(--text);"></div>
+                    
+                    <!-- نموذج التعديل المستقل -->
+                    <div class="input-group" style="margin-bottom: 15px;">
+                        <label data-i18n="lblPatientName">اسم المريض:</label>
+                        <input type="text" id="editName">
+                    </div>
+                    <div class="form-grid">
+                        <div class="input-group">
+                            <label data-i18n="lblAge">العمر:</label>
+                            <input type="text" id="editAge">
+                        </div>
+                        <div class="input-group">
+                            <label data-i18n="lblBlood">فصيلة الدم:</label>
+                            <input type="text" id="editBlood">
+                        </div>
+                    </div>
+                    <div class="form-grid">
+                        <div class="input-group">
+                            <label data-i18n="lblAllergy">حساسية للأدوية:</label>
+                            <input type="text" id="editAllergy">
+                        </div>
+                        <div class="input-group">
+                            <label data-i18n="lblChronic">أمراض مزمنة:</label>
+                            <input type="text" id="editChronic">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label data-i18n="lblNotes">التشخيص والملاحظات:</label>
+                        <textarea id="editNotes"></textarea>
+                    </div>
+
                     <div style="margin-top: 30px; display: flex; gap: 15px;">
-                        <button class="btn" style="flex: 1; background: var(--accent);" onclick="editCurrentDetailPatient()">✏️ تعديل هذا الملف</button>
-                        <button class="btn btn-danger" style="flex: 1;" onclick="deleteCurrentDetailPatient()">🗑️ حذف المريض من الأرشيف</button>
+                        <button class="btn" style="flex: 1; background: var(--accent);" onclick="saveEditedPatient()" data-i18n="saveEditBtn">💾 حفظ التعديلات</button>
+                        <button class="btn btn-danger" style="flex: 1;" onclick="deleteCurrentDetailPatient()" data-i18n="deleteBtn">🗑️ حذف المريض من الأرشيف</button>
                     </div>
                 </div>
 
@@ -241,7 +270,7 @@
                 insideNow: "رقم المريض بالداخل", callNext: "📢 مناداة المريض التالي", btnDone: "✔️ تم الكشف", btnAbsent: "❌ غائب",
                 medicalFileTitle: "📋 الملف الطبي", optional: "اختياري", lblPatientName: "اسم المريض:", lblAge: "العمر:", lblBlood: "فصيلة الدم:", lblAllergy: "حساسية للأدوية:", lblChronic: "أمراض مزمنة:", lblNotes: "التشخيص والملاحظات:", btnSaveFile: "💾 حفظ الملف الطبي للمريض", prescTitle: "💊 الوصفة الطبية (Ordonnance)", btnPrintPresc: "🖨️ طباعة الوصفة الطبية",
                 archiveTitle: "📂 أرشيف ومراجعات المرضى", btnNewPatient: "+ إضافة ملف مريض جديد", searchPlaceholder: "🔍 ابحث عن مريض بالاسم...", loading: "جاري التحميل...", noPatients: "لا يوجد مرضى مسجلين في الأرشيف بعد.", 
-                viewBtn: "👁️ التفاصيل", reviewBtn: "✏️ تعديل", deleteBtn: "🗑️ حذف",
+                viewBtn: "👁️ التفاصيل والتعديل", deleteBtn: "🗑️ حذف", editTitle: "✏️ تفاصيل وتعديل ملف المريض", backBtn: "⬅️ العودة للأرشيف", saveEditBtn: "💾 حفظ التعديلات",
                 statsHeader: "نظرة عامة على أداء العيادة", statWaiting: "المرضى في الانتظار حالياً", statToday: "إجمالي مرضى اليوم",
                 errNoPatient: "⚠️ لا يوجد أي مريض في الانتظار.", errEmpty: "لا يوجد مريض لتسجيل حالته.", successStatus: "✔️ تم الحفظ بنجاح.", successCall: "📢 تم مناداة الرقم:", errSave: "خطأ أثناء الحفظ"
             },
@@ -250,7 +279,7 @@
                 insideNow: "Patient Actuel", callNext: "📢 Patient Suivant", btnDone: "✔️ Terminé", btnAbsent: "❌ Absent",
                 medicalFileTitle: "📋 Dossier Médical", optional: "Optionnel", lblPatientName: "Nom du patient:", lblAge: "Âge:", lblBlood: "Groupe Sanguin:", lblAllergy: "Allergies:", lblChronic: "Maladies chroniques:", lblNotes: "Diagnostic / Notes:", btnSaveFile: "💾 Enregistrer le dossier", prescTitle: "💊 Ordonnance", btnPrintPresc: "🖨️ Imprimer l'ordonnance",
                 archiveTitle: "📂 Archives des Patients", btnNewPatient: "+ Nouveau Dossier", searchPlaceholder: "🔍 Rechercher un patient...", loading: "Chargement...", noPatients: "Aucun patient enregistré.", 
-                viewBtn: "👁️ Détails", reviewBtn: "✏️ Modifier", deleteBtn: "🗑️ Supprimer",
+                viewBtn: "👁️ Détails & Modifier", deleteBtn: "🗑️ Supprimer", editTitle: "✏️ Modifier le dossier", backBtn: "⬅️ Retour", saveEditBtn: "💾 Enregistrer",
                 statsHeader: "Aperçu des performances", statWaiting: "Patients en attente", statToday: "Total aujourd'hui",
                 errNoPatient: "⚠️ Aucun patient en attente.", errEmpty: "Aucun patient.", successStatus: "✔️ Enregistré avec succès.", successCall: "📢 Appel:", errSave: "Erreur"
             },
@@ -259,7 +288,7 @@
                 insideNow: "Current Patient", callNext: "📢 Call Next", btnDone: "✔️ Done", btnAbsent: "❌ Absent",
                 medicalFileTitle: "📋 Medical Record", optional: "Optional", lblPatientName: "Patient Name:", lblAge: "Age:", lblBlood: "Blood Type:", lblAllergy: "Allergies:", lblChronic: "Chronic Diseases:", lblNotes: "Diagnosis & Notes:", btnSaveFile: "💾 Save Medical Record", prescTitle: "💊 Prescription", btnPrintPresc: "🖨️ Print Prescription",
                 archiveTitle: "📂 Patients Archive", btnNewPatient: "+ Add New Patient File", searchPlaceholder: "🔍 Search patient by name...", loading: "Loading...", noPatients: "No patients registered in archive yet.", 
-                viewBtn: "👁️ Details", reviewBtn: "✏️ Edit", deleteBtn: "🗑️ Delete",
+                viewBtn: "👁️ Details & Edit", deleteBtn: "🗑️ Delete", editTitle: "✏️ Edit Patient File", backBtn: "⬅️ Back", saveEditBtn: "💾 Save Changes",
                 statsHeader: "Clinic Performance", statWaiting: "Patients waiting", statToday: "Total today",
                 errNoPatient: "⚠️ No patients waiting.", errEmpty: "No patient selected.", successStatus: "✔️ Saved successfully.", successCall: "📢 Called:", errSave: "Error saving"
             }
@@ -274,7 +303,7 @@
                 const key = el.getAttribute('data-i18n');
                 if (dict[lang][key]) el.innerText = dict[lang][key];
             });
-            if (document.getElementById('searchInput')) document.getElementById('searchInput').placeholder = dict[lang].searchPlaceholder;
+            if (document.getElementById('searchInput')) document.getElementById('searchInput').placeholder = dict[lang][el.getAttribute('data-i18n')];
         }
 
         const toggleTheme = () => {
@@ -531,7 +560,6 @@
                         </div>
                         <div class="archive-actions">
                             <button class="btn-small" onclick="viewPatientDetail(${p.id})">${dict[currentLang].viewBtn}</button>
-                            <button class="btn-small" onclick="reviewPatient('${p.patient_name.replace(/'/g, "\\'")}')">${dict[currentLang].reviewBtn}</button>
                             <button class="btn-small btn-delete" onclick="deletePatientRecord(${p.id})">${dict[currentLang].deleteBtn}</button>
                         </div>
                     </div>
@@ -546,22 +574,19 @@
             renderPatientsList(filtered);
         }
 
-        // عرض صفحة تفاصيل المريض المستقلة عند الضغط على "التفاصيل"
+        // فتح صفحة التفاصيل والتعديل المستقلة (بدون شاشة النداء والأرقام)
         function viewPatientDetail(id) {
             const p = allPatientsData.find(item => item.id === id);
             if (!p) return;
             currentSelectedPatientId = p.id;
 
-            const detailHtml = `
-                <p><strong>👤 اسم المريض:</strong> ${p.patient_name}</p>
-                <p><strong>🎂 العمر:</strong> ${p.age || 'غير مسجل'}</p>
-                <p><strong>🩸 فصيلة الدم:</strong> ${p.blood_type || 'غير مسجلة'}</p>
-                <p><strong>⚠️ الحساسية:</strong> ${p.allergies || 'لا يوجد'}</p>
-                <p><strong>🩺 الأمراض المزمنة:</strong> ${p.chronic_diseases || 'لا يوجد'}</p>
-                <p><strong>📝 الملاحظات والتشخيص:</strong><br>${p.notes || 'لا توجد ملاحظات مسجلة.'}</p>
-                <p style="color: var(--muted); font-size: 0.85rem; margin-top: 20px;">آخر تحديث: ${new Date(p.updated_at).toLocaleString('ar-DZ')}</p>
-            `;
-            document.getElementById('detailContent').innerHTML = detailHtml;
+            document.getElementById('editName').value = p.patient_name || '';
+            document.getElementById('editAge').value = p.age || '';
+            document.getElementById('editBlood').value = p.blood_type || '';
+            document.getElementById('editAllergy').value = p.allergies || '';
+            document.getElementById('editChronic').value = p.chronic_diseases || '';
+            document.getElementById('editNotes').value = p.notes || '';
+
             document.getElementById('archiveListView').style.display = 'none';
             document.getElementById('patientDetailView').style.display = 'block';
         }
@@ -572,13 +597,37 @@
             currentSelectedPatientId = null;
         }
 
-        function editCurrentDetailPatient() {
-            const p = allPatientsData.find(item => item.id === currentSelectedPatientId);
-            if (!p) return;
-            reviewPatient(p.patient_name);
+        // حفظ التعديلات من صفحة التفاصيل المستقلة
+        async function saveEditedPatient() {
+            const pName = document.getElementById('editName').value.trim();
+            if (!pName) return showToast('اسم المريض مطلوب', 'warning');
+
+            try {
+                const payload = {
+                    clinic_slug: CLINIC_SLUG,
+                    patient_name: pName,
+                    age: document.getElementById('editAge').value,
+                    blood_type: document.getElementById('editBlood').value,
+                    allergies: document.getElementById('editAllergy').value,
+                    chronic: document.getElementById('editChronic').value,
+                    notes: document.getElementById('editNotes').value
+                };
+                const res = await fetch('https://clinic-server-i00s.onrender.com/api/patient/save', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    showToast(dict[currentLang].successStatus, 'success');
+                    closePatientDetail();
+                    fetchAllPatients();
+                } else {
+                    showToast(dict[currentLang].errSave, 'error');
+                }
+            } catch (e) {
+                showToast(dict[currentLang].errSave, 'error');
+            }
         }
 
-        // حذف مريض من الأرشيف
         async function deletePatientRecord(id) {
             if (!confirm('هل أنت متأكد من رغبتك في حذف هذا المريض نهائياً من الأرشيف؟')) return;
             try {
@@ -595,40 +644,24 @@
             }
         }
 
-        function reviewPatient(pName) {
-            activePatientName = pName;
-            document.getElementById('cancelledBanner').style.display = 'none';
-            document.getElementById('currentPatientName').style.color = 'var(--accent)';
-            document.getElementById('currentPatientName').innerText = `👤 المراجعة: ${pName}`;
-            document.getElementById('medicalCard').style.display = 'block';
-            
-            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById('call-tab').style.display = 'block';
-            document.querySelector('.nav-item').classList.add('active'); 
-            
-            loadMedicalRecord(pName);
+        function deleteCurrentDetailPatient() {
+            if (currentSelectedPatientId) {
+                deletePatientRecord(currentSelectedPatientId);
+            }
         }
 
         function openNewPatientFile() {
-            activePatientName = '';
-            document.getElementById('cancelledBanner').style.display = 'none';
-            document.getElementById('currentPatientName').style.color = 'var(--accent)';
-            document.getElementById('currentPatientName').innerText = '👤 ملف مريض جديد';
-            document.getElementById('mPatientNameInput').value = '';
-            document.getElementById('mAge').value = '';
-            document.getElementById('mBlood').value = '';
-            document.getElementById('mAllergy').value = '';
-            document.getElementById('mChronic').value = '';
-            document.getElementById('mNotes').value = '';
-            document.getElementById('mPrescription').value = '';
-            document.getElementById('medicalCard').style.display = 'block';
+            currentSelectedPatientId = null;
+            document.getElementById('editName').value = '';
+            document.getElementById('editAge').value = '';
+            document.getElementById('editBlood').value = '';
+            document.getElementById('editAllergy').value = '';
+            document.getElementById('editChronic').value = '';
+            document.getElementById('editNotes').value = '';
 
-            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById('call-tab').style.display = 'block';
-            document.querySelector('.nav-item').classList.add('active');
-            document.getElementById('mPatientNameInput').focus();
+            document.getElementById('archiveListView').style.display = 'none';
+            document.getElementById('patientDetailView').style.display = 'block';
+            document.getElementById('editName').focus();
         }
 
         const socket = io('https://clinic-server-i00s.onrender.com');
