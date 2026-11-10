@@ -6,112 +6,199 @@
     <title>حجز تذكرة - ClinicFlow</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #f4f7f6; --card: #ffffff; --text: #2d3748; --accent: #10b981; --border: #e2e8f0; --muted: #718096; }
+        :root { --bg: #f4f7f6; --card: #ffffff; --text: #2d3748; --accent: #10b981; --border: #e2e8f0; --muted: #718096; --warning: #f59e0b; }
         body { font-family: 'Tajawal', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
         
-        .header { text-align: center; margin-bottom: 30px; margin-top: 20px; }
-        .header h1 { color: var(--accent); margin: 0; font-weight: 800; font-size: 2rem; }
-        .header p { color: var(--muted); margin-top: 5px; font-weight: bold; }
+        .header { text-align: center; margin-bottom: 25px; margin-top: 10px; }
+        .header h1 { color: var(--accent); margin: 0; font-weight: 800; font-size: 2.2rem; }
+        .header p { color: var(--muted); margin-top: 5px; font-weight: bold; font-size: 1.1rem; }
 
         .main-card { background: var(--card); padding: 35px; border-radius: 24px; width: 100%; max-width: 450px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); text-align: center; border: 1px solid var(--border); box-sizing: border-box; }
         
-        .live-stats { display: flex; gap: 15px; margin-bottom: 30px; }
-        .stat-box { flex: 1; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); padding: 20px 10px; border-radius: 16px; }
-        .stat-box span { display: block; font-size: 0.9rem; color: var(--muted); font-weight: bold; margin-bottom: 10px; }
-        .stat-box strong { display: block; font-size: 2.5rem; color: var(--accent); line-height: 1; }
-
-        input { width: 100%; padding: 16px; margin-bottom: 20px; border-radius: 12px; border: 2px solid var(--border); background: var(--bg); color: var(--text); font-family: inherit; font-size: 1.1rem; box-sizing: border-box; outline: none; transition: 0.3s; }
-        input:focus { border-color: var(--accent); }
+        /* قسم الحجز */
+        #bookingSection { display: block; animation: fadeIn 0.4s ease; }
+        select, input { width: 100%; padding: 16px; margin-bottom: 20px; border-radius: 12px; border: 2px solid var(--border); background: var(--bg); color: var(--text); font-family: inherit; font-size: 1.1rem; box-sizing: border-box; outline: none; transition: 0.3s; }
+        select:focus, input:focus { border-color: var(--accent); }
         
         .btn { background: var(--accent); color: white; padding: 18px; border: none; border-radius: 12px; font-size: 1.2rem; font-weight: bold; cursor: pointer; width: 100%; transition: 0.2s; font-family: inherit; }
         .btn:hover { filter: brightness(1.1); transform: translateY(-2px); }
+
+        /* قسم التذكرة المحفوظة */
+        #ticketSection { display: none; animation: popIn 0.4s ease; }
+        .ticket-result { margin-top: 10px; padding: 30px; background: rgba(16, 185, 129, 0.1); border-radius: 16px; border: 2px dashed var(--accent); margin-bottom: 25px; }
+        .ticket-result h2 { margin: 15px 0; color: var(--accent); font-size: 5rem; line-height: 1; }
         
-        .ticket-result { margin-top: 25px; padding: 30px; background: rgba(16, 185, 129, 0.1); border-radius: 16px; border: 2px dashed var(--accent); display: none; animation: popIn 0.4s ease; }
-        .ticket-result h2 { margin: 15px 0; color: var(--accent); font-size: 4rem; line-height: 1; }
-        .ticket-result p { font-weight: bold; color: var(--text); margin-bottom: 0; }
+        .live-stats { display: flex; gap: 15px; margin-bottom: 20px; }
+        .stat-box { flex: 1; background: var(--bg); border: 1px solid var(--border); padding: 15px 10px; border-radius: 16px; }
+        .stat-box span { display: block; font-size: 0.9rem; color: var(--muted); font-weight: bold; margin-bottom: 8px; }
+        .stat-box strong { display: block; font-size: 2rem; color: var(--text); line-height: 1; }
+        
+        .patient-name-display { font-size: 1.2rem; font-weight: bold; color: var(--text); margin-bottom: 15px; }
 
         @keyframes popIn { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes fadeIn { 0% { opacity: 0; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
 
     <div class="header">
         <h1>ClinicFlow</h1>
-        <p id="clinicTitle">عيادة الطبيب</p>
+        <p id="clinicTitle">نظام الحجز الذكي</p>
     </div>
 
     <div class="main-card">
-        <div class="live-stats">
-            <div class="stat-box">
-                <span>رقم المريض بالداخل</span>
-                <strong id="currentNumberDisplay">--</strong>
-            </div>
-            <div class="stat-box" style="background: rgba(245, 158, 11, 0.05); border-color: rgba(245, 158, 11, 0.2);">
-                <span>عدد المرضى قبلك</span>
-                <strong id="waitingCountDisplay" style="color: #f59e0b;">--</strong>
-            </div>
+        
+        <!-- قسم الحجز (يظهر للمستخدم الجديد) -->
+        <div id="bookingSection">
+            <h3 style="margin-top:0; color: var(--text);">احجز تذكرتك الآن</h3>
+            <label style="display: block; text-align: start; margin-bottom: 10px; font-weight: bold; color: var(--muted);">اختر الطبيب المعالج:</label>
+            <select id="doctorSelect">
+                <option value="">جاري تحميل الأطباء...</option>
+            </select>
+
+            <label style="display: block; text-align: start; margin-bottom: 10px; font-weight: bold; color: var(--muted);">اسم المريض (اختياري):</label>
+            <input type="text" id="patientName" placeholder="أدخل اسمك الكريم هنا...">
+
+            <button class="btn" onclick="bookTicket()">سحب تذكرة الحجز</button>
         </div>
 
-        <input type="text" id="patientName" placeholder="أدخل اسمك الكريم (اختياري)...">
-        <button class="btn" onclick="bookTicket()">سحب تذكرة الحجز</button>
+        <!-- قسم التذكرة المباشرة (يظهر بعد الحجز ويُحفظ في الهاتف) -->
+        <div id="ticketSection">
+            <div class="patient-name-display" id="displayName">--</div>
+            
+            <div class="ticket-result">
+                <span style="font-size: 1.2rem; font-weight: bold; color: var(--text);">رقم تذكرتك:</span>
+                <h2 id="ticketNumberDisplay">0</h2>
+            </div>
 
-        <div class="ticket-result" id="ticketResult">
-            <span style="font-size: 1.2rem; font-weight: bold;">تم الحجز بنجاح! رقمك هو:</span>
-            <h2 id="ticketNumberDisplay">0</h2>
-            <p>يرجى الانتباه للشاشة أو النداء الصوتي.</p>
+            <div class="live-stats">
+                <div class="stat-box">
+                    <span>رقم المريض بالداخل</span>
+                    <strong id="currentNumberDisplay">--</strong>
+                </div>
+                <div class="stat-box" style="background: rgba(245, 158, 11, 0.05); border-color: rgba(245, 158, 11, 0.2);">
+                    <span>عدد المرضى قبلك</span>
+                    <strong id="waitingCountDisplay" style="color: #f59e0b;">--</strong>
+                </div>
+            </div>
+            
+            <p style="color: var(--muted); font-size: 0.9rem; font-weight: bold;">تذكرتك محفوظة في الهاتف، يمكنك إغلاق الصفحة والعودة لمتابعة الطابور.</p>
         </div>
+
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const CLINIC_SLUG = new URLSearchParams(window.location.search).get('clinic');
-        if(CLINIC_SLUG) {
-            document.getElementById('clinicTitle').innerText = `العيادة: ${CLINIC_SLUG}`;
-        }
+        let currentDoctorSlug = '';
+        
+        window.onload = async () => {
+            if(CLINIC_SLUG) {
+                document.getElementById('clinicTitle').innerText = `عيادة: ${CLINIC_SLUG}`;
+            }
 
-        window.onload = () => { fetchLiveStats(); };
+            // 1. التحقق من التخزين المحلي (استرجاع التذكرة إذا كانت موجودة واليوم)
+            const savedData = localStorage.getItem('clinic_my_ticket');
+            if (savedData) {
+                const parsed = JSON.parse(savedData);
+                const today = new Date().toLocaleDateString('ar-DZ');
+                // إذا كانت التذكرة محجوزة اليوم وفي نفس العيادة
+                if (parsed.date === today && parsed.mainClinic === CLINIC_SLUG) {
+                    currentDoctorSlug = parsed.doctorSlug;
+                    document.getElementById('ticketNumberDisplay').innerText = parsed.ticketNumber;
+                    document.getElementById('displayName').innerText = `👤 المريض: ${parsed.patientName}`;
+                    
+                    document.getElementById('bookingSection').style.display = 'none';
+                    document.getElementById('ticketSection').style.display = 'block';
+                    
+                    fetchLiveStats();
+                    return; // إيقاف تحميل الفورم
+                } else {
+                    // مسح التذكرة القديمة إذا مر عليها يوم
+                    localStorage.removeItem('clinic_my_ticket');
+                }
+            }
 
-        async function fetchLiveStats() {
-            if(!CLINIC_SLUG) return;
-            try {
-                const res = await fetch(`https://clinic-server-i00s.onrender.com/api/queue-status/${CLINIC_SLUG}`);
-                const data = await res.json();
-                
-                const currentNum = data.current_number || 0;
-                const lastIssued = data.last_issued_number || 0;
-                const waiting = Math.max(0, lastIssued - currentNum);
+            // 2. إذا لم يكن هناك تذكرة، جلب قائمة الأطباء ليختار المريض
+            if(CLINIC_SLUG) {
+                try {
+                    const res = await fetch(`https://clinic-server-i00s.onrender.com/api/clinic-doctors/${CLINIC_SLUG}`);
+                    const doctors = await res.json();
+                    const select = document.getElementById('doctorSelect');
+                    select.innerHTML = `<option value="">-- اختر الطبيب --</option>`;
+                    doctors.forEach(doc => {
+                        select.innerHTML += `<option value="${doc.slug}">${doc.name}</option>`;
+                    });
+                } catch(e) { console.error(e); }
+            }
+        };
 
-                document.getElementById('currentNumberDisplay').innerText = currentNum === 0 ? '--' : currentNum;
-                document.getElementById('waitingCountDisplay').innerText = waiting;
-            } catch(e) { console.error('خطأ في جلب البيانات'); }
-        }
-
+        // دالة حجز التذكرة
         async function bookTicket() {
-            if(!CLINIC_SLUG) return alert('خطأ: رابط العيادة غير صحيح');
+            currentDoctorSlug = document.getElementById('doctorSelect').value;
             const pName = document.getElementById('patientName').value.trim() || 'مريض';
             
+            if(!currentDoctorSlug) return alert('يرجى اختيار الطبيب أولاً');
+
             try {
+                // الحجز يتم على حساب "الطبيب" وليس العيادة الرئيسية لضمان دمج الطابور
                 const res = await fetch('https://clinic-server-i00s.onrender.com/api/tickets', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ clinic_slug: CLINIC_SLUG, patient_name: pName })
+                    body: JSON.stringify({ clinic_slug: currentDoctorSlug, patient_name: pName })
                 });
                 const data = await res.json();
                 if(res.ok) {
                     const num = data.message.match(/\d+/)[0];
+                    
+                    // حفظ التذكرة في الهاتف للعودة إليها لاحقاً
+                    const ticketData = {
+                        date: new Date().toLocaleDateString('ar-DZ'),
+                        mainClinic: CLINIC_SLUG,
+                        doctorSlug: currentDoctorSlug,
+                        patientName: pName,
+                        ticketNumber: num
+                    };
+                    localStorage.setItem('clinic_my_ticket', JSON.stringify(ticketData));
+
+                    // الانتقال لشاشة التذكرة
                     document.getElementById('ticketNumberDisplay').innerText = num;
-                    document.getElementById('ticketResult').style.display = 'block';
-                    document.getElementById('patientName').value = '';
+                    document.getElementById('displayName').innerText = `👤 المريض: ${pName}`;
+                    document.getElementById('bookingSection').style.display = 'none';
+                    document.getElementById('ticketSection').style.display = 'block';
+                    
                     fetchLiveStats();
                 } else { alert(data.error); }
             } catch(e) { alert('خطأ في الاتصال بالخادم.'); }
         }
 
+        // دالة جلب الإحصائيات المباشرة
+        async function fetchLiveStats() {
+            if(!currentDoctorSlug) return;
+            try {
+                const res = await fetch(`https://clinic-server-i00s.onrender.com/api/queue-status/${currentDoctorSlug}`);
+                const data = await res.json();
+                
+                const currentNum = data.current_number || 0;
+                const lastIssued = data.last_issued_number || 0;
+                const myTicket = parseInt(document.getElementById('ticketNumberDisplay').innerText);
+                
+                // حساب عدد المرضى قبل المريض الحالي
+                let waiting = myTicket - currentNum - 1;
+                if(waiting < 0) waiting = 0;
+                if(currentNum >= myTicket) waiting = 0; // حان دوره أو فات
+
+                document.getElementById('currentNumberDisplay').innerText = currentNum === 0 ? '--' : currentNum;
+                document.getElementById('waitingCountDisplay').innerText = waiting;
+            } catch(e) { console.error('خطأ'); }
+        }
+
+        // السوكيت للتحديث التلقائي
         const socket = io('https://clinic-server-i00s.onrender.com');
         socket.on('call_patient', (data) => {
-            if(data.clinic_slug === CLINIC_SLUG) fetchLiveStats();
+            if(data.clinic_slug === currentDoctorSlug) fetchLiveStats();
         });
         socket.on('new_ticket', (data) => {
-            if(data.clinic_slug === CLINIC_SLUG) fetchLiveStats();
+            if(data.clinic_slug === currentDoctorSlug) fetchLiveStats();
         });
     </script>
 </body>

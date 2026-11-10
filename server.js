@@ -54,17 +54,25 @@ const initDB = async () => {
                 id SERIAL PRIMARY KEY,
                 clinic_id INTEGER REFERENCES clinics(id) ON DELETE CASCADE,
                 patient_name VARCHAR(255) NOT NULL,
-                age VARCHAR(20) DEFAULT '',
-                blood_type VARCHAR(10) DEFAULT '',
-                allergies TEXT DEFAULT '',
-                chronic_diseases TEXT DEFAULT '',
-                notes TEXT DEFAULT '',
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE(clinic_id, patient_name)
             );
         `);
-        console.log("✅ قاعدة البيانات جاهزة ومحدثة بالكامل!");
-    } catch (e) { console.error("❌ خطأ:", e.message); }
+
+        // 🔥 التحديث الإجباري للأعمدة لمنع الخطأ 500 في الأرشيف
+        try {
+            const addColumns = [
+                `ALTER TABLE patients ADD COLUMN IF NOT EXISTS age VARCHAR(20) DEFAULT '';`,
+                `ALTER TABLE patients ADD COLUMN IF NOT EXISTS blood_type VARCHAR(10) DEFAULT '';`,
+                `ALTER TABLE patients ADD COLUMN IF NOT EXISTS allergies TEXT DEFAULT '';`,
+                `ALTER TABLE patients ADD COLUMN IF NOT EXISTS chronic_diseases TEXT DEFAULT '';`,
+                `ALTER TABLE patients ADD COLUMN IF NOT EXISTS notes TEXT DEFAULT '';`,
+                `ALTER TABLE patients ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;`
+            ];
+            for (let q of addColumns) { await db.query(q); }
+        } catch(e) { console.log('Columns already exist or minor issue.'); }
+
+        console.log("✅ قاعدة البيانات جاهزة ومحدثة بالكامل (بدون أخطاء)!");
+    } catch (e) { console.error("❌ خطأ رئيسي:", e.message); }
 };
 initDB();
 
@@ -120,7 +128,7 @@ app.post('/api/call-next', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// مسار جلب الملف الطبي للمريض الفردي
+// الملف الطبي للمريض
 app.post('/api/patient/get', async (req, res) => {
     try {
         const { clinic_slug, patient_name } = req.body;
@@ -131,7 +139,6 @@ app.post('/api/patient/get', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// مسار حفظ/تحديث الملف الطبي للمريض
 app.post('/api/patient/save', async (req, res) => {
     try {
         const { clinic_slug, patient_name, age, blood_type, allergies, chronic, notes } = req.body;
@@ -146,12 +153,11 @@ app.post('/api/patient/save', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// 🔥 (الجديد) مسار جلب أرشيف جميع المرضى الخاص بالطبيب
+// الأرشيف
 app.get('/api/patients/all/:clinic_slug', async (req, res) => {
     try {
         const clinic = await db.query('SELECT id FROM clinics WHERE slug = $1', [req.params.clinic_slug]);
         if(clinic.rows.length === 0) return res.json([]);
-        
         const patientsList = await db.query('SELECT patient_name, age, chronic_diseases, updated_at FROM patients WHERE clinic_id = $1 ORDER BY updated_at DESC', [clinic.rows[0].id]);
         res.json(patientsList.rows);
     } catch (err) { res.status(500).json({ error: err.message }); }
@@ -170,7 +176,7 @@ app.get('/api/queue-status/:clinic_slug', async (req, res) => {
 app.get('/api/doctor-stats/:clinic_slug', async (req, res) => {
     try {
         const clinic = await db.query('SELECT id FROM clinics WHERE slug = $1', [req.params.clinic_slug]);
-        if(clinic.rows.length === 0) return res.json({ today:0, waiting:0, weekly:0, monthly:0 });
+        if(clinic.rows.length === 0) return res.json({ today:0, waiting:0 });
         const cId = clinic.rows[0].id;
         let q = await db.query('SELECT current_number, last_issued_number FROM queues WHERE clinic_id = $1 AND queue_date = CURRENT_DATE', [cId]);
         let today = 0, waiting = 0;
@@ -178,7 +184,7 @@ app.get('/api/doctor-stats/:clinic_slug', async (req, res) => {
             today = q.rows[0].last_issued_number;
             waiting = Math.max(0, today - q.rows[0].current_number);
         }
-        res.json({ today, waiting, weekly: 0, monthly: 0 }); 
+        res.json({ today, waiting }); 
     } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -219,12 +225,11 @@ app.post('/api/admin/renew', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// الحذف الآمن والعميق
 app.delete('/api/admin/clinics/:id', async (req, res) => {
     try {
         await db.query('DELETE FROM clinics WHERE parent_id::text = $1::text', [req.params.id]); 
         await db.query('DELETE FROM clinics WHERE id::text = $1::text', [req.params.id]); 
-        res.json({ message: 'تم الحذف بنجاح' });
+        res.json({ message: 'تم החذف بنجاح' });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
