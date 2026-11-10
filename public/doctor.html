@@ -295,7 +295,6 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        // حفظ واسترجاع اسم العيادة تلقائياً لدعم تطبيق سطح المكتب (PWA)
         const urlSlug = new URLSearchParams(window.location.search).get('clinic');
         if (urlSlug) localStorage.setItem('saved_doc_clinic_slug', urlSlug);
         const CLINIC_SLUG = urlSlug || localStorage.getItem('saved_doc_clinic_slug') || 'default-clinic';
