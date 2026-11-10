@@ -66,24 +66,63 @@ const initDB = async () => {
             );
         `);
 
+        // 🔥 التحديث: إضافة عمود كلمة السر للأطباء
         const clinicCols = [
             `ALTER TABLE clinics ADD COLUMN IF NOT EXISTS is_main BOOLEAN DEFAULT true;`,
             `ALTER TABLE clinics ADD COLUMN IF NOT EXISTS parent_id TEXT DEFAULT NULL;`,
             `ALTER TABLE clinics ADD COLUMN IF NOT EXISTS subscription_end DATE DEFAULT (CURRENT_DATE + INTERVAL '1 month');`,
             `ALTER TABLE clinics ADD COLUMN IF NOT EXISTS phone VARCHAR(50) DEFAULT '';`,
-            `ALTER TABLE clinics ADD COLUMN IF NOT EXISTS email VARCHAR(255) DEFAULT '';`
+            `ALTER TABLE clinics ADD COLUMN IF NOT EXISTS email VARCHAR(255) DEFAULT '';`,
+            `ALTER TABLE clinics ADD COLUMN IF NOT EXISTS password VARCHAR(255) DEFAULT NULL;`
         ];
         for (let q of clinicCols) {
-            try { await db.query(q); } catch (e) {}
+            try { await db.query(q); } catch (e) { try { await db.query(q.replace('IF NOT EXISTS ', '')); } catch(err){} }
         }
 
         await ensureArchiveTable();
-        console.log("✅ قاعدة البيانات والأرشيف جاهزون بالكامل!");
+        console.log("✅ قاعدة البيانات جاهزة ومحدثة بالكامل!");
     } catch (e) {
         console.error("❌ خطأ في تهيئة قاعدة البيانات:", e.message);
     }
 };
 initDB();
+
+// ----------------- مسارات كلمة السر للطبيب (الجديدة) -----------------
+
+// 1. التحقق مما إذا كان الطبيب يملك كلمة سر
+app.get('/api/doctor/auth-status/:slug', async (req, res) => {
+    try {
+        const clinic = await db.query('SELECT password FROM clinics WHERE slug = $1', [req.params.slug]);
+        if (clinic.rows.length === 0) return res.status(404).json({ error: 'غير موجود' });
+        const hasPassword = clinic.rows[0].password && clinic.rows[0].password.length > 0;
+        res.json({ hasPassword });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// 2. التحقق من صحة كلمة السر المدخلة
+app.post('/api/doctor/verify-password', async (req, res) => {
+    try {
+        const { clinic_slug, password } = req.body;
+        const clinic = await db.query('SELECT password FROM clinics WHERE slug = $1', [clinic_slug]);
+        if (clinic.rows.length === 0) return res.status(404).json({ error: 'غير موجود' });
+        if (clinic.rows[0].password === password) {
+            res.json({ success: true });
+        } else {
+            res.status(401).json({ error: 'كلمة السر غير صحيحة' });
+        }
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// 3. تغيير أو إلغاء كلمة السر من الإعدادات
+app.post('/api/doctor/set-password', async (req, res) => {
+    try {
+        const { clinic_slug, new_password } = req.body;
+        await db.query('UPDATE clinics SET password = $1 WHERE slug = $2', [new_password, clinic_slug]);
+        res.json({ message: 'تم تحديث إعدادات الحماية بنجاح' });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ----------------- المسارات الأساسية الأخرى -----------------
 
 app.post('/api/clinics', async (req, res) => {
     try {
@@ -93,9 +132,7 @@ app.post('/api/clinics', async (req, res) => {
             VALUES ($1, $2, true, CURRENT_DATE + INTERVAL '1 month', $3, $4) RETURNING *
         `, [name, slug, phone || '', email || '']);
         res.status(201).json({ message: 'تم', clinic: result.rows[0] });
-    } catch (err) {
-        res.status(500).json({ error: 'الرابط مستخدم مسبقاً.' });
-    }
+    } catch (err) { res.status(500).json({ error: 'الرابط مستخدم مسبقاً.' }); }
 });
 
 app.post('/api/tickets', async (req, res) => {
@@ -126,9 +163,7 @@ app.post('/api/tickets', async (req, res) => {
 
         io.emit('new_ticket', { clinic_slug, ticket_number: newNumber });
         res.status(201).json({ message: `رقمك هو: ${newNumber}` });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+    } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.post('/api/tickets/cancel', async (req, res) => {
@@ -148,9 +183,7 @@ app.post('/api/tickets/cancel', async (req, res) => {
             }
         }
         res.json({ message: 'تم الإلغاء' });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+    } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.post('/api/call-next', async (req, res) => {
@@ -172,30 +205,18 @@ app.post('/api/call-next', async (req, res) => {
         const ticketStatus = ticket.rows.length > 0 ? ticket.rows[0].status : 'waiting';
 
         io.emit('call_patient', { clinic_slug, current_number: newCurrent, status: ticketStatus });
-        res.status(200).json({
-            message: `الرقم: ${newCurrent}`,
-            patient_name: patientName,
-            ticket_status: ticketStatus,
-            doctor_name: clinic.rows[0].name
-        });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+        res.status(200).json({ message: `الرقم: ${newCurrent}`, patient_name: patientName, ticket_status: ticketStatus, doctor_name: clinic.rows[0].name });
+    } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.post('/api/patient/get', async (req, res) => {
     try {
         await ensureArchiveTable();
         const { clinic_slug, patient_name } = req.body;
-        const patient = await db.query(
-            'SELECT * FROM patient_records WHERE clinic_slug = $1 AND patient_name = $2 ORDER BY updated_at DESC LIMIT 1',
-            [clinic_slug, patient_name]
-        );
+        const patient = await db.query('SELECT * FROM patient_records WHERE clinic_slug = $1 AND patient_name = $2 ORDER BY updated_at DESC LIMIT 1', [clinic_slug, patient_name]);
         if (patient.rows.length > 0) res.json(patient.rows[0]);
         else res.json({ age: '', blood_type: '', allergies: '', chronic_diseases: '', notes: '' });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+    } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.post('/api/patient/save', async (req, res) => {
@@ -204,30 +225,14 @@ app.post('/api/patient/save', async (req, res) => {
         const { clinic_slug, patient_name, age, blood_type, allergies, chronic, notes } = req.body;
         if (!patient_name) return res.status(400).json({ error: 'اسم المريض مطلوب' });
 
-        const existing = await db.query(
-            'SELECT id FROM patient_records WHERE clinic_slug = $1 AND patient_name = $2',
-            [clinic_slug, patient_name]
-        );
-
+        const existing = await db.query('SELECT id FROM patient_records WHERE clinic_slug = $1 AND patient_name = $2', [clinic_slug, patient_name]);
         if (existing.rows.length > 0) {
-            await db.query(
-                `UPDATE patient_records 
-                 SET age = $1, blood_type = $2, allergies = $3, chronic_diseases = $4, notes = $5, updated_at = CURRENT_TIMESTAMP 
-                 WHERE id = $6`,
-                [age || '', blood_type || '', allergies || '', chronic || '', notes || '', existing.rows[0].id]
-            );
+            await db.query(`UPDATE patient_records SET age = $1, blood_type = $2, allergies = $3, chronic_diseases = $4, notes = $5, updated_at = CURRENT_TIMESTAMP WHERE id = $6`, [age || '', blood_type || '', allergies || '', chronic || '', notes || '', existing.rows[0].id]);
         } else {
-            await db.query(
-                `INSERT INTO patient_records (clinic_slug, patient_name, age, blood_type, allergies, chronic_diseases, notes, updated_at)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)`,
-                [clinic_slug, patient_name, age || '', blood_type || '', allergies || '', chronic || '', notes || '']
-            );
+            await db.query(`INSERT INTO patient_records (clinic_slug, patient_name, age, blood_type, allergies, chronic_diseases, notes, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)`, [clinic_slug, patient_name, age || '', blood_type || '', allergies || '', chronic || '', notes || '']);
         }
-
-        res.json({ message: 'تم حفظ الملف الطبي في الأرشيف بنجاح' });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+        res.json({ message: 'تم حفظ الملف الطبي بنجاح' });
+    } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.delete('/api/patients/delete/:id', async (req, res) => {
@@ -235,22 +240,15 @@ app.delete('/api/patients/delete/:id', async (req, res) => {
         await ensureArchiveTable();
         await db.query('DELETE FROM patient_records WHERE id::text = $1::text', [req.params.id]);
         res.json({ message: 'تم حذف المريض من الأرشيف بنجاح' });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+    } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.get('/api/patients/all/:clinic_slug', async (req, res) => {
     try {
         await ensureArchiveTable();
-        const patientsList = await db.query(
-            'SELECT id, patient_name, age, blood_type, allergies, chronic_diseases, notes, updated_at FROM patient_records WHERE clinic_slug = $1 ORDER BY updated_at DESC',
-            [req.params.clinic_slug]
-        );
+        const patientsList = await db.query('SELECT id, patient_name, age, blood_type, allergies, chronic_diseases, notes, updated_at FROM patient_records WHERE clinic_slug = $1 ORDER BY updated_at DESC', [req.params.clinic_slug]);
         res.json(patientsList.rows);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+    } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.get('/api/queue-status/:clinic_slug', async (req, res) => {
@@ -274,81 +272,45 @@ app.get('/api/queue-status/:clinic_slug', async (req, res) => {
             }
         }
 
-        const waitingRes = await db.query(
-            `SELECT COUNT(*) FROM tickets WHERE queue_id = $1 AND ticket_number > $2 AND status != 'cancelled'`,
-            [qId, currentNum]
-        );
+        const waitingRes = await db.query(`SELECT COUNT(*) FROM tickets WHERE queue_id = $1 AND ticket_number > $2 AND status != 'cancelled'`, [qId, currentNum]);
         const waitingCount = parseInt(waitingRes.rows[0].count || 0);
 
         let aheadCount = waitingCount;
         const myTicket = parseInt(req.query.my_ticket);
         if (!isNaN(myTicket) && myTicket > 0) {
-            if (currentNum >= myTicket) {
-                aheadCount = 0;
-            } else {
-                const aheadRes = await db.query(
-                    `SELECT COUNT(*) FROM tickets WHERE queue_id = $1 AND ticket_number > $2 AND ticket_number < $3 AND status != 'cancelled'`,
-                    [qId, currentNum, myTicket]
-                );
+            if (currentNum >= myTicket) { aheadCount = 0; } 
+            else {
+                const aheadRes = await db.query(`SELECT COUNT(*) FROM tickets WHERE queue_id = $1 AND ticket_number > $2 AND ticket_number < $3 AND status != 'cancelled'`, [qId, currentNum, myTicket]);
                 aheadCount = parseInt(aheadRes.rows[0].count || 0);
             }
         }
 
-        res.json({
-            current_number: currentNum,
-            last_issued_number: lastIssued,
-            waiting_count: waitingCount,
-            ahead_count: aheadCount,
-            status: queue.rows[0].status,
-            current_patient_name: currentPatientName,
-            current_ticket_status: currentTicketStatus,
-            doctor_name: clinic.rows[0].name
-        });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+        res.json({ current_number: currentNum, last_issued_number: lastIssued, waiting_count: waitingCount, ahead_count: aheadCount, status: queue.rows[0].status, current_patient_name: currentPatientName, current_ticket_status: currentTicketStatus, doctor_name: clinic.rows[0].name });
+    } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// 🔥 تحديث دالة إحصائيات الطبيب لحساب الإحصائيات الأسبوعية والشهرية بدقة
 app.get('/api/doctor-stats/:clinic_slug', async (req, res) => {
     try {
         const clinic = await db.query('SELECT id FROM clinics WHERE slug = $1', [req.params.clinic_slug]);
         if (clinic.rows.length === 0) return res.json({ today: 0, waiting: 0, weekly: 0, monthly: 0 });
         const cId = clinic.rows[0].id;
         
-        // إحصائيات اليوم والانتظار
         let q = await db.query('SELECT id, current_number, last_issued_number FROM queues WHERE clinic_id = $1 AND queue_date = CURRENT_DATE', [cId]);
         let today = 0, waiting = 0;
         if (q.rows.length > 0) {
             const totalRes = await db.query(`SELECT COUNT(*) FROM tickets WHERE queue_id = $1 AND status != 'cancelled'`, [q.rows[0].id]);
             today = parseInt(totalRes.rows[0].count || 0);
-
             const waitRes = await db.query(`SELECT COUNT(*) FROM tickets WHERE queue_id = $1 AND ticket_number > $2 AND status != 'cancelled'`, [q.rows[0].id, q.rows[0].current_number]);
             waiting = parseInt(waitRes.rows[0].count || 0);
         }
 
-        // إحصائيات الأسبوع (آخر 7 أيام)
-        const weeklyRes = await db.query(`
-            SELECT COUNT(*) 
-            FROM tickets t
-            JOIN queues q ON t.queue_id = q.id
-            WHERE q.clinic_id = $1 AND q.queue_date >= CURRENT_DATE - INTERVAL '7 days' AND t.status != 'cancelled'
-        `, [cId]);
+        const weeklyRes = await db.query(`SELECT COUNT(*) FROM tickets t JOIN queues q ON t.queue_id = q.id WHERE q.clinic_id = $1 AND q.queue_date >= CURRENT_DATE - INTERVAL '7 days' AND t.status != 'cancelled'`, [cId]);
         const weekly = parseInt(weeklyRes.rows[0].count || 0);
-
-        // إحصائيات الشهر (آخر 30 يوماً)
-        const monthlyRes = await db.query(`
-            SELECT COUNT(*) 
-            FROM tickets t
-            JOIN queues q ON t.queue_id = q.id
-            WHERE q.clinic_id = $1 AND q.queue_date >= CURRENT_DATE - INTERVAL '30 days' AND t.status != 'cancelled'
-        `, [cId]);
+        const monthlyRes = await db.query(`SELECT COUNT(*) FROM tickets t JOIN queues q ON t.queue_id = q.id WHERE q.clinic_id = $1 AND q.queue_date >= CURRENT_DATE - INTERVAL '30 days' AND t.status != 'cancelled'`, [cId]);
         const monthly = parseInt(monthlyRes.rows[0].count || 0);
 
         res.json({ today, waiting, weekly, monthly });
-    } catch (e) {
-        res.status(500).json({ error: e.message });
-    }
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.get('/api/clinic-doctors/:main_slug', async (req, res) => {
@@ -361,31 +323,20 @@ app.get('/api/clinic-doctors/:main_slug', async (req, res) => {
             const q = await db.query('SELECT id, current_number, last_issued_number, status FROM queues WHERE clinic_id = $1 AND queue_date = CURRENT_DATE', [doc.id]);
             if (q.rows.length > 0) {
                 const waitRes = await db.query(`SELECT COUNT(*) FROM tickets WHERE queue_id = $1 AND ticket_number > $2 AND status != 'cancelled'`, [q.rows[0].id, q.rows[0].current_number]);
-                const waitingCount = parseInt(waitRes.rows[0].count || 0);
-                result.push({
-                    name: doc.name,
-                    slug: doc.slug,
-                    current: q.rows[0].current_number,
-                    waiting: waitingCount,
-                    status: q.rows[0].status
-                });
+                result.push({ name: doc.name, slug: doc.slug, current: q.rows[0].current_number, waiting: parseInt(waitRes.rows[0].count || 0), status: q.rows[0].status });
             } else {
                 result.push({ name: doc.name, slug: doc.slug, current: 0, waiting: 0, status: 'active' });
             }
         }
         res.json(result);
-    } catch (e) {
-        res.status(500).json({ error: e.message });
-    }
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.get('/api/admin/clinics', async (req, res) => {
     try {
         const clinics = await db.query(`SELECT id, name, slug, subscription_end, phone, email, (SELECT COUNT(*) FROM clinics d WHERE d.parent_id::text = c.id::text) as doctors_count FROM clinics c WHERE is_main = true OR parent_id IS NULL ORDER BY created_at DESC`);
         res.json(clinics.rows);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+    } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.post('/api/admin/add-doctor', async (req, res) => {
@@ -393,18 +344,14 @@ app.post('/api/admin/add-doctor', async (req, res) => {
         const { parent_id, name, slug, phone, email } = req.body;
         await db.query('INSERT INTO clinics (name, slug, is_main, parent_id, phone, email) VALUES ($1, $2, false, $3, $4, $5)', [name, slug, parent_id, phone || '', email || '']);
         res.json({ message: 'تم' });
-    } catch (err) {
-        res.status(500).json({ error: 'خطأ' });
-    }
+    } catch (err) { res.status(500).json({ error: 'خطأ' }); }
 });
 
 app.post('/api/admin/renew', async (req, res) => {
     try {
         await db.query(`UPDATE clinics SET subscription_end = GREATEST(subscription_end, CURRENT_DATE) + INTERVAL '${req.body.months} month' WHERE id::text = $1::text`, [req.body.clinic_id]);
         res.json({ message: 'تم' });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+    } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.delete('/api/admin/clinics/:id', async (req, res) => {
@@ -412,27 +359,21 @@ app.delete('/api/admin/clinics/:id', async (req, res) => {
         await db.query('DELETE FROM clinics WHERE parent_id::text = $1::text', [req.params.id]);
         await db.query('DELETE FROM clinics WHERE id::text = $1::text', [req.params.id]);
         res.json({ message: 'تم الحذف بنجاح' });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+    } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.delete('/api/admin/doctors/:id', async (req, res) => {
     try {
         await db.query('DELETE FROM clinics WHERE id::text = $1::text', [req.params.id]);
         res.json({ message: 'تم الحذف بنجاح' });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+    } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.get('/api/admin/clinic-doctors-links/:main_id', async (req, res) => {
     try {
         const docs = await db.query('SELECT id, name, slug, phone, email FROM clinics WHERE parent_id::text = $1::text', [req.params.main_id]);
         res.json(docs.rows);
-    } catch (e) {
-        res.status(500).json({ error: e.message });
-    }
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.post('/api/tickets/status', async (req, res) => {
@@ -446,9 +387,7 @@ app.post('/api/tickets/status', async (req, res) => {
             }
         }
         res.json({ message: 'تم' });
-    } catch (e) {
-        res.status(500).json({ error: e.message });
-    }
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 const PORT = process.env.PORT || 3000;

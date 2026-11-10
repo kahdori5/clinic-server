@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ClinicFlow - Doctor Dashboard</title>
+    <!-- استدعاء ملف الـ Manifest ليعمل كتطبيق سطح مكتب PWA -->
+    <link rel="manifest" href="/manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #f4f7f6; --card: #ffffff; --text: #2d3748; --accent: #10b981; --border: #e2e8f0; --muted: #718096; --danger: #ef4444; --warning: #f59e0b; }
@@ -15,6 +17,10 @@
         .nav-item { padding: 16px 25px; color: var(--muted); text-decoration: none; display: flex; align-items: center; gap: 10px; font-weight: 500; cursor: pointer; border-inline-end: 4px solid transparent; font-size: 1.05rem; transition: 0.3s; }
         .nav-item:hover, .nav-item.active { background: rgba(16, 185, 129, 0.1); color: var(--accent); border-color: var(--accent); }
         
+        /* زر تثبيت التطبيق على سطح المكتب */
+        #installAppBtn { display: none; padding: 15px; margin: 15px; background: var(--accent); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; text-align: center; font-family: inherit; font-size: 1rem; transition: 0.2s; box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3); }
+        #installAppBtn:hover { transform: translateY(-3px); filter: brightness(1.1); }
+        
         .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
         header { display: flex; justify-content: space-between; align-items: center; padding: 15px 30px; border-bottom: 1px solid var(--border); background: var(--card); }
         .controls { display: flex; gap: 10px; }
@@ -22,6 +28,13 @@
         
         .content-scroll { padding: 40px; overflow-y: auto; flex: 1; scroll-behavior: smooth; }
         
+        /* شاشة القفل بكلمة السر */
+        #lockScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 999999; display: flex; justify-content: center; align-items: center; flex-direction: column; }
+        .lock-card { background: var(--card); padding: 40px; border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); text-align: center; border: 1px solid var(--border); width: 100%; max-width: 400px; }
+        .lock-card input { width: 100%; padding: 15px; border-radius: 12px; border: 2px solid var(--border); background: var(--bg); color: var(--text); margin-bottom: 20px; font-size: 1.2rem; text-align: center; outline: none; box-sizing: border-box; }
+        .lock-card input:focus { border-color: var(--accent); }
+        .lock-card button { width: 100%; padding: 15px; border-radius: 12px; border: none; background: var(--accent); color: white; font-size: 1.1rem; font-weight: bold; cursor: pointer; font-family: inherit; }
+
         .call-wrapper { display: flex; gap: 25px; flex-wrap: wrap; align-items: flex-start; justify-content: center; }
         .control-card { background: var(--card); padding: 40px; border-radius: 24px; text-align: center; border: 1px solid var(--border); flex: 1; min-width: 320px; max-width: 450px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
         .number-display { font-size: 7rem; font-weight: 800; margin: 15px 0; line-height: 1; color: var(--text); }
@@ -35,7 +48,6 @@
         .input-group input, .input-group textarea { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); outline: none; font-family: inherit; box-sizing: border-box; transition: 0.3s; }
         .input-group input:focus, .input-group textarea:focus { border-color: var(--accent); }
         .input-group textarea { resize: vertical; min-height: 80px; }
-        .prescription-area { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); }
         
         .btn { padding: 16px; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: bold; cursor: pointer; color: white; width: 100%; margin-bottom: 15px; font-family: inherit; transition: 0.2s; }
         .btn:hover { filter: brightness(1.1); transform: translateY(-2px); }
@@ -45,22 +57,17 @@
         .btn-absent { background: var(--danger); flex: 1; }
         .btn-outline { background: transparent; border: 2px solid var(--accent); color: var(--accent); }
         
-        /* تصميم أنيق لبطاقات الإحصائيات */
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 25px; width: 100%; max-width: 900px; margin: 0 auto; }
         .stat-card { background: var(--card); padding: 30px; border-radius: 24px; border: 1px solid var(--border); text-align: center; box-shadow: 0 5px 20px rgba(0,0,0,0.03); transition: 0.3s; }
-        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0,0,0,0.06); }
         .stat-card span { color: var(--muted); font-size: 1.1rem; display: block; margin-bottom: 15px; font-weight: bold; }
         .stat-card strong { font-size: 4rem; color: var(--text); line-height: 1; display: block; }
         
         .archive-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 25px; }
         .search-bar { flex: 1; min-width: 260px; max-width: 500px; padding: 14px 20px; border-radius: 12px; border: 2px solid var(--border); background: var(--card); color: var(--text); font-size: 1.05rem; outline: none; transition: 0.3s; font-family: inherit; }
-        .search-bar:focus { border-color: var(--accent); }
         .patients-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
         .patient-card { background: var(--card); padding: 25px; border-radius: 16px; border: 1px solid var(--border); transition: 0.3s; display: flex; flex-direction: column; justify-content: space-between; }
-        .patient-card:hover { transform: translateY(-3px); border-color: var(--accent); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
-        .patient-name { font-size: 1.2rem; font-weight: bold; color: var(--text); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .patient-name { font-size: 1.2rem; font-weight: bold; color: var(--text); margin-bottom: 10px; }
         .patient-details { font-size: 0.9rem; color: var(--muted); line-height: 1.6; margin-bottom: 15px; }
-        
         .archive-actions { display: flex; gap: 10px; }
         .btn-small { padding: 10px; font-size: 0.9rem; flex: 1; background: rgba(16, 185, 129, 0.1); color: var(--accent); border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; text-align: center; }
         .btn-small:hover { background: var(--accent); color: white; }
@@ -82,6 +89,16 @@
     </style>
 </head>
 <body>
+
+    <!-- شاشة القفل (تظهر فقط إذا وضع الطبيب كلمة سر) -->
+    <div id="lockScreen" style="display: none;">
+        <div class="lock-card">
+            <h1 style="color: var(--accent); margin-top: 0;">🔒 ClinicFlow</h1>
+            <p style="color: var(--muted); font-weight: bold; margin-bottom: 30px;" data-i18n="lockDesc">هذه العيادة محمية بكلمة سر</p>
+            <input type="password" id="loginPassword" placeholder="أدخل كلمة السر هنا..." onkeypress="if(event.key === 'Enter') checkPassword()">
+            <button onclick="checkPassword()" data-i18n="btnUnlock">🔓 فتح العيادة</button>
+        </div>
+    </div>
     
     <div class="sidebar">
         <div>
@@ -90,12 +107,12 @@
                 <div class="nav-item active" onclick="switchTab('call-tab', this)" data-i18n="menuCall">📢 شاشة النداء</div>
                 <div class="nav-item" onclick="switchTab('patients-tab', this)" data-i18n="menuPatients">📂 أرشيف المرضى</div>
                 <div class="nav-item" onclick="switchTab('stats-tab', this)" data-i18n="menuStats">📊 إحصائيات العيادة</div>
+                <div class="nav-item" onclick="switchTab('settings-tab', this)" data-i18n="menuSettings">⚙️ الإعدادات والحماية</div>
             </div>
         </div>
         
-        <div style="padding: 20px; text-align: center; color: var(--muted); font-size: 0.8rem;">
-            ClinicFlow SaaS v2.5
-        </div>
+        <button id="installAppBtn" onclick="installApp()">💻 تثبيت التطبيق</button>
+        <div style="padding: 20px; text-align: center; color: var(--muted); font-size: 0.8rem;">ClinicFlow SaaS v3.0</div>
     </div>
 
     <div class="main-content">
@@ -141,37 +158,23 @@
                         </div>
 
                         <div class="form-grid">
-                            <div class="input-group">
-                                <label data-i18n="lblAge">العمر:</label>
-                                <input type="text" id="mAge" placeholder="مثال: 34 سنة">
-                            </div>
-                            <div class="input-group">
-                                <label data-i18n="lblBlood">فصيلة الدم:</label>
-                                <input type="text" id="mBlood" placeholder="مثال: O+">
-                            </div>
+                            <div class="input-group"><label data-i18n="lblAge">العمر:</label><input type="text" id="mAge"></div>
+                            <div class="input-group"><label data-i18n="lblBlood">فصيلة الدم:</label><input type="text" id="mBlood"></div>
                         </div>
                         <div class="form-grid">
-                            <div class="input-group">
-                                <label data-i18n="lblAllergy">حساسية للأدوية:</label>
-                                <input type="text" id="mAllergy" placeholder="لا يوجد">
-                            </div>
-                            <div class="input-group">
-                                <label data-i18n="lblChronic">أمراض مزمنة:</label>
-                                <input type="text" id="mChronic" placeholder="سكري، ضغط...">
-                            </div>
+                            <div class="input-group"><label data-i18n="lblAllergy">حساسية للأدوية:</label><input type="text" id="mAllergy"></div>
+                            <div class="input-group"><label data-i18n="lblChronic">أمراض مزمنة:</label><input type="text" id="mChronic"></div>
                         </div>
                         <div class="input-group">
-                            <label data-i18n="lblNotes">التشخيص والملاحظات (زيارة اليوم):</label>
-                            <textarea id="mNotes" placeholder="أعراض المريض وتشخيص الطبيب..."></textarea>
+                            <label data-i18n="lblNotes">التشخيص والملاحظات:</label>
+                            <textarea id="mNotes"></textarea>
                         </div>
                         
                         <button class="btn btn-outline" style="margin-top:10px;" onclick="saveMedicalRecord()" data-i18n="btnSaveFile">💾 حفظ الملف الطبي للمريض</button>
 
                         <div class="prescription-area">
-                            <h4 style="margin-top:0; color:var(--text);" data-i18n="prescTitle">💊 الوصفة الطبية (Ordonnance)</h4>
-                            <div class="input-group">
-                                <textarea id="mPrescription" placeholder="اكتب الأدوية هنا، كل دواء في سطر..."></textarea>
-                            </div>
+                            <h4 style="margin-top:0; color:var(--text);" data-i18n="prescTitle">💊 الوصفة الطبية</h4>
+                            <div class="input-group"><textarea id="mPrescription" placeholder="اكتب الأدوية هنا..."></textarea></div>
                             <button class="btn" style="background:var(--text); color:var(--bg);" onclick="printPrescription()" data-i18n="btnPrintPresc">🖨️ طباعة الوصفة الطبية</button>
                         </div>
                     </div>
@@ -180,7 +183,6 @@
 
             <!-- 2. أرشيف المرضى -->
             <div id="patients-tab" class="tab-content" style="display: none; padding: 0 20px;">
-                
                 <div id="archiveListView">
                     <div class="archive-header">
                         <h2 style="margin: 0; color: var(--text);" data-i18n="archiveTitle">📂 أرشيف ومراجعات المرضى</h2>
@@ -200,63 +202,49 @@
                         <button class="btn" style="width: auto; margin:0; padding: 8px 15px; background: var(--muted);" onclick="closePatientDetail()" data-i18n="backBtn">⬅️ العودة للأرشيف</button>
                     </div>
                     
-                    <div class="input-group" style="margin-bottom: 15px;">
-                        <label data-i18n="lblPatientName">اسم المريض:</label>
-                        <input type="text" id="editName">
+                    <div class="input-group" style="margin-bottom: 15px;"><label data-i18n="lblPatientName">اسم المريض:</label><input type="text" id="editName"></div>
+                    <div class="form-grid">
+                        <div class="input-group"><label data-i18n="lblAge">العمر:</label><input type="text" id="editAge"></div>
+                        <div class="input-group"><label data-i18n="lblBlood">فصيلة الدم:</label><input type="text" id="editBlood"></div>
                     </div>
                     <div class="form-grid">
-                        <div class="input-group">
-                            <label data-i18n="lblAge">العمر:</label>
-                            <input type="text" id="editAge">
-                        </div>
-                        <div class="input-group">
-                            <label data-i18n="lblBlood">فصيلة الدم:</label>
-                            <input type="text" id="editBlood">
-                        </div>
+                        <div class="input-group"><label data-i18n="lblAllergy">حساسية للأدوية:</label><input type="text" id="editAllergy"></div>
+                        <div class="input-group"><label data-i18n="lblChronic">أمراض مزمنة:</label><input type="text" id="editChronic"></div>
                     </div>
-                    <div class="form-grid">
-                        <div class="input-group">
-                            <label data-i18n="lblAllergy">حساسية للأدوية:</label>
-                            <input type="text" id="editAllergy">
-                        </div>
-                        <div class="input-group">
-                            <label data-i18n="lblChronic">أمراض مزمنة:</label>
-                            <input type="text" id="editChronic">
-                        </div>
-                    </div>
-                    <div class="input-group">
-                        <label data-i18n="lblNotes">التشخيص والملاحظات:</label>
-                        <textarea id="editNotes"></textarea>
-                    </div>
+                    <div class="input-group"><label data-i18n="lblNotes">التشخيص والملاحظات:</label><textarea id="editNotes"></textarea></div>
 
                     <div style="margin-top: 30px; display: flex; gap: 15px;">
                         <button class="btn" style="flex: 1; background: var(--accent);" onclick="saveEditedPatient()" data-i18n="saveEditBtn">💾 حفظ التعديلات</button>
-                        <button class="btn btn-danger" style="flex: 1;" onclick="deleteCurrentDetailPatient()" data-i18n="deleteBtn">🗑️ حذف المريض من الأرشيف</button>
+                        <button class="btn btn-danger" style="flex: 1;" onclick="deleteCurrentDetailPatient()" data-i18n="deleteBtn">🗑️ حذف المريض</button>
                     </div>
                 </div>
-
             </div>
 
-            <!-- 3. الإحصائيات (مُحدَّثة) -->
+            <!-- 3. الإحصائيات -->
             <div id="stats-tab" class="tab-content" style="display: none; text-align: center;">
                 <h2 style="margin-top: 0; margin-bottom: 30px; color: var(--text);" data-i18n="statsHeader">نظرة عامة على أداء العيادة</h2>
                 <div class="stats-grid">
                     <div class="stat-card" style="border: 2px solid var(--accent); background: rgba(16, 185, 129, 0.05);">
-                        <span style="color: var(--accent);" data-i18n="statWaiting">المرضى في الانتظار حالياً</span>
-                        <strong id="statWaiting" style="color: var(--accent);">0</strong>
+                        <span style="color: var(--accent); font-weight: bold;" data-i18n="statWaiting">المرضى في الانتظار حالياً</span><strong id="statWaiting" style="color: var(--accent);">0</strong>
                     </div>
-                    <div class="stat-card">
-                        <span data-i18n="statToday">إجمالي مرضى اليوم</span>
-                        <strong id="statToday">0</strong>
+                    <div class="stat-card"><span data-i18n="statToday">إجمالي مرضى اليوم</span><strong id="statToday">0</strong></div>
+                    <div class="stat-card"><span data-i18n="statWeekly">مرضى الأسبوع</span><strong id="statWeekly">0</strong></div>
+                    <div class="stat-card"><span data-i18n="statMonthly">مرضى الشهر</span><strong id="statMonthly">0</strong></div>
+                </div>
+            </div>
+
+            <!-- 4. تبويبة الإعدادات (الحماية بكلمة سر) -->
+            <div id="settings-tab" class="tab-content" style="display: none;">
+                <div class="control-card" style="max-width: 600px; margin: 0 auto; text-align: start;">
+                    <h2 style="color: var(--text); margin-top: 0;" data-i18n="secTitle">🛡️ إعدادات الحماية والخصوصية</h2>
+                    <p style="color: var(--muted); margin-bottom: 25px; font-weight: bold;" data-i18n="secDesc">لحماية عيادتك وملفات مرضاك من التطفل، يمكنك وضع كلمة سر تمنع أي شخص من الدخول إلى هذه اللوحة بدونها. لتعطيل الحماية، اترك الخانة فارغة واضغط حفظ.</p>
+                    
+                    <div class="input-group">
+                        <label data-i18n="lblNewPass">كلمة السر الجديدة:</label>
+                        <input type="text" id="newSettingsPassword" placeholder="اكتب كلمة السر هنا...">
                     </div>
-                    <div class="stat-card">
-                        <span data-i18n="statWeekly">مرضى هذا الأسبوع</span>
-                        <strong id="statWeekly">0</strong>
-                    </div>
-                    <div class="stat-card">
-                        <span data-i18n="statMonthly">مرضى هذا الشهر</span>
-                        <strong id="statMonthly">0</strong>
-                    </div>
+                    
+                    <button class="btn" style="margin-top: 15px;" onclick="saveSettingsPassword()" data-i18n="btnSavePass">💾 حفظ إعدادات الحماية</button>
                 </div>
             </div>
 
@@ -272,31 +260,37 @@
 
         const dict = {
             ar: { 
-                menuCall: "📢 شاشة النداء", menuPatients: "📂 أرشيف المرضى", menuStats: "📊 إحصائيات العيادة", docTitle: "لوحة الطبيب", btnTheme: "🌓 الوضع الليلي", 
+                menuCall: "📢 شاشة النداء", menuPatients: "📂 أرشيف المرضى", menuStats: "📊 الإحصائيات", menuSettings: "⚙️ الإعدادات", docTitle: "لوحة الطبيب", btnTheme: "🌓 الوضع الليلي", 
                 insideNow: "رقم المريض بالداخل", callNext: "📢 مناداة المريض التالي", btnDone: "✔️ تم الكشف", btnAbsent: "❌ غائب",
-                medicalFileTitle: "📋 الملف الطبي", optional: "اختياري", lblPatientName: "اسم المريض:", lblAge: "العمر:", lblBlood: "فصيلة الدم:", lblAllergy: "حساسية للأدوية:", lblChronic: "أمراض مزمنة:", lblNotes: "التشخيص والملاحظات:", btnSaveFile: "💾 حفظ الملف الطبي للمريض", prescTitle: "💊 الوصفة الطبية (Ordonnance)", btnPrintPresc: "🖨️ طباعة الوصفة الطبية",
-                archiveTitle: "📂 أرشيف ومراجعات المرضى", btnNewPatient: "+ إضافة ملف مريض جديد", searchPlaceholder: "🔍 ابحث عن مريض بالاسم...", loading: "جاري التحميل...", noPatients: "لا يوجد مرضى مسجلين في الأرشيف بعد.", 
-                viewBtn: "👁️ التفاصيل والتعديل", deleteBtn: "🗑️ حذف", editTitle: "📄 تفاصيل وتعديل ملف المريض", backBtn: "⬅️ العودة للأرشيف", saveEditBtn: "💾 حفظ التعديلات",
-                statsHeader: "نظرة عامة على أداء العيادة", statWaiting: "المرضى في الانتظار حالياً", statToday: "إجمالي مرضى اليوم", statWeekly: "مرضى هذا الأسبوع", statMonthly: "مرضى هذا الشهر",
-                errNoPatient: "⚠️ لا يوجد أي مريض في الانتظار.", errEmpty: "لا يوجد مريض لتسجيل حالته.", successStatus: "✔️ تم الحفظ بنجاح.", successCall: "📢 تم مناداة الرقم:", errSave: "خطأ أثناء الحفظ"
+                medicalFileTitle: "📋 الملف الطبي", optional: "اختياري", lblPatientName: "اسم المريض:", lblAge: "العمر:", lblBlood: "الدم:", lblAllergy: "حساسية:", lblChronic: "أمراض مزمنة:", lblNotes: "التشخيص:", btnSaveFile: "💾 حفظ", prescTitle: "💊 الوصفة", btnPrintPresc: "🖨️ طباعة",
+                archiveTitle: "📂 أرشيف المرضى", btnNewPatient: "+ مريض جديد", searchPlaceholder: "🔍 ابحث...", loading: "تحميل...", noPatients: "لا يوجد مرضى.", 
+                viewBtn: "👁️ التفاصيل والتعديل", deleteBtn: "🗑️ حذف", editTitle: "📄 تفاصيل ملف المريض", backBtn: "⬅️ عودة", saveEditBtn: "💾 حفظ",
+                statsHeader: "أداء العيادة", statWaiting: "في الانتظار", statToday: "اليوم", statWeekly: "الأسبوع", statMonthly: "الشهر",
+                secTitle: "🛡️ إعدادات الحماية", secDesc: "قم بوضع كلمة سر لحماية ملفات المرضى. اتركها فارغة لإلغاء الحماية.", lblNewPass: "كلمة السر الجديدة:", btnSavePass: "💾 حفظ الحماية",
+                lockDesc: "هذه العيادة محمية بكلمة سر", btnUnlock: "🔓 فتح العيادة",
+                errNoPatient: "⚠️ لا يوجد مريض", errEmpty: "لا يوجد مريض", successStatus: "✔️ تم الحفظ", successCall: "📢 تم مناداة:", errSave: "خطأ"
             },
             fr: { 
-                menuCall: "📢 Appel", menuPatients: "📂 Archives Patients", menuStats: "📊 Statistiques", docTitle: "Tableau du Médecin", btnTheme: "🌓 Mode Sombre", 
-                insideNow: "Patient Actuel", callNext: "📢 Patient Suivant", btnDone: "✔️ Terminé", btnAbsent: "❌ Absent",
-                medicalFileTitle: "📋 Dossier Médical", optional: "Optionnel", lblPatientName: "Nom du patient:", lblAge: "Âge:", lblBlood: "Groupe Sanguin:", lblAllergy: "Allergies:", lblChronic: "Maladies chroniques:", lblNotes: "Diagnostic / Notes:", btnSaveFile: "💾 Enregistrer le dossier", prescTitle: "💊 Ordonnance", btnPrintPresc: "🖨️ Imprimer l'ordonnance",
-                archiveTitle: "📂 Archives des Patients", btnNewPatient: "+ Nouveau Dossier", searchPlaceholder: "🔍 Rechercher un patient...", loading: "Chargement...", noPatients: "Aucun patient enregistré.", 
-                viewBtn: "👁️ Détails & Modifier", deleteBtn: "🗑️ Supprimer", editTitle: "📄 Modifier le dossier", backBtn: "⬅️ Retour", saveEditBtn: "💾 Enregistrer",
-                statsHeader: "Aperçu des performances", statWaiting: "Patients en attente", statToday: "Total aujourd'hui", statWeekly: "Cette semaine", statMonthly: "Ce mois-ci",
-                errNoPatient: "⚠️ Aucun patient en attente.", errEmpty: "Aucun patient.", successStatus: "✔️ Enregistré avec succès.", successCall: "📢 Appel:", errSave: "Erreur"
+                menuCall: "📢 Appel", menuPatients: "📂 Archives", menuStats: "📊 Stats", menuSettings: "⚙️ Paramètres", docTitle: "Tableau de bord", btnTheme: "🌓 Sombre", 
+                insideNow: "Patient Actuel", callNext: "📢 Suivant", btnDone: "✔️ Terminé", btnAbsent: "❌ Absent",
+                medicalFileTitle: "📋 Dossier", optional: "Optionnel", lblPatientName: "Nom:", lblAge: "Âge:", lblBlood: "Sang:", lblAllergy: "Allergies:", lblChronic: "Chroniques:", lblNotes: "Notes:", btnSaveFile: "💾 Enregistrer", prescTitle: "💊 Ordonnance", btnPrintPresc: "🖨️ Imprimer",
+                archiveTitle: "📂 Archives", btnNewPatient: "+ Nouveau", searchPlaceholder: "🔍 Chercher...", loading: "Chargement...", noPatients: "Aucun patient.", 
+                viewBtn: "👁️ Détails & Modifier", deleteBtn: "🗑️ Supprimer", editTitle: "📄 Modifier Dossier", backBtn: "⬅️ Retour", saveEditBtn: "💾 Enregistrer",
+                statsHeader: "Performances", statWaiting: "En attente", statToday: "Aujourd'hui", statWeekly: "Semaine", statMonthly: "Mois",
+                secTitle: "🛡️ Sécurité", secDesc: "Ajoutez un mot de passe pour protéger les dossiers. Laissez vide pour désactiver.", lblNewPass: "Nouveau MDP:", btnSavePass: "💾 Sauvegarder",
+                lockDesc: "Cette clinique est protégée par un mot de passe", btnUnlock: "🔓 Déverrouiller",
+                errNoPatient: "⚠️ Aucun patient", errEmpty: "Aucun patient", successStatus: "✔️ Enregistré", successCall: "📢 Appel:", errSave: "Erreur"
             },
             en: { 
-                menuCall: "📢 Call Screen", menuPatients: "📂 Patients Archive", menuStats: "📊 Clinic Stats", docTitle: "Doctor Dashboard", btnTheme: "🌓 Dark Mode", 
+                menuCall: "📢 Call Screen", menuPatients: "📂 Archive", menuStats: "📊 Stats", menuSettings: "⚙️ Settings", docTitle: "Dashboard", btnTheme: "🌓 Dark", 
                 insideNow: "Current Patient", callNext: "📢 Call Next", btnDone: "✔️ Done", btnAbsent: "❌ Absent",
-                medicalFileTitle: "📋 Medical Record", optional: "Optional", lblPatientName: "Patient Name:", lblAge: "Age:", lblBlood: "Blood Type:", lblAllergy: "Allergies:", lblChronic: "Chronic Diseases:", lblNotes: "Diagnosis & Notes:", btnSaveFile: "💾 Save Medical Record", prescTitle: "💊 Prescription", btnPrintPresc: "🖨️ Print Prescription",
-                archiveTitle: "📂 Patients Archive", btnNewPatient: "+ Add New Patient File", searchPlaceholder: "🔍 Search patient by name...", loading: "Loading...", noPatients: "No patients registered in archive yet.", 
-                viewBtn: "👁️ Details & Edit", deleteBtn: "🗑️ Delete", editTitle: "📄 Edit Patient File", backBtn: "⬅️ Back", saveEditBtn: "💾 Save Changes",
-                statsHeader: "Clinic Performance", statWaiting: "Patients waiting", statToday: "Total today", statWeekly: "This week", statMonthly: "This month",
-                errNoPatient: "⚠️ No patients waiting.", errEmpty: "No patient selected.", successStatus: "✔️ Saved successfully.", successCall: "📢 Called:", errSave: "Error saving"
+                medicalFileTitle: "📋 Record", optional: "Optional", lblPatientName: "Name:", lblAge: "Age:", lblBlood: "Blood:", lblAllergy: "Allergies:", lblChronic: "Chronic:", lblNotes: "Notes:", btnSaveFile: "💾 Save", prescTitle: "💊 Prescription", btnPrintPresc: "🖨️ Print",
+                archiveTitle: "📂 Archive", btnNewPatient: "+ New", searchPlaceholder: "🔍 Search...", loading: "Loading...", noPatients: "No patients.", 
+                viewBtn: "👁️ Details & Edit", deleteBtn: "🗑️ Delete", editTitle: "📄 Edit Record", backBtn: "⬅️ Back", saveEditBtn: "💾 Save",
+                statsHeader: "Performance", statWaiting: "Waiting", statToday: "Today", statWeekly: "Week", statMonthly: "Month",
+                secTitle: "🛡️ Security", secDesc: "Set a password to protect records. Leave empty to disable.", lblNewPass: "New Password:", btnSavePass: "💾 Save Security",
+                lockDesc: "This clinic is password protected", btnUnlock: "🔓 Unlock",
+                errNoPatient: "⚠️ No patient", errEmpty: "No patient", successStatus: "✔️ Saved", successCall: "📢 Called:", errSave: "Error"
             }
         };
         
@@ -328,9 +322,7 @@
                 document.getElementById('patientDetailView').style.display = 'none';
                 document.getElementById('archiveListView').style.display = 'block';
                 fetchAllPatients();
-            } else if (tabId === 'stats-tab') {
-                fetchStats(); // جلب الإحصائيات عند فتح التبويبة
-            }
+            } else if (tabId === 'stats-tab') { fetchStats(); }
         }
 
         function showToast(message, type = 'success') {
@@ -342,6 +334,71 @@
             setTimeout(() => { toast.remove(); }, 3500);
         }
 
+        // --- نظام الحماية بكلمة سر ---
+        async function checkInitialLock() {
+            try {
+                const res = await fetch(`https://clinic-server-i00s.onrender.com/api/doctor/auth-status/${CLINIC_SLUG}`);
+                const data = await res.json();
+                if (data.hasPassword) {
+                    const savedAuth = sessionStorage.getItem(`doc_auth_${CLINIC_SLUG}`);
+                    if (!savedAuth) {
+                        document.getElementById('lockScreen').style.display = 'flex';
+                    }
+                }
+            } catch(e) {}
+        }
+
+        async function checkPassword() {
+            const pass = document.getElementById('loginPassword').value;
+            if(!pass) return showToast('يرجى إدخال كلمة السر', 'warning');
+            try {
+                const res = await fetch('https://clinic-server-i00s.onrender.com/api/doctor/verify-password', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ clinic_slug: CLINIC_SLUG, password: pass })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    sessionStorage.setItem(`doc_auth_${CLINIC_SLUG}`, 'true');
+                    document.getElementById('lockScreen').style.display = 'none';
+                    showToast('تم تسجيل الدخول بنجاح', 'success');
+                } else {
+                    showToast('كلمة السر خاطئة!', 'error');
+                }
+            } catch(e) { showToast('خطأ اتصال', 'error'); }
+        }
+
+        async function saveSettingsPassword() {
+            const newPass = document.getElementById('newSettingsPassword').value;
+            try {
+                await fetch('https://clinic-server-i00s.onrender.com/api/doctor/set-password', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ clinic_slug: CLINIC_SLUG, new_password: newPass })
+                });
+                showToast('تم حفظ إعدادات الحماية بنجاح', 'success');
+                document.getElementById('newSettingsPassword').value = '';
+            } catch(e) { showToast('خطأ في الحفظ', 'error'); }
+        }
+
+        // --- PWA: تثبيت التطبيق على سطح المكتب ---
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('installAppBtn').style.display = 'block'; // إظهار زر التثبيت
+        });
+
+        function installApp() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        document.getElementById('installAppBtn').style.display = 'none';
+                    }
+                    deferredPrompt = null;
+                });
+            }
+        }
+
         let currentNum = 0;
         let activePatientName = '';
         let activeDoctorName = 'الطبيب المختص';
@@ -351,8 +408,14 @@
         window.onload = async () => {
             changeLang(localStorage.getItem('doc_lang') || 'ar');
             if (localStorage.getItem('theme') === 'dark') document.body.setAttribute('data-theme', 'dark');
+            await checkInitialLock();
             await fetchStatus();
             await fetchStats();
+            
+            // تسجيل الـ Service Worker لتطبيق سطح المكتب
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW failed', err));
+            }
         };
 
         function displayPatientState(pName, ticketStatus) {
@@ -418,17 +481,13 @@
                     displayPatientState(activePatientName, data.ticket_status);
 
                     if (data.ticket_status === 'cancelled') {
-                        showToast(`⚠️ المريض (${activePatientName}) صاحب الرقم ${currentNum} قام بإلغاء حجزه!`, 'error');
+                        showToast(`⚠️ المريض (${activePatientName}) صاحب الرقم ${currentNum} ألغى حجزه!`, 'error');
                     } else {
-                        showToast(`${dict[currentLang].successCall} ${currentNum} (${activePatientName})`, 'success');
+                        showToast(`${dict[currentLang].successCall} ${currentNum}`, 'success');
                     }
                     fetchStats(); 
-                } else {
-                    showToast(dict[currentLang].errNoPatient, 'warning');
-                }
-            } catch (e) {
-                showToast('خطأ اتصال بالسيرفر', 'error');
-            }
+                } else { showToast(dict[currentLang].errNoPatient, 'warning'); }
+            } catch (e) { showToast('خطأ اتصال بالسيرفر', 'error'); }
         }
 
         async function loadMedicalRecord(pName) {
@@ -450,130 +509,54 @@
 
         async function saveMedicalRecord() {
             const pName = document.getElementById('mPatientNameInput').value.trim() || activePatientName;
-            if (!pName) return showToast('يرجى كتابة اسم المريض أولاً', 'warning');
+            if (!pName) return showToast('يرجى كتابة اسم المريض', 'warning');
             activePatientName = pName;
             document.getElementById('currentPatientName').innerText = `👤 ${activePatientName}`;
 
             try {
-                const payload = {
-                    clinic_slug: CLINIC_SLUG,
-                    patient_name: pName,
-                    age: document.getElementById('mAge').value,
-                    blood_type: document.getElementById('mBlood').value,
-                    allergies: document.getElementById('mAllergy').value,
-                    chronic: document.getElementById('mChronic').value,
-                    notes: document.getElementById('mNotes').value
-                };
-                const res = await fetch('https://clinic-server-i00s.onrender.com/api/patient/save', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                if (res.ok) {
-                    showToast(dict[currentLang].successStatus, 'success');
-                } else {
-                    showToast(dict[currentLang].errSave, 'error');
-                }
-            } catch (e) {
-                showToast(dict[currentLang].errSave, 'error');
-            }
+                const payload = { clinic_slug: CLINIC_SLUG, patient_name: pName, age: document.getElementById('mAge').value, blood_type: document.getElementById('mBlood').value, allergies: document.getElementById('mAllergy').value, chronic: document.getElementById('mChronic').value, notes: document.getElementById('mNotes').value };
+                const res = await fetch('https://clinic-server-i00s.onrender.com/api/patient/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                if (res.ok) showToast(dict[currentLang].successStatus, 'success');
+                else showToast(dict[currentLang].errSave, 'error');
+            } catch (e) { showToast(dict[currentLang].errSave, 'error'); }
         }
 
         function printPrescription() {
             const pName = document.getElementById('mPatientNameInput').value.trim() || activePatientName || 'المريض';
             const prescriptionText = document.getElementById('mPrescription').value.trim();
-            if (!prescriptionText) return showToast('يرجى كتابة الأدوية في الوصفة أولاً', 'warning');
-
+            if (!prescriptionText) return showToast('اكتب الأدوية أولاً', 'warning');
             const ageText = document.getElementById('mAge').value.trim() || '--';
             const dateStr = new Date().toLocaleDateString('ar-DZ');
             const printWindow = window.open('', '', 'width=800,height=600');
-            
-            printWindow.document.write(`
-                <html dir="rtl" lang="ar">
-                <head>
-                    <title>وصفة طبية - ${pName}</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; padding: 40px; color: #333; }
-                        .header { display: flex; justify-content: space-between; border-bottom: 2px solid #10b981; padding-bottom: 20px; margin-bottom: 30px; }
-                        .clinic-info { font-size: 1.2rem; font-weight: bold; color: #10b981; }
-                        .date-info { font-size: 1rem; color: #555; }
-                        .patient-info { font-size: 1.4rem; font-weight: bold; margin-bottom: 40px; display: flex; justify-content: space-between; background: #f9f9f9; padding: 15px; border-radius: 10px; }
-                        .prescription-body { font-size: 1.2rem; line-height: 2; white-space: pre-wrap; min-height: 300px; }
-                        .footer { margin-top: 50px; text-align: left; font-size: 1.2rem; font-weight: bold; color: #555; }
-                        @media print { @page { size: A5; margin: 10mm; } }
-                    </style>
-                </head>
-                <body>
-                    <div class="header"><div class="clinic-info">العيادة الطبية<br>${activeDoctorName}</div><div class="date-info">التاريخ: ${dateStr}</div></div>
-                    <div class="patient-info"><span>المريض: ${pName}</span><span>العمر: ${ageText}</span></div>
-                    <div class="prescription-body">${prescriptionText}</div>
-                    <div class="footer">توقيع الطبيب</div>
-                </body>
-                </html>
-            `);
-            printWindow.document.close();
-            printWindow.focus();
-            setTimeout(() => { printWindow.print(); printWindow.close(); }, 500);
+            printWindow.document.write(`<html dir="rtl" lang="ar"><head><title>وصفة - ${pName}</title><style>body{font-family:Arial; padding:40px;} .header{display:flex; justify-content:space-between; border-bottom:2px solid #10b981; padding-bottom:20px;} .patient-info{font-size:1.4rem; font-weight:bold; display:flex; justify-content:space-between; background:#f9f9f9; padding:15px; margin:20px 0; border-radius:10px;} .body{font-size:1.2rem; line-height:2; min-height:300px; white-space:pre-wrap;}</style></head><body><div class="header"><div>العيادة الطبية<br>${activeDoctorName}</div><div>التاريخ: ${dateStr}</div></div><div class="patient-info"><span>المريض: ${pName}</span><span>العمر: ${ageText}</span></div><div class="body">${prescriptionText}</div><div style="margin-top:50px;font-weight:bold;">توقيع الطبيب</div></body></html>`);
+            printWindow.document.close(); printWindow.focus(); setTimeout(() => { printWindow.print(); printWindow.close(); }, 500);
         }
 
         async function setStatus(statusType) {
             if (currentNum === 0) return showToast(dict[currentLang].errEmpty, 'warning');
             try {
-                await fetch('https://clinic-server-i00s.onrender.com/api/tickets/status', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ clinic_slug: CLINIC_SLUG, ticket_number: currentNum, status: statusType })
-                });
+                await fetch('https://clinic-server-i00s.onrender.com/api/tickets/status', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ clinic_slug: CLINIC_SLUG, ticket_number: currentNum, status: statusType }) });
                 showToast(dict[currentLang].successStatus, 'success');
                 document.getElementById('medicalCard').style.display = 'none';
                 document.getElementById('cancelledBanner').style.display = 'none';
                 document.getElementById('currentPatientName').innerText = '--';
-                activePatientName = '';
-            } catch (e) {
-                showToast('Error', 'error');
-            }
+            } catch (e) { showToast('Error', 'error'); }
         }
 
         async function fetchAllPatients() {
-            const container = document.getElementById('patientsListContainer');
             try {
                 const res = await fetch(`https://clinic-server-i00s.onrender.com/api/patients/all/${CLINIC_SLUG}`);
-                const data = await res.json();
-                if (!res.ok || data.error) throw new Error(data.error || `HTTP ${res.status}`);
-                
-                allPatientsData = data;
+                allPatientsData = await res.json();
                 renderPatientsList(allPatientsData);
-            } catch (e) { 
-                container.innerHTML = `<div style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--danger); color: var(--danger); padding: 15px; border-radius: 12px; text-align: center; width: 100%;">
-                    ⚠️ <b>تعذر تحميل الأرشيف:</b><br><small>${e.message}</small>
-                </div>`; 
-            }
+            } catch (e) { document.getElementById('patientsListContainer').innerHTML = `<p style="color:red; text-align:center;">خطأ في الأرشيف</p>`; }
         }
 
         function renderPatientsList(patientsArray) {
             const container = document.getElementById('patientsListContainer');
-            if (!patientsArray || patientsArray.length === 0) {
-                container.innerHTML = `<p style="color: var(--muted); text-align: center; width: 100%; padding: 30px;" data-i18n="noPatients">${dict[currentLang].noPatients}</p>`;
-                return;
-            }
-            
+            if (!patientsArray || patientsArray.length === 0) return container.innerHTML = `<p style="text-align: center; width: 100%; padding: 30px;">${dict[currentLang].noPatients}</p>`;
             let html = '';
             patientsArray.forEach(p => {
-                const lastVisit = p.updated_at ? new Date(p.updated_at).toLocaleDateString('ar-DZ') : '--';
-                html += `
-                    <div class="patient-card">
-                        <div>
-                            <div class="patient-name">👤 ${p.patient_name}</div>
-                            <div class="patient-details">
-                                <strong>العمر:</strong> ${p.age || '--'} | <strong>الدم:</strong> ${p.blood_type || '--'}<br>
-                                <strong>الأمراض المزمنة:</strong> ${p.chronic_diseases || 'لا يوجد'} <br>
-                                <strong>آخر تحديث:</strong> ${lastVisit}
-                            </div>
-                        </div>
-                        <div class="archive-actions">
-                            <button class="btn-small" onclick="viewPatientDetail(${p.id})">${dict[currentLang].viewBtn}</button>
-                            <button class="btn-small btn-delete" onclick="deletePatientRecord(${p.id})">${dict[currentLang].deleteBtn}</button>
-                        </div>
-                    </div>
-                `;
+                html += `<div class="patient-card"><div><div class="patient-name">👤 ${p.patient_name}</div><div class="patient-details"><strong>العمر:</strong> ${p.age || '--'} | <strong>الدم:</strong> ${p.blood_type || '--'}<br><strong>الأمراض:</strong> ${p.chronic_diseases || 'لا يوجد'} <br><strong>آخر تحديث:</strong> ${p.updated_at ? new Date(p.updated_at).toLocaleDateString('ar-DZ') : '--'}</div></div><div class="archive-actions"><button class="btn-small" onclick="viewPatientDetail(${p.id})">${dict[currentLang].viewBtn}</button><button class="btn-small btn-delete" onclick="deletePatientRecord(${p.id})">${dict[currentLang].deleteBtn}</button></div></div>`;
             });
             container.innerHTML = html;
         }
@@ -588,94 +571,47 @@
             const p = allPatientsData.find(item => item.id === id);
             if (!p) return;
             currentSelectedPatientId = p.id;
-
             document.getElementById('editName').value = p.patient_name || '';
             document.getElementById('editAge').value = p.age || '';
             document.getElementById('editBlood').value = p.blood_type || '';
             document.getElementById('editAllergy').value = p.allergies || '';
             document.getElementById('editChronic').value = p.chronic_diseases || '';
             document.getElementById('editNotes').value = p.notes || '';
-
             document.getElementById('archiveListView').style.display = 'none';
             document.getElementById('patientDetailView').style.display = 'block';
         }
 
-        function closePatientDetail() {
-            document.getElementById('patientDetailView').style.display = 'none';
-            document.getElementById('archiveListView').style.display = 'block';
-            currentSelectedPatientId = null;
-        }
+        function closePatientDetail() { document.getElementById('patientDetailView').style.display = 'none'; document.getElementById('archiveListView').style.display = 'block'; currentSelectedPatientId = null; }
 
         async function saveEditedPatient() {
             const pName = document.getElementById('editName').value.trim();
-            if (!pName) return showToast('اسم المريض مطلوب', 'warning');
-
+            if (!pName) return showToast('الاسم مطلوب', 'warning');
             try {
-                const payload = {
-                    clinic_slug: CLINIC_SLUG,
-                    patient_name: pName,
-                    age: document.getElementById('editAge').value,
-                    blood_type: document.getElementById('editBlood').value,
-                    allergies: document.getElementById('editAllergy').value,
-                    chronic: document.getElementById('editChronic').value,
-                    notes: document.getElementById('editNotes').value
-                };
-                const res = await fetch('https://clinic-server-i00s.onrender.com/api/patient/save', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                if (res.ok) {
-                    showToast(dict[currentLang].successStatus, 'success');
-                    closePatientDetail();
-                    fetchAllPatients();
-                } else {
-                    showToast(dict[currentLang].errSave, 'error');
-                }
-            } catch (e) {
-                showToast(dict[currentLang].errSave, 'error');
-            }
+                const payload = { clinic_slug: CLINIC_SLUG, patient_name: pName, age: document.getElementById('editAge').value, blood_type: document.getElementById('editBlood').value, allergies: document.getElementById('editAllergy').value, chronic: document.getElementById('editChronic').value, notes: document.getElementById('editNotes').value };
+                const res = await fetch('https://clinic-server-i00s.onrender.com/api/patient/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                if (res.ok) { showToast(dict[currentLang].successStatus, 'success'); closePatientDetail(); fetchAllPatients(); }
+            } catch (e) { showToast(dict[currentLang].errSave, 'error'); }
         }
 
         async function deletePatientRecord(id) {
-            if (!confirm('هل أنت متأكد من رغبتك في حذف هذا المريض نهائياً من الأرشيف؟')) return;
+            if (!confirm('تأكيد الحذف؟')) return;
             try {
                 const res = await fetch(`https://clinic-server-i00s.onrender.com/api/patients/delete/${id}`, { method: 'DELETE' });
-                if (res.ok) {
-                    showToast('✔️ تم حذف المريض بنجاح', 'success');
-                    fetchAllPatients();
-                    if (currentSelectedPatientId === id) closePatientDetail();
-                } else {
-                    showToast('خطأ أثناء الحذف', 'error');
-                }
-            } catch (e) {
-                showToast('خطأ في الاتصال', 'error');
-            }
+                if (res.ok) { showToast('✔️ تم الحذف', 'success'); fetchAllPatients(); if (currentSelectedPatientId === id) closePatientDetail(); }
+            } catch (e) { showToast('خطأ', 'error'); }
         }
 
         function openNewPatientFile() {
             currentSelectedPatientId = null;
-            document.getElementById('editName').value = '';
-            document.getElementById('editAge').value = '';
-            document.getElementById('editBlood').value = '';
-            document.getElementById('editAllergy').value = '';
-            document.getElementById('editChronic').value = '';
-            document.getElementById('editNotes').value = '';
-
+            ['editName', 'editAge', 'editBlood', 'editAllergy', 'editChronic', 'editNotes'].forEach(id => document.getElementById(id).value = '');
             document.getElementById('archiveListView').style.display = 'none';
             document.getElementById('patientDetailView').style.display = 'block';
             document.getElementById('editName').focus();
         }
 
         const socket = io('https://clinic-server-i00s.onrender.com');
-        socket.on('new_ticket', (data) => {
-            if (data.clinic_slug === CLINIC_SLUG) { fetchStats(); }
-        });
-        socket.on('ticket_cancelled', (data) => {
-            if (data.clinic_slug === CLINIC_SLUG) {
-                showToast(`⚠️ قام المريض (${data.patient_name}) بإلغاء تذكرته رقم ${data.ticket_number}`, 'warning');
-                fetchStats();
-            }
-        });
+        socket.on('new_ticket', (data) => { if (data.clinic_slug === CLINIC_SLUG) fetchStats(); });
+        socket.on('ticket_cancelled', (data) => { if (data.clinic_slug === CLINIC_SLUG) { showToast(`⚠️ ألغى المريض (${data.patient_name}) تذكرته`, 'warning'); fetchStats(); } });
     </script>
 </body>
 </html>
