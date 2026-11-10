@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ClinicFlow - Doctor Dashboard</title>
-    <!-- استدعاء ملف الـ Manifest ليعمل كتطبيق سطح مكتب PWA -->
     <link rel="manifest" href="/manifest.json">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
     <style>
@@ -17,7 +16,6 @@
         .nav-item { padding: 16px 25px; color: var(--muted); text-decoration: none; display: flex; align-items: center; gap: 10px; font-weight: 500; cursor: pointer; border-inline-end: 4px solid transparent; font-size: 1.05rem; transition: 0.3s; }
         .nav-item:hover, .nav-item.active { background: rgba(16, 185, 129, 0.1); color: var(--accent); border-color: var(--accent); }
         
-        /* زر تثبيت التطبيق على سطح المكتب */
         #installAppBtn { display: none; padding: 15px; margin: 15px; background: var(--accent); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; text-align: center; font-family: inherit; font-size: 1rem; transition: 0.2s; box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3); }
         #installAppBtn:hover { transform: translateY(-3px); filter: brightness(1.1); }
         
@@ -28,7 +26,6 @@
         
         .content-scroll { padding: 40px; overflow-y: auto; flex: 1; scroll-behavior: smooth; }
         
-        /* شاشة القفل بكلمة السر */
         #lockScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 999999; display: flex; justify-content: center; align-items: center; flex-direction: column; }
         .lock-card { background: var(--card); padding: 40px; border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); text-align: center; border: 1px solid var(--border); width: 100%; max-width: 400px; }
         .lock-card input { width: 100%; padding: 15px; border-radius: 12px; border: 2px solid var(--border); background: var(--bg); color: var(--text); margin-bottom: 20px; font-size: 1.2rem; text-align: center; outline: none; box-sizing: border-box; }
@@ -48,14 +45,17 @@
         .input-group input, .input-group textarea { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); outline: none; font-family: inherit; box-sizing: border-box; transition: 0.3s; }
         .input-group input:focus, .input-group textarea:focus { border-color: var(--accent); }
         .input-group textarea { resize: vertical; min-height: 80px; }
+        .prescription-area { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); }
         
-        .btn { padding: 16px; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: bold; cursor: pointer; color: white; width: 100%; margin-bottom: 15px; font-family: inherit; transition: 0.2s; }
+        /* 🔥 إصلاح ألوان الأزرار لتكون واضحة دائماً 🔥 */
+        .btn { padding: 16px; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: bold; cursor: pointer; color: #ffffff !important; background: var(--accent); width: 100%; margin-bottom: 15px; font-family: inherit; transition: 0.2s; }
         .btn:hover { filter: brightness(1.1); transform: translateY(-2px); }
-        .btn-call { background: var(--accent); font-size: 1.3rem; }
+        .btn-done { background: #3b82f6 !important; flex: 1; }
+        .btn-absent { background: #ef4444 !important; flex: 1; }
+        .btn-danger { background: #ef4444 !important; color: #ffffff !important; }
+        .btn-outline { background: transparent !important; border: 2px solid var(--accent) !important; color: var(--accent) !important; }
+        .btn-outline:hover { background: var(--accent) !important; color: #ffffff !important; }
         .status-btns { display: flex; gap: 10px; margin-bottom: 20px; }
-        .btn-done { background: #3b82f6; flex: 1; }
-        .btn-absent { background: var(--danger); flex: 1; }
-        .btn-outline { background: transparent; border: 2px solid var(--accent); color: var(--accent); }
         
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 25px; width: 100%; max-width: 900px; margin: 0 auto; }
         .stat-card { background: var(--card); padding: 30px; border-radius: 24px; border: 1px solid var(--border); text-align: center; box-shadow: 0 5px 20px rgba(0,0,0,0.03); transition: 0.3s; }
@@ -64,16 +64,13 @@
         
         .archive-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 25px; }
         .search-bar { flex: 1; min-width: 260px; max-width: 500px; padding: 14px 20px; border-radius: 12px; border: 2px solid var(--border); background: var(--card); color: var(--text); font-size: 1.05rem; outline: none; transition: 0.3s; font-family: inherit; }
+        .search-bar:focus { border-color: var(--accent); }
         .patients-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
         .patient-card { background: var(--card); padding: 25px; border-radius: 16px; border: 1px solid var(--border); transition: 0.3s; display: flex; flex-direction: column; justify-content: space-between; }
-        .patient-name { font-size: 1.2rem; font-weight: bold; color: var(--text); margin-bottom: 10px; }
+        .patient-card:hover { transform: translateY(-3px); border-color: var(--accent); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+        .patient-name { font-size: 1.2rem; font-weight: bold; color: var(--text); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
         .patient-details { font-size: 0.9rem; color: var(--muted); line-height: 1.6; margin-bottom: 15px; }
-        .archive-actions { display: flex; gap: 10px; }
-        .btn-small { padding: 10px; font-size: 0.9rem; flex: 1; background: rgba(16, 185, 129, 0.1); color: var(--accent); border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; text-align: center; }
-        .btn-small:hover { background: var(--accent); color: white; }
-        .btn-delete { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
-        .btn-delete:hover { background: var(--danger); color: white; }
-
+        
         #patientDetailView { display: none; background: var(--card); padding: 35px; border-radius: 24px; border: 1px solid var(--border); max-width: 700px; margin: 0 auto; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
 
         .toast-container { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 10px; z-index: 9999; }
@@ -90,13 +87,12 @@
 </head>
 <body>
 
-    <!-- شاشة القفل (تظهر فقط إذا وضع الطبيب كلمة سر) -->
     <div id="lockScreen" style="display: none;">
         <div class="lock-card">
             <h1 style="color: var(--accent); margin-top: 0;">🔒 ClinicFlow</h1>
             <p style="color: var(--muted); font-weight: bold; margin-bottom: 30px;" data-i18n="lockDesc">هذه العيادة محمية بكلمة سر</p>
             <input type="password" id="loginPassword" placeholder="أدخل كلمة السر هنا..." onkeypress="if(event.key === 'Enter') checkPassword()">
-            <button onclick="checkPassword()" data-i18n="btnUnlock">🔓 فتح العيادة</button>
+            <button onclick="checkPassword()" data-i18n="btnUnlock" style="color: #ffffff !important; background: var(--accent);">🔓 فتح العيادة</button>
         </div>
     </div>
     
@@ -112,7 +108,7 @@
         </div>
         
         <button id="installAppBtn" onclick="installApp()">💻 تثبيت التطبيق</button>
-        <div style="padding: 20px; text-align: center; color: var(--muted); font-size: 0.8rem;">ClinicFlow SaaS v3.0</div>
+        <div style="padding: 20px; text-align: center; color: var(--muted); font-size: 0.8rem;">ClinicFlow SaaS v3.1</div>
     </div>
 
     <div class="main-content">
@@ -175,7 +171,8 @@
                         <div class="prescription-area">
                             <h4 style="margin-top:0; color:var(--text);" data-i18n="prescTitle">💊 الوصفة الطبية</h4>
                             <div class="input-group"><textarea id="mPrescription" placeholder="اكتب الأدوية هنا..."></textarea></div>
-                            <button class="btn" style="background:var(--text); color:var(--bg);" onclick="printPrescription()" data-i18n="btnPrintPresc">🖨️ طباعة الوصفة الطبية</button>
+                            <!-- زر الطباعة بألوان مخصصة ليكون واضحاً -->
+                            <button class="btn" style="background:var(--text) !important; color:var(--bg) !important;" onclick="printPrescription()" data-i18n="btnPrintPresc">🖨️ طباعة الوصفة الطبية</button>
                         </div>
                     </div>
                 </div>
@@ -186,7 +183,7 @@
                 <div id="archiveListView">
                     <div class="archive-header">
                         <h2 style="margin: 0; color: var(--text);" data-i18n="archiveTitle">📂 أرشيف ومراجعات المرضى</h2>
-                        <button class="btn" style="width: auto; margin: 0; padding: 12px 20px; background: var(--accent);" onclick="openNewPatientFile()" data-i18n="btnNewPatient">+ إضافة ملف مريض جديد</button>
+                        <button class="btn" style="width: auto; margin: 0; padding: 12px 20px;" onclick="openNewPatientFile()" data-i18n="btnNewPatient">+ إضافة ملف مريض جديد</button>
                     </div>
                     
                     <input type="text" id="searchInput" class="search-bar" placeholder="🔍 ابحث عن مريض بالاسم..." onkeyup="filterPatients()" style="margin-bottom: 25px; width: 100%; box-sizing: border-box;">
@@ -199,7 +196,7 @@
                 <div id="patientDetailView">
                     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border); padding-bottom: 15px; margin-bottom: 20px;">
                         <h2 style="margin:0; color: var(--accent);" data-i18n="editTitle">📄 تفاصيل وتعديل ملف المريض</h2>
-                        <button class="btn" style="width: auto; margin:0; padding: 8px 15px; background: var(--muted);" onclick="closePatientDetail()" data-i18n="backBtn">⬅️ العودة للأرشيف</button>
+                        <button class="btn" style="width: auto; margin:0; padding: 8px 15px; background: var(--muted) !important;" onclick="closePatientDetail()" data-i18n="backBtn">⬅️ العودة للأرشيف</button>
                     </div>
                     
                     <div class="input-group" style="margin-bottom: 15px;"><label data-i18n="lblPatientName">اسم المريض:</label><input type="text" id="editName"></div>
@@ -214,7 +211,7 @@
                     <div class="input-group"><label data-i18n="lblNotes">التشخيص والملاحظات:</label><textarea id="editNotes"></textarea></div>
 
                     <div style="margin-top: 30px; display: flex; gap: 15px;">
-                        <button class="btn" style="flex: 1; background: var(--accent);" onclick="saveEditedPatient()" data-i18n="saveEditBtn">💾 حفظ التعديلات</button>
+                        <button class="btn" style="flex: 1;" onclick="saveEditedPatient()" data-i18n="saveEditBtn">💾 حفظ التعديلات</button>
                         <button class="btn btn-danger" style="flex: 1;" onclick="deleteCurrentDetailPatient()" data-i18n="deleteBtn">🗑️ حذف المريض</button>
                     </div>
                 </div>
@@ -225,7 +222,7 @@
                 <h2 style="margin-top: 0; margin-bottom: 30px; color: var(--text);" data-i18n="statsHeader">نظرة عامة على أداء العيادة</h2>
                 <div class="stats-grid">
                     <div class="stat-card" style="border: 2px solid var(--accent); background: rgba(16, 185, 129, 0.05);">
-                        <span style="color: var(--accent); font-weight: bold;" data-i18n="statWaiting">المرضى في الانتظار حالياً</span><strong id="statWaiting" style="color: var(--accent);">0</strong>
+                        <span style="color: var(--accent);" data-i18n="statWaiting">المرضى في الانتظار حالياً</span><strong id="statWaiting" style="color: var(--accent);">0</strong>
                     </div>
                     <div class="stat-card"><span data-i18n="statToday">إجمالي مرضى اليوم</span><strong id="statToday">0</strong></div>
                     <div class="stat-card"><span data-i18n="statWeekly">مرضى الأسبوع</span><strong id="statWeekly">0</strong></div>
@@ -233,7 +230,7 @@
                 </div>
             </div>
 
-            <!-- 4. تبويبة الإعدادات (الحماية بكلمة سر) -->
+            <!-- 4. الإعدادات -->
             <div id="settings-tab" class="tab-content" style="display: none;">
                 <div class="control-card" style="max-width: 600px; margin: 0 auto; text-align: start;">
                     <h2 style="color: var(--text); margin-top: 0;" data-i18n="secTitle">🛡️ إعدادات الحماية والخصوصية</h2>
@@ -334,7 +331,6 @@
             setTimeout(() => { toast.remove(); }, 3500);
         }
 
-        // --- نظام الحماية بكلمة سر ---
         async function checkInitialLock() {
             try {
                 const res = await fetch(`https://clinic-server-i00s.onrender.com/api/doctor/auth-status/${CLINIC_SLUG}`);
@@ -379,12 +375,11 @@
             } catch(e) { showToast('خطأ في الحفظ', 'error'); }
         }
 
-        // --- PWA: تثبيت التطبيق على سطح المكتب ---
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            document.getElementById('installAppBtn').style.display = 'block'; // إظهار زر التثبيت
+            document.getElementById('installAppBtn').style.display = 'block'; 
         });
 
         function installApp() {
@@ -412,7 +407,6 @@
             await fetchStatus();
             await fetchStats();
             
-            // تسجيل الـ Service Worker لتطبيق سطح المكتب
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW failed', err));
             }
@@ -528,7 +522,8 @@
             const ageText = document.getElementById('mAge').value.trim() || '--';
             const dateStr = new Date().toLocaleDateString('ar-DZ');
             const printWindow = window.open('', '', 'width=800,height=600');
-            printWindow.document.write(`<html dir="rtl" lang="ar"><head><title>وصفة - ${pName}</title><style>body{font-family:Arial; padding:40px;} .header{display:flex; justify-content:space-between; border-bottom:2px solid #10b981; padding-bottom:20px;} .patient-info{font-size:1.4rem; font-weight:bold; display:flex; justify-content:space-between; background:#f9f9f9; padding:15px; margin:20px 0; border-radius:10px;} .body{font-size:1.2rem; line-height:2; min-height:300px; white-space:pre-wrap;}</style></head><body><div class="header"><div>العيادة الطبية<br>${activeDoctorName}</div><div>التاريخ: ${dateStr}</div></div><div class="patient-info"><span>المريض: ${pName}</span><span>العمر: ${ageText}</span></div><div class="body">${prescriptionText}</div><div style="margin-top:50px;font-weight:bold;">توقيع الطبيب</div></body></html>`);
+            // 🔥 تغيير "المريض:" إلى "الاسم:" حسب طلبك 🔥
+            printWindow.document.write(`<html dir="rtl" lang="ar"><head><title>وصفة - ${pName}</title><style>body{font-family:Arial; padding:40px;} .header{display:flex; justify-content:space-between; border-bottom:2px solid #10b981; padding-bottom:20px;} .patient-info{font-size:1.4rem; font-weight:bold; display:flex; justify-content:space-between; background:#f9f9f9; padding:15px; margin:20px 0; border-radius:10px;} .body{font-size:1.2rem; line-height:2; min-height:300px; white-space:pre-wrap;}</style></head><body><div class="header"><div>العيادة الطبية<br>${activeDoctorName}</div><div>التاريخ: ${dateStr}</div></div><div class="patient-info"><span>الاسم: ${pName}</span><span>العمر: ${ageText}</span></div><div class="body">${prescriptionText}</div><div style="margin-top:50px;font-weight:bold;">توقيع الطبيب</div></body></html>`);
             printWindow.document.close(); printWindow.focus(); setTimeout(() => { printWindow.print(); printWindow.close(); }, 500);
         }
 
