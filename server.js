@@ -45,10 +45,13 @@ const initDB = async () => {
             );
         `);
 
+        // إضافة الأعمدة الجديدة (الهاتف والبريد الإلكتروني)
         const newColumns = [
             `ALTER TABLE clinics ADD COLUMN is_main BOOLEAN DEFAULT true;`,
             `ALTER TABLE clinics ADD COLUMN parent_id TEXT DEFAULT NULL;`, 
-            `ALTER TABLE clinics ADD COLUMN subscription_end DATE DEFAULT (CURRENT_DATE + INTERVAL '1 month');`
+            `ALTER TABLE clinics ADD COLUMN subscription_end DATE DEFAULT (CURRENT_DATE + INTERVAL '1 month');`,
+            `ALTER TABLE clinics ADD COLUMN phone VARCHAR(50) DEFAULT '';`,
+            `ALTER TABLE clinics ADD COLUMN email VARCHAR(255) DEFAULT '';`
         ];
         
         for (let query of newColumns) {
@@ -59,18 +62,17 @@ const initDB = async () => {
             await db.query(`UPDATE clinics SET is_main = true WHERE is_main IS NULL`);
             await db.query(`UPDATE clinics SET subscription_end = CURRENT_DATE + INTERVAL '1 month' WHERE subscription_end IS NULL`);
         } catch(e) {}
-        console.log("✅ قاعدة البيانات جاهزة!");
     } catch (e) { console.error("❌ خطأ:", e.message); }
 };
 initDB();
 
 app.post('/api/clinics', async (req, res) => {
     try {
-        const { name, slug } = req.body; 
+        const { name, slug, phone, email } = req.body; 
         const result = await db.query(`
-            INSERT INTO clinics (name, slug, is_main, subscription_end) 
-            VALUES ($1, $2, true, CURRENT_DATE + INTERVAL '1 month') RETURNING *
-        `, [name, slug]);
+            INSERT INTO clinics (name, slug, is_main, subscription_end, phone, email) 
+            VALUES ($1, $2, true, CURRENT_DATE + INTERVAL '1 month', $3, $4) RETURNING *
+        `, [name, slug, phone || '', email || '']);
         res.status(201).json({ message: 'تم إنشاء العيادة بنجاح', clinic: result.rows[0] });
     } catch (err) { res.status(500).json({ error: 'الرابط المخصص مستخدم مسبقاً.' }); }
 });
@@ -174,7 +176,7 @@ app.get('/api/admin/clinics', async (req, res) => {
     try {
         await initDB(); 
         const clinics = await db.query(`
-            SELECT id, name, slug, subscription_end,
+            SELECT id, name, slug, subscription_end, phone, email,
                    (SELECT COUNT(*) FROM clinics d WHERE d.parent_id::text = c.id::text) as doctors_count
             FROM clinics c WHERE is_main = true OR parent_id IS NULL ORDER BY created_at DESC
         `);
@@ -184,8 +186,8 @@ app.get('/api/admin/clinics', async (req, res) => {
 
 app.post('/api/admin/add-doctor', async (req, res) => {
     try {
-        const { parent_id, name, slug } = req.body;
-        await db.query('INSERT INTO clinics (name, slug, is_main, parent_id) VALUES ($1, $2, false, $3)', [name, slug, parent_id]);
+        const { parent_id, name, slug, phone, email } = req.body;
+        await db.query('INSERT INTO clinics (name, slug, is_main, parent_id, phone, email) VALUES ($1, $2, false, $3, $4, $5)', [name, slug, parent_id, phone || '', email || '']);
         res.json({ message: 'تم إضافة الطبيب بنجاح' });
     } catch (err) { res.status(500).json({ error: 'الرابط مستخدم مسبقاً' }); }
 });
@@ -198,7 +200,6 @@ app.post('/api/admin/renew', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// 🔥 تعديل: حذف العيادة الرئيسية بذكاء (الحذف العميق لتفادي رفض القاعدة)
 app.delete('/api/admin/clinics/:id', async (req, res) => {
     try {
         const docs = await db.query('SELECT id FROM clinics WHERE parent_id::text = $1::text OR id::text = $1::text', [req.params.id]);
@@ -212,7 +213,6 @@ app.delete('/api/admin/clinics/:id', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// 🔥 تعديل: حذف طبيب واحد بذكاء (يتم مسح تذاكره وطوابيره أولاً)
 app.delete('/api/admin/doctors/:id', async (req, res) => {
     try {
         await db.query('DELETE FROM tickets WHERE queue_id IN (SELECT id FROM queues WHERE clinic_id::text = $1::text)', [req.params.id]);
@@ -224,7 +224,7 @@ app.delete('/api/admin/doctors/:id', async (req, res) => {
 
 app.get('/api/admin/clinic-doctors-links/:main_id', async (req, res) => {
     try {
-        const docs = await db.query('SELECT id, name, slug FROM clinics WHERE parent_id::text = $1::text', [req.params.main_id]);
+        const docs = await db.query('SELECT id, name, slug, phone, email FROM clinics WHERE parent_id::text = $1::text', [req.params.main_id]);
         res.json(docs.rows);
     } catch(e) { res.status(500).json({ error: e.message }); }
 });

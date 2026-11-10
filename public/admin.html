@@ -6,74 +6,47 @@
     <title>ClinicFlow - Super Admin</title>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
     <style>
-        :root { 
-            --bg: #f4f7f6; --card: #ffffff; --text: #2d3748; 
-            --accent: #40757d; --border: #e2e8f0; --muted: #718096; 
-            --success: #10b981; --danger: #ef4444; --warning: #f59e0b; 
-        }
-        [data-theme="dark"] { 
-            --bg: #0f172a; --card: #1e293b; --text: #f8fafc; 
-            --accent: #38bdf8; --border: #334155; --muted: #94a3b8; 
-        }
+        :root { --bg: #f4f7f6; --card: #ffffff; --text: #2d3748; --accent: #40757d; --border: #e2e8f0; --muted: #718096; --success: #10b981; --danger: #ef4444; --warning: #f59e0b; }
+        [data-theme="dark"] { --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --accent: #38bdf8; --border: #334155; --muted: #94a3b8; }
         body { font-family: 'Tajawal', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; display: flex; height: 100vh; overflow: hidden; transition: 0.3s; }
-        
-        .sidebar { width: 280px; background: var(--card); border-inline-end: 1px solid var(--border); display: flex; flex-direction: column; padding: 25px 0; box-shadow: 0 0 25px rgba(0,0,0,0.05); z-index: 10; transition: 0.3s; }
+        .sidebar { width: 280px; background: var(--card); border-inline-end: 1px solid var(--border); display: flex; flex-direction: column; padding: 25px 0; z-index: 10; }
         .logo { font-size: 1.8rem; font-weight: 800; text-align: center; margin-bottom: 40px; color: var(--text); letter-spacing: 1px; }
         .logo span { color: var(--accent); }
-        .nav-item { padding: 16px 30px; color: var(--muted); text-decoration: none; display: flex; align-items: center; gap: 10px; font-weight: 500; transition: 0.3s; cursor: pointer; border-inline-end: 4px solid transparent; font-size: 1.05rem; }
+        .nav-item { padding: 16px 30px; color: var(--muted); text-decoration: none; display: flex; align-items: center; gap: 10px; font-weight: 500; cursor: pointer; border-inline-end: 4px solid transparent; }
         .nav-item:hover, .nav-item.active { background: rgba(64, 117, 125, 0.1); color: var(--accent); border-color: var(--accent); }
         [data-theme="dark"] .nav-item:hover, [data-theme="dark"] .nav-item.active { background: rgba(56, 189, 248, 0.08); }
-
         .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-        
         .top-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 50px; background: var(--card); border-bottom: 1px solid var(--border); }
         .top-header h1 { margin: 0; font-size: 1.8rem; font-weight: 800; }
         .controls { display: flex; gap: 15px; align-items: center; }
-        select, .theme-btn { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 10px 20px; border-radius: 12px; cursor: pointer; font-family: inherit; outline: none; font-weight: bold; transition: 0.2s; }
-        .theme-btn:hover { border-color: var(--accent); }
-        .admin-badge { background: rgba(64, 117, 125, 0.1); color: var(--accent); padding: 10px 20px; border-radius: 30px; border: 1px solid var(--accent); font-weight: bold; display: flex; align-items: center; gap: 10px; }
-
-        .content-scroll { padding: 40px 50px; overflow-y: auto; flex: 1; scroll-behavior: smooth; }
-
+        select, .theme-btn { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 10px 20px; border-radius: 12px; cursor: pointer; outline: none; font-weight: bold; }
+        .admin-badge { background: rgba(64, 117, 125, 0.1); color: var(--accent); padding: 10px 20px; border-radius: 30px; font-weight: bold; }
+        .content-scroll { padding: 40px 50px; overflow-y: auto; flex: 1; }
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 25px; margin-bottom: 40px; }
-        .stat-card { background: var(--card); padding: 30px; border-radius: 24px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.02); transition: 0.3s; }
-        .stat-card:hover { transform: translateY(-5px); border-color: var(--accent); box-shadow: 0 15px 35px rgba(0,0,0,0.05); }
-        .stat-card span { color: var(--muted); font-size: 1rem; display: block; margin-bottom: 15px; font-weight: 500; }
+        .stat-card { background: var(--card); padding: 30px; border-radius: 24px; border: 1px solid var(--border); }
+        .stat-card span { color: var(--muted); font-size: 1rem; display: block; margin-bottom: 15px; }
         .stat-card strong { font-size: 3rem; color: var(--text); line-height: 1; display: block; }
-
-        .card-panel { background: var(--card); border-radius: 24px; border: 1px solid var(--border); padding: 35px; box-shadow: 0 10px 30px rgba(0,0,0,0.02); }
+        .card-panel { background: var(--card); border-radius: 24px; border: 1px solid var(--border); padding: 35px; }
         .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        
-        .btn { background: var(--accent); color: #ffffff; border: none; padding: 12px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; font-family: inherit; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.95rem; }
+        .btn { background: var(--accent); color: #ffffff; border: none; padding: 12px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; }
         [data-theme="dark"] .btn { color: #0f172a; }
-        .btn:hover { filter: brightness(1.1); transform: scale(1.02); }
         .btn-danger { background: var(--danger) !important; color: white !important; }
-        
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 18px 15px; text-align: start; border-bottom: 1px solid var(--border); }
         th { color: var(--muted); font-size: 0.95rem; font-weight: 700; text-transform: uppercase; }
-        tr:hover td { background: rgba(64, 117, 125, 0.02); }
-        [data-theme="dark"] tr:hover td { background: rgba(255,255,255,0.02); }
         .badge { padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: bold; }
         .badge-success { background: rgba(16, 185, 129, 0.15); color: var(--success); }
         .badge-danger { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
-        
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(5px); }
-        .modal-content { background: var(--card); padding: 40px; border-radius: 24px; width: 100%; max-width: 500px; border: 1px solid var(--border); max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 50px rgba(0,0,0,0.1); animation: zoomIn 0.3s ease; }
-        @keyframes zoomIn { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-        
-        .modal-content h2 { margin-top: 0; margin-bottom: 25px; font-size: 1.6rem; display: flex; align-items: center; gap: 10px; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: var(--card); padding: 40px; border-radius: 24px; width: 100%; max-width: 500px; border: 1px solid var(--border); max-height: 90vh; overflow-y: auto; }
+        .modal-content h2 { margin-top: 0; margin-bottom: 25px; font-size: 1.6rem; }
         .modal-content label { display: block; margin-bottom: 8px; color: var(--muted); font-size: 0.9rem; font-weight: bold; }
-        .modal-content input, .modal-content select { width: 100%; padding: 16px; margin-bottom: 20px; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 12px; box-sizing: border-box; font-family: inherit; font-size: 1rem; transition: 0.3s; outline: none; }
-        
+        .modal-content input, .modal-content select { width: 100%; padding: 14px; margin-bottom: 15px; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 12px; box-sizing: border-box; outline: none; }
         .link-group { background: var(--bg); padding: 20px; border-radius: 16px; border: 1px solid var(--border); margin-bottom: 20px; }
-        .clickable-link { color: var(--accent); text-decoration: none; word-break: break-all; font-size: 0.95rem; font-weight: 500; display: inline-block; padding: 10px 15px; background: rgba(64, 117, 125, 0.1); border-radius: 8px; transition: 0.2s; }
+        .clickable-link { color: var(--accent); text-decoration: none; word-break: break-all; font-size: 0.95rem; display: inline-block; padding: 10px 15px; background: rgba(64, 117, 125, 0.1); border-radius: 8px; }
         [data-theme="dark"] .clickable-link { background: rgba(56, 189, 248, 0.1); }
-        .clickable-link:hover { background: var(--accent); color: #ffffff; }
-
         .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeIn 0.4s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .tab-content.active { display: block; }
     </style>
 </head>
 <body>
@@ -81,7 +54,7 @@
         <div class="logo">Clinic<span>Flow</span><br><span style="font-size: 0.85rem; color: var(--muted); font-weight: 500;" data-i18n="logoSub">Enterprise SaaS Admin</span></div>
         <div style="margin-top: 20px;">
             <div class="nav-item active" onclick="switchTab('clinics', this)" data-i18n="menuClinics">🏢 إدارة العيادات</div>
-            <div class="nav-item" onclick="switchTab('stats', this)" data-i18n="menuStats">📊 نظرة عامة وإحصائيات</div>
+            <div class="nav-item" onclick="switchTab('stats', this)" data-i18n="menuStats">📊 الإحصائيات</div>
             <div class="nav-item" onclick="switchTab('settings', this)" data-i18n="menuSettings">⚙️ إعدادات النظام</div>
         </div>
     </div>
@@ -105,20 +78,21 @@
                 <div class="card-panel">
                     <div class="panel-header">
                         <h2 data-i18n="tabClinics">قائمة العيادات المشتركة</h2>
-                        <button class="btn" onclick="document.getElementById('addModal').style.display='flex'" data-i18n="btnAddClinic">+ إضافة عيادة رئيسية جديدة</button>
+                        <button class="btn" onclick="document.getElementById('addModal').style.display='flex'" data-i18n="btnAddClinic">+ إضافة عيادة جديدة</button>
                     </div>
                     <table>
                         <thead>
                             <tr>
                                 <th data-i18n="thName">اسم العيادة</th>
-                                <th data-i18n="thSlug">الرابط المخصص</th>
-                                <th data-i18n="thDocs">عدد الأطباء</th>
-                                <th data-i18n="thSub">حالة الاشتراك</th>
-                                <th style="text-align: center;" data-i18n="thActions">إجراءات الإدارة</th>
+                                <th data-i18n="thSlug">الرابط</th>
+                                <th data-i18n="thContact">التواصل (هاتف / إيميل)</th>
+                                <th data-i18n="thDocs">الأطباء</th>
+                                <th data-i18n="thSub">الاشتراك</th>
+                                <th style="text-align: center;" data-i18n="thActions">الإجراءات</th>
                             </tr>
                         </thead>
                         <tbody id="clinicsTable">
-                            <tr><td colspan="5" style="text-align: center; color: var(--muted); padding: 40px;" data-i18n="loading">جاري تحميل البيانات...</td></tr>
+                            <tr><td colspan="6" style="text-align: center; color: var(--muted); padding: 40px;" data-i18n="loading">جاري التحميل...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -144,43 +118,49 @@
             <div id="settings" class="tab-content">
                 <div class="card-panel" style="max-width: 600px;">
                     <h2 data-i18n="settingsTitle">إعدادات حساب المسؤول</h2>
-                    <p style="color: var(--muted); line-height: 1.6; margin-bottom: 25px;" data-i18n="settingsDesc">يمكنك تخصيص اسمك الذي يظهر في الأعلى:</p>
-                    
                     <label style="color: var(--text); font-weight: bold; display: block; margin-bottom: 10px;" data-i18n="adminName">اسم العرض (المدير):</label>
                     <input type="text" id="adminNameInput" placeholder="أدخل اسمك هنا...">
-                    
                     <button class="btn" style="width: 100%; padding: 18px; font-size: 1.1rem;" onclick="saveAdminName()" data-i18n="btnSave">💾 حفظ التعديلات</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- النوافذ -->
+    <!-- نافذة إضافة عيادة -->
     <div class="modal" id="addModal">
         <div class="modal-content">
             <h2 data-i18n="modalAddClinic">🏢 إضافة عيادة رئيسية</h2>
             <label data-i18n="labelName">اسم العيادة:</label>
-            <input type="text" id="clinicName">
-            <label data-i18n="labelSlug">الرابط المختصر (Slug) بالإنجليزي:</label>
-            <input type="text" id="clinicSlug">
+            <input type="text" id="clinicName" placeholder="مثال: عيادة الشفاء">
+            <label data-i18n="labelSlug">الرابط المختصر (Slug):</label>
+            <input type="text" id="clinicSlug" placeholder="alshifa-clinic">
+            <label data-i18n="labelPhone">رقم الهاتف:</label>
+            <input type="text" id="clinicPhone" placeholder="0555000000">
+            <label data-i18n="labelEmail">البريد الإلكتروني:</label>
+            <input type="email" id="clinicEmail" placeholder="clinic@email.com">
             <div style="display: flex; gap: 15px; margin-top: 10px;">
                 <button class="btn" style="background: var(--bg); color: var(--text); flex: 1; border: 1px solid var(--border);" onclick="document.getElementById('addModal').style.display='none'" data-i18n="btnCancel">إلغاء</button>
-                <button class="btn" style="flex: 2;" onclick="addClinic()" data-i18n="btnSaveClinic">حفظ وإنشاء العيادة</button>
+                <button class="btn" style="flex: 2;" onclick="addClinic()" data-i18n="btnSaveClinic">حفظ وإنشاء</button>
             </div>
         </div>
     </div>
 
+    <!-- نافذة إضافة طبيب -->
     <div class="modal" id="addDocModal">
         <div class="modal-content">
             <h2 data-i18n="modalAddDoc">👨‍⚕️ إضافة طبيب جديد</h2>
             <input type="hidden" id="dParent">
             <label data-i18n="labelDocName">اسم الطبيب وتخصصه:</label>
-            <input type="text" id="dName">
+            <input type="text" id="dName" placeholder="د. أحمد - أسنان">
             <label data-i18n="labelDocSlug">رابط الطبيب المختصر:</label>
-            <input type="text" id="dSlug">
+            <input type="text" id="dSlug" placeholder="dr-ahmed">
+            <label data-i18n="labelPhone">رقم الهاتف:</label>
+            <input type="text" id="dPhone" placeholder="0666000000">
+            <label data-i18n="labelEmail">البريد الإلكتروني:</label>
+            <input type="email" id="dEmail" placeholder="doctor@email.com">
             <div style="display: flex; gap: 15px; margin-top: 10px;">
                 <button class="btn" style="background: var(--bg); color: var(--text); flex: 1; border: 1px solid var(--border);" onclick="document.getElementById('addDocModal').style.display='none'" data-i18n="btnCancel">إلغاء</button>
-                <button class="btn" style="flex: 2;" onclick="addDoctor()" data-i18n="btnSaveDoc">تأكيد وإضافة الطبيب</button>
+                <button class="btn" style="flex: 2;" onclick="addDoctor()" data-i18n="btnSaveDoc">تأكيد وإضافة</button>
             </div>
         </div>
     </div>
@@ -191,10 +171,10 @@
             <input type="hidden" id="rId">
             <label data-i18n="labelMonths">اختر باقة التجديد:</label>
             <select id="rMonths">
-                <option value="1" data-i18n="opt1">تمديد لشهر واحد</option>
-                <option value="3" data-i18n="opt3">تمديد لـ 3 أشهر</option>
-                <option value="6" data-i18n="opt6">تمديد لـ 6 أشهر</option>
-                <option value="12" data-i18n="opt12">تمديد لسنة كاملة</option>
+                <option value="1" data-i18n="opt1">شهر واحد</option>
+                <option value="3" data-i18n="opt3">3 أشهر</option>
+                <option value="6" data-i18n="opt6">6 أشهر</option>
+                <option value="12" data-i18n="opt12">سنة كاملة</option>
             </select>
             <div style="display: flex; gap: 15px; margin-top: 10px;">
                 <button class="btn" style="background: var(--bg); color: var(--text); flex: 1; border: 1px solid var(--border);" onclick="document.getElementById('renewModal').style.display='none'" data-i18n="btnCancel">إلغاء</button>
@@ -207,10 +187,10 @@
         <div class="modal-content" style="max-width: 650px;">
             <h2 data-i18n="modalLinks">🔗 لوحة تحكم الروابط</h2>
             <div class="link-group" style="background: transparent; border-color: var(--accent);">
-                <label data-i18n="linkMainTitle">📌 الروابط المشتركة للعيادة المركزية:</label>
-                <span style="font-size: 0.85rem; color: var(--muted); display: block; margin-bottom: 5px;" data-i18n="linkRecDesc">مكتب الاستقبال (السكرتير):</span>
+                <label data-i18n="linkMainTitle">📌 روابط العيادة المركزية:</label>
+                <span style="font-size: 0.85rem; color: var(--muted); display: block; margin-bottom: 5px;" data-i18n="linkRecDesc">مكتب الاستقبال:</span>
                 <a id="linkRec" href="#" target="_blank" class="clickable-link" style="margin-bottom: 15px; display: block;"></a>
-                <span style="font-size: 0.85rem; color: var(--muted); display: block; margin-bottom: 5px;" data-i18n="linkTvDesc">شاشة التلفاز الذكية:</span>
+                <span style="font-size: 0.85rem; color: var(--muted); display: block; margin-bottom: 5px;" data-i18n="linkTvDesc">شاشة التلفاز:</span>
                 <a id="linkTv" href="#" target="_blank" class="clickable-link" style="display: block;"></a>
             </div>
             <hr style="border: 1px dashed var(--border); margin: 25px 0;">
@@ -220,15 +200,14 @@
         </div>
     </div>
 
-    <!-- 🔥 النافذة المنبثقة العصرية لتأكيد الحذف 🔥 -->
     <div class="modal" id="confirmModal">
         <div class="modal-content" style="max-width: 400px; text-align: center;">
-            <div style="font-size: 4rem; margin-bottom: 15px; text-shadow: 0 10px 20px rgba(0,0,0,0.1);">⚠️</div>
+            <div style="font-size: 4rem; margin-bottom: 15px;">⚠️</div>
             <h2 id="confirmTitle" style="justify-content: center; font-size: 1.8rem; margin-bottom: 10px; color: var(--text);">تأكيد الحذف</h2>
-            <p id="confirmDesc" style="color: var(--muted); margin-bottom: 30px; font-size: 1.05rem; line-height: 1.5;">هل أنت متأكد؟ لا يمكن التراجع عن هذا الإجراء.</p>
+            <p id="confirmDesc" style="color: var(--muted); margin-bottom: 30px; font-size: 1.05rem;">هل أنت متأكد؟ لا يمكن التراجع.</p>
             <div style="display: flex; gap: 15px;">
                 <button class="btn" style="background: var(--bg); color: var(--text); flex: 1; border: 1px solid var(--border);" onclick="closeConfirmModal()" data-i18n="btnCancel">إلغاء</button>
-                <button class="btn btn-danger" id="confirmActionBtn" style="flex: 1;" data-i18n="btnDel">نعم، احذف</button>
+                <button class="btn btn-danger" id="confirmActionBtn" style="flex: 1;" data-i18n="btnDel">حذف</button>
             </div>
         </div>
     </div>
@@ -236,58 +215,55 @@
     <script>
         const dict = {
             ar: {
-                logoSub: "Enterprise SaaS Admin", menuClinics: "🏢 إدارة العيادات", menuStats: "📊 الإحصائيات", menuSettings: "⚙️ إعدادات النظام",
+                logoSub: "Enterprise SaaS Admin", menuClinics: "🏢 إدارة العيادات", menuStats: "📊 الإحصائيات", menuSettings: "⚙️ الإعدادات",
                 headerTitle: "إدارة العيادات", btnTheme: "🌓 الوضع الليلي", adminRole: "المدير العام",
                 tabClinics: "العيادات المشتركة", btnAddClinic: "+ إضافة عيادة جديدة",
-                thName: "اسم العيادة", thSlug: "الرابط", thDocs: "عدد الأطباء", thSub: "الاشتراك", thActions: "الإجراءات",
-                loading: "جاري تحميل البيانات...", noClinics: "لا توجد عيادات مسجلة.",
-                statClinics: "إجمالي العيادات", statDocs: "إجمالي الأطباء", statServer: "حالة الخادم",
-                serverOk: "متصل ومستقر", serverErr: "يوجد خطأ",
-                settingsTitle: "إعدادات حساب المسؤول", settingsDesc: "يمكنك تخصيص اسمك الذي يظهر في الأعلى:", adminName: "اسم العرض (المدير):", btnSave: "💾 حفظ التعديلات",
-                modalAddClinic: "🏢 إضافة عيادة رئيسية", labelName: "اسم العيادة:", labelSlug: "الرابط المختصر (Slug):", btnCancel: "إلغاء", btnSaveClinic: "حفظ وإنشاء",
-                modalAddDoc: "👨‍⚕️ إضافة طبيب جديد", labelDocName: "اسم الطبيب وتخصصه:", labelDocSlug: "رابط الطبيب المختصر:", btnSaveDoc: "تأكيد وإضافة",
-                modalRenew: "💳 تجديد اشتراك العيادة", labelMonths: "اختر باقة التجديد:", opt1: "شهر واحد", opt3: "3 أشهر", opt6: "6 أشهر", opt12: "سنة كاملة", btnSaveRenew: "تأكيد التجديد",
-                modalLinks: "🔗 لوحة تحكم الروابط", linkMainTitle: "📌 روابط العيادة المركزية:", linkRecDesc: "مكتب الاستقبال (السكرتير):", linkTvDesc: "شاشة التلفاز:", linkDocTitle: "👨‍⚕️ الأطباء التابعين:", linkDocDesc: "لوحة الطبيب:", linkPatDesc: "رابط حجز المرضى:", btnClose: "إغلاق النافذة",
+                thName: "اسم العيادة", thSlug: "الرابط", thContact: "التواصل (هاتف / إيميل)", thDocs: "الأطباء", thSub: "الاشتراك", thActions: "الإجراءات",
+                loading: "جاري التحميل...", noClinics: "لا توجد عيادات مسجلة.",
+                statClinics: "إجمالي العيادات", statDocs: "إجمالي الأطباء", statServer: "حالة الخادم", serverOk: "متصل ومستقر", serverErr: "يوجد خطأ",
+                settingsTitle: "إعدادات حساب المسؤول", adminName: "اسم العرض (المدير):", btnSave: "💾 حفظ التعديلات",
+                modalAddClinic: "🏢 إضافة عيادة رئيسية", labelName: "اسم العيادة:", labelSlug: "الرابط (Slug):", labelPhone: "رقم الهاتف:", labelEmail: "البريد الإلكتروني:", btnCancel: "إلغاء", btnSaveClinic: "حفظ وإنشاء",
+                modalAddDoc: "👨‍⚕️ إضافة طبيب جديد", labelDocName: "اسم الطبيب:", labelDocSlug: "رابط الطبيب:", btnSaveDoc: "تأكيد وإضافة",
+                modalRenew: "💳 تجديد اشتراك العيادة", labelMonths: "اختر الباقة:", opt1: "شهر واحد", opt3: "3 أشهر", opt6: "6 أشهر", opt12: "سنة كاملة", btnSaveRenew: "تأكيد التجديد",
+                modalLinks: "🔗 لوحة تحكم الروابط", linkMainTitle: "📌 روابط العيادة المركزية:", linkRecDesc: "مكتب الاستقبال:", linkTvDesc: "شاشة التلفاز:", linkDocTitle: "👨‍⚕️ الأطباء التابعين:", linkDocDesc: "لوحة الطبيب:", linkPatDesc: "رابط الحجز:", btnClose: "إغلاق",
                 activeSub: "فعال", endingSub: "سينتهي قريباً", endedSub: "منتهي الصلاحية", days: "يوم", doctors: "أطباء",
-                btnAddDoc: "➕ إضافة طبيب", btnRenew: "💳 تجديد", btnLinks: "🔗 الروابط", btnDel: "🗑️ حذف",
-                confirmDel: "هل أنت متأكد من حذف هذه العيادة نهائياً بكل بياناتها؟", confirmDelDoc: "هل أنت متأكد من حذف هذا الطبيب نهائياً؟", confirmTitle: "تأكيد الحذف",
+                btnAddDoc: "➕ طبيب", btnRenew: "💳 تجديد", btnLinks: "🔗 الروابط", btnDel: "🗑️ حذف",
+                confirmDel: "هل أنت متأكد من حذف العيادة نهائياً؟", confirmDelDoc: "هل أنت متأكد من حذف هذا الطبيب؟", confirmTitle: "تأكيد الحذف",
                 alertReq: "يرجى تعبئة الحقول.", alertErr: "حدث خطأ.", alertDone: "تم الحفظ بنجاح."
             },
             fr: {
-                logoSub: "Admin SaaS", menuClinics: "🏢 Cliniques", menuStats: "📊 Statistiques", menuSettings: "⚙️ Paramètres",
-                headerTitle: "Gestion des Cliniques", btnTheme: "🌓 Mode Sombre", adminRole: "Administrateur",
-                tabClinics: "Cliniques Abonnées", btnAddClinic: "+ Ajouter une Clinique",
-                thName: "Nom", thSlug: "Lien", thDocs: "Médecins", thSub: "Abonnement", thActions: "Actions",
-                loading: "Chargement...", noClinics: "Aucune clinique enregistrée.",
-                statClinics: "Total Cliniques", statDocs: "Total Médecins", statServer: "État Serveur",
-                serverOk: "Connecté", serverErr: "Erreur",
-                settingsTitle: "Paramètres du Compte", settingsDesc: "Modifiez votre nom d'affichage:", adminName: "Nom d'affichage:", btnSave: "💾 Enregistrer",
-                modalAddClinic: "🏢 Ajouter Clinique", labelName: "Nom de la clinique:", labelSlug: "Lien (Slug):", btnCancel: "Annuler", btnSaveClinic: "Créer",
-                modalAddDoc: "👨‍⚕️ Ajouter Médecin", labelDocName: "Nom et Spécialité:", labelDocSlug: "Lien du médecin:", btnSaveDoc: "Ajouter",
+                logoSub: "Admin SaaS", menuClinics: "🏢 Cliniques", menuStats: "📊 Stats", menuSettings: "⚙️ Paramètres",
+                headerTitle: "Gestion des Cliniques", btnTheme: "🌓 Mode Sombre", adminRole: "Admin",
+                tabClinics: "Cliniques", btnAddClinic: "+ Ajouter",
+                thName: "Nom", thSlug: "Lien", thContact: "Contact (Tél / Email)", thDocs: "Médecins", thSub: "Abonnement", thActions: "Actions",
+                loading: "Chargement...", noClinics: "Aucune clinique.",
+                statClinics: "Total Cliniques", statDocs: "Total Médecins", statServer: "Serveur", serverOk: "En ligne", serverErr: "Erreur",
+                settingsTitle: "Paramètres", adminName: "Nom:", btnSave: "💾 Enregistrer",
+                modalAddClinic: "🏢 Ajouter Clinique", labelName: "Nom:", labelSlug: "Slug:", labelPhone: "Téléphone:", labelEmail: "Email:", btnCancel: "Annuler", btnSaveClinic: "Créer",
+                modalAddDoc: "👨‍⚕️ Ajouter Médecin", labelDocName: "Nom:", labelDocSlug: "Slug:", btnSaveDoc: "Ajouter",
                 modalRenew: "💳 Renouveler", labelMonths: "Durée:", opt1: "1 Mois", opt3: "3 Mois", opt6: "6 Mois", opt12: "1 An", btnSaveRenew: "Confirmer",
-                modalLinks: "🔗 Liens", linkMainTitle: "📌 Liens de la Clinique:", linkRecDesc: "Réception:", linkTvDesc: "Écran TV:", linkDocTitle: "👨‍⚕️ Liens des Médecins:", linkDocDesc: "Tableau Médecin:", linkPatDesc: "Lien Patient:", btnClose: "Fermer",
+                modalLinks: "🔗 Liens", linkMainTitle: "📌 Liens:", linkRecDesc: "Réception:", linkTvDesc: "TV:", linkDocTitle: "👨‍⚕️ Médecins:", linkDocDesc: "Tableau:", linkPatDesc: "Patient:", btnClose: "Fermer",
                 activeSub: "Actif", endingSub: "Expire Bientôt", endedSub: "Expiré", days: "jours", doctors: "médecins",
                 btnAddDoc: "➕ Médecin", btnRenew: "💳 Renouveler", btnLinks: "🔗 Liens", btnDel: "🗑️ Supprimer",
-                confirmDel: "Voulez-vous vraiment supprimer cette clinique?", confirmDelDoc: "Voulez-vous vraiment supprimer ce médecin ?", confirmTitle: "Confirmation de suppression",
-                alertReq: "Veuillez remplir les champs.", alertErr: "Erreur.", alertDone: "Enregistré avec succès."
+                confirmDel: "Supprimer cette clinique ?", confirmDelDoc: "Supprimer ce médecin ?", confirmTitle: "Confirmation",
+                alertReq: "Remplissez les champs.", alertErr: "Erreur.", alertDone: "Enregistré."
             },
             en: {
-                logoSub: "SaaS Admin", menuClinics: "🏢 Clinics", menuStats: "📊 Statistics", menuSettings: "⚙️ Settings",
-                headerTitle: "Clinics Management", btnTheme: "🌓 Dark Mode", adminRole: "General Manager",
-                tabClinics: "Subscribed Clinics", btnAddClinic: "+ Add Clinic",
-                thName: "Name", thSlug: "Slug", thDocs: "Doctors", thSub: "Subscription", thActions: "Actions",
-                loading: "Loading...", noClinics: "No clinics registered.",
-                statClinics: "Total Clinics", statDocs: "Total Doctors", statServer: "Server Status",
-                serverOk: "Online", serverErr: "Error",
-                settingsTitle: "Account Settings", settingsDesc: "Change your display name here:", adminName: "Display Name:", btnSave: "💾 Save Changes",
-                modalAddClinic: "🏢 Add Clinic", labelName: "Clinic Name:", labelSlug: "Short Link (Slug):", btnCancel: "Cancel", btnSaveClinic: "Create",
-                modalAddDoc: "👨‍⚕️ Add Doctor", labelDocName: "Doctor Name & Spec:", labelDocSlug: "Doctor Slug:", btnSaveDoc: "Add Doctor",
-                modalRenew: "💳 Renew Plan", labelMonths: "Choose Plan:", opt1: "1 Month", opt3: "3 Months", opt6: "6 Months", opt12: "1 Year", btnSaveRenew: "Confirm",
-                modalLinks: "🔗 Control Links", linkMainTitle: "📌 Main Clinic Links:", linkRecDesc: "Reception Desk:", linkTvDesc: "TV Display:", linkDocTitle: "👨‍⚕️ Doctor Links:", linkDocDesc: "Doctor Board:", linkPatDesc: "Patient Booking:", btnClose: "Close",
+                logoSub: "SaaS Admin", menuClinics: "🏢 Clinics", menuStats: "📊 Stats", menuSettings: "⚙️ Settings",
+                headerTitle: "Clinics Management", btnTheme: "🌓 Dark Mode", adminRole: "Admin",
+                tabClinics: "Clinics", btnAddClinic: "+ Add Clinic",
+                thName: "Name", thSlug: "Slug", thContact: "Contact (Phone / Email)", thDocs: "Doctors", thSub: "Subscription", thActions: "Actions",
+                loading: "Loading...", noClinics: "No clinics.",
+                statClinics: "Total Clinics", statDocs: "Total Doctors", statServer: "Server", serverOk: "Online", serverErr: "Error",
+                settingsTitle: "Settings", adminName: "Name:", btnSave: "💾 Save",
+                modalAddClinic: "🏢 Add Clinic", labelName: "Name:", labelSlug: "Slug:", labelPhone: "Phone:", labelEmail: "Email:", btnCancel: "Cancel", btnSaveClinic: "Create",
+                modalAddDoc: "👨‍⚕️ Add Doctor", labelDocName: "Name:", labelDocSlug: "Slug:", btnSaveDoc: "Add",
+                modalRenew: "💳 Renew", labelMonths: "Duration:", opt1: "1 Month", opt3: "3 Months", opt6: "6 Months", opt12: "1 Year", btnSaveRenew: "Confirm",
+                modalLinks: "🔗 Links", linkMainTitle: "📌 Links:", linkRecDesc: "Reception:", linkTvDesc: "TV:", linkDocTitle: "👨‍⚕️ Doctors:", linkDocDesc: "Board:", linkPatDesc: "Booking:", btnClose: "Close",
                 activeSub: "Active", endingSub: "Ending Soon", endedSub: "Expired", days: "days", doctors: "doctors",
                 btnAddDoc: "➕ Doctor", btnRenew: "💳 Renew", btnLinks: "🔗 Links", btnDel: "🗑️ Delete",
-                confirmDel: "Are you sure you want to delete this clinic permanently?", confirmDelDoc: "Are you sure you want to delete this doctor permanently?", confirmTitle: "Confirm Deletion",
-                alertReq: "Please fill fields.", alertErr: "Error occurred.", alertDone: "Saved successfully."
+                confirmDel: "Delete clinic?", confirmDelDoc: "Delete doctor?", confirmTitle: "Confirm",
+                alertReq: "Fill fields.", alertErr: "Error.", alertDone: "Saved."
             }
         };
 
@@ -330,16 +306,13 @@
             document.getElementById('adminNameInput').value = savedName;
         };
 
-        // 🔥 نظام التأكيد العصري (بدل الـ confirm المزعج) 🔥
         let actionToConfirm = null;
-        
         function openConfirmModal(desc, action) {
             document.getElementById('confirmTitle').innerText = dict[currentLang].confirmTitle;
             document.getElementById('confirmDesc').innerText = desc;
             actionToConfirm = action;
             document.getElementById('confirmModal').style.display = 'flex';
         }
-
         function closeConfirmModal() {
             document.getElementById('confirmModal').style.display = 'none';
             actionToConfirm = null;
@@ -349,13 +322,9 @@
             if(actionToConfirm) {
                 const btn = document.getElementById('confirmActionBtn');
                 const oldText = btn.innerText;
-                btn.innerText = '⏳';
-                btn.disabled = true;
-                
+                btn.innerText = '⏳'; btn.disabled = true;
                 await actionToConfirm();
-                
-                btn.innerText = oldText;
-                btn.disabled = false;
+                btn.innerText = oldText; btn.disabled = false;
                 closeConfirmModal();
             }
         });
@@ -366,15 +335,10 @@
                 const res = await fetch('https://clinic-server-i00s.onrender.com/api/admin/clinics');
                 const data = await res.json();
                 
-                if (!res.ok || data.error) {
-                    document.getElementById('serverStatus').innerText = dict[currentLang].serverErr;
-                    document.getElementById('serverStatus').style.color = 'var(--danger)';
-                    table.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 40px; color: var(--danger);">⚠️ ${data.error}</td></tr>`;
-                    return;
-                }
+                if (!res.ok || data.error) return;
 
                 if (!Array.isArray(data) || data.length === 0) {
-                    table.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--muted); padding: 40px;">${dict[currentLang].noClinics}</td></tr>`;
+                    table.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--muted); padding: 40px;">${dict[currentLang].noClinics}</td></tr>`;
                     return;
                 }
 
@@ -390,10 +354,16 @@
                     else if (daysLeft > 0) subHtml = `<span class="badge" style="background: rgba(245, 158, 11, 0.15); color: var(--warning);">${dict[currentLang].endingSub} (${daysLeft} ${dict[currentLang].days})</span>`;
                     else subHtml = `<span class="badge badge-danger">${dict[currentLang].endedSub}</span>`;
                     
+                    const contactInfo = `
+                        <div style="font-size: 0.9rem;">📱 ${c.phone || 'غير مهيأ'}</div>
+                        <div style="font-size: 0.85rem; color: var(--muted);">✉️ ${c.email || 'غير مهيأ'}</div>
+                    `;
+
                     table.innerHTML += `
                         <tr>
                             <td style="font-weight: 800; font-size: 1.05rem; color: var(--text);">${c.name}</td>
                             <td style="color: var(--muted); font-family: monospace;">${c.slug}</td>
+                            <td>${contactInfo}</td>
                             <td><strong style="color: var(--accent);">${c.doctors_count}</strong> ${dict[currentLang].doctors}</td>
                             <td>${subHtml}</td>
                             <td style="text-align: start;">
@@ -410,24 +380,27 @@
                 document.getElementById('totalDoctors').innerText = totalDocs;
                 document.getElementById('serverStatus').innerText = dict[currentLang].serverOk;
                 document.getElementById('serverStatus').style.color = 'var(--success)';
-
-            } catch (e) { 
-                table.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--danger); padding: 40px;">${dict[currentLang].serverErr}</td></tr>`;
-            }
+            } catch (e) {}
         }
 
         async function addClinic() {
             const name = document.getElementById('clinicName').value.trim();
             const slug = document.getElementById('clinicSlug').value.trim();
+            const phone = document.getElementById('clinicPhone').value.trim();
+            const email = document.getElementById('clinicEmail').value.trim();
             if(!name || !slug) return alert(dict[currentLang].alertReq);
             try {
-                const res = await fetch('https://clinic-server-i00s.onrender.com/api/clinics', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, slug }) });
+                const res = await fetch('https://clinic-server-i00s.onrender.com/api/clinics', { 
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ name, slug, phone, email }) 
+                });
                 if(res.ok) {
                     document.getElementById('addModal').style.display='none';
                     document.getElementById('clinicName').value = ''; document.getElementById('clinicSlug').value = '';
+                    document.getElementById('clinicPhone').value = ''; document.getElementById('clinicEmail').value = '';
                     fetchClinics();
-                } else alert(dict[currentLang].alertErr);
-            } catch (e) { alert(dict[currentLang].alertErr); }
+                }
+            } catch (e) {}
         }
 
         function openDocModal(parentId) { document.getElementById('dParent').value = parentId; document.getElementById('addDocModal').style.display='flex'; }
@@ -436,15 +409,21 @@
             const parent_id = document.getElementById('dParent').value;
             const name = document.getElementById('dName').value.trim();
             const slug = document.getElementById('dSlug').value.trim();
+            const phone = document.getElementById('dPhone').value.trim();
+            const email = document.getElementById('dEmail').value.trim();
             if(!name || !slug) return alert(dict[currentLang].alertReq);
             try {
-                const res = await fetch('https://clinic-server-i00s.onrender.com/api/admin/add-doctor', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ parent_id, name, slug }) });
+                const res = await fetch('https://clinic-server-i00s.onrender.com/api/admin/add-doctor', { 
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ parent_id, name, slug, phone, email }) 
+                });
                 if(res.ok) {
                     document.getElementById('addDocModal').style.display='none';
                     document.getElementById('dName').value = ''; document.getElementById('dSlug').value = '';
+                    document.getElementById('dPhone').value = ''; document.getElementById('dEmail').value = '';
                     fetchClinics();
-                } else alert(dict[currentLang].alertErr);
-            } catch (e) { alert(dict[currentLang].alertErr); }
+                }
+            } catch (e) {}
         }
 
         function openRenewModal(id) { document.getElementById('rId').value = id; document.getElementById('renewModal').style.display='flex'; }
@@ -456,27 +435,24 @@
                 await fetch('https://clinic-server-i00s.onrender.com/api/admin/renew', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ clinic_id: id, months }) });
                 document.getElementById('renewModal').style.display='none';
                 fetchClinics();
-            } catch (e) { alert(dict[currentLang].alertErr); }
+            } catch (e) {}
         }
 
-        // استخدام نافذة التأكيد العصرية لحذف العيادة
         function promptDeleteClinic(id) {
             openConfirmModal(dict[currentLang].confirmDel, async () => {
                 try {
                     await fetch(`https://clinic-server-i00s.onrender.com/api/admin/clinics/${id}`, { method: 'DELETE' });
                     fetchClinics();
-                } catch(e) { alert(dict[currentLang].alertErr); }
+                } catch(e) {}
             });
         }
 
-        // استخدام نافذة التأكيد العصرية لحذف طبيب
         function promptDeleteDoctor(docId, mainId, mainSlug) {
             openConfirmModal(dict[currentLang].confirmDelDoc, async () => {
                 try {
                     await fetch(`https://clinic-server-i00s.onrender.com/api/admin/doctors/${docId}`, { method: 'DELETE' });
-                    fetchClinics(); 
-                    showLinks(mainId, mainSlug); 
-                } catch(e) { alert(dict[currentLang].alertErr); }
+                    fetchClinics(); showLinks(mainId, mainSlug); 
+                } catch(e) {}
             });
         }
 
@@ -492,25 +468,20 @@
                 docsContainer.innerHTML = '';
                 
                 if(doctors.length === 0) {
-                    docsContainer.innerHTML = `
-                        <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); padding: 15px; border-radius: 12px; color: var(--warning); text-align: center;">
-                            <strong style="font-size: 1.1rem;">⚠️ لم تقم بإضافة أطباء لهذه العيادة بعد!</strong><br>
-                            <span style="font-size: 0.95rem; display: block; margin-top: 10px; color: var(--text);">يرجى إغلاق هذه النافذة، والضغط على زر <b>(➕ أضف طبيب)</b> الموجود في الجدول.</span>
-                        </div>
-                    `;
+                    docsContainer.innerHTML = `<div style="background: rgba(245, 158, 11, 0.1); padding: 15px; border-radius: 12px; color: var(--warning); text-align: center;">⚠️ لا توجد أطباء مضافين بعد.</div>`;
                 } else {
                     doctors.forEach(doc => {
                         const urlDoc = `${base}/doctor.html?clinic=${doc.slug}`;
                         const urlPat = `${base}/patient.html?clinic=${doc.slug}`;
                         docsContainer.innerHTML += `
-                            <div class="link-group" style="background: transparent; border-color: var(--success); margin-bottom: 15px; position: relative;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                                    <label style="color: var(--success); display: flex; align-items: center; gap: 8px; margin: 0;">👨‍⚕️ ${doc.name}</label>
-                                    <button class="btn btn-danger" style="padding: 6px 12px; font-size: 0.85rem; border: none; border-radius: 8px;" onclick="promptDeleteDoctor('${doc.id}', '${mainId}', '${mainSlug}')">${dict[currentLang].btnDel}</button>
+                            <div class="link-group" style="background: transparent; border-color: var(--success); margin-bottom: 15px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                    <label style="color: var(--success); margin: 0;">👨‍⚕️ ${doc.name} <span style="font-size:0.8rem; color:var(--muted);">(📱 ${doc.phone || 'N/A'})</span></label>
+                                    <button class="btn btn-danger" style="padding: 4px 10px; font-size: 0.8rem; border-radius: 6px;" onclick="promptDeleteDoctor('${doc.id}', '${mainId}', '${mainSlug}')">${dict[currentLang].btnDel}</button>
                                 </div>
-                                <span style="font-size: 0.85rem; color: var(--muted); display: block; margin-bottom: 5px;">${dict[currentLang].linkDocDesc}</span>
-                                <a href="${urlDoc}" target="_blank" class="clickable-link" style="margin-bottom: 15px; display: block;">${urlDoc}</a>
-                                <span style="font-size: 0.85rem; color: var(--muted); display: block; margin-bottom: 5px;">${dict[currentLang].linkPatDesc}</span>
+                                <span style="font-size: 0.8rem; color: var(--muted); display: block;">${dict[currentLang].linkDocDesc}</span>
+                                <a href="${urlDoc}" target="_blank" class="clickable-link" style="margin-bottom: 10px; display: block;">${urlDoc}</a>
+                                <span style="font-size: 0.8rem; color: var(--muted); display: block;">${dict[currentLang].linkPatDesc}</span>
                                 <a href="${urlPat}" target="_blank" class="clickable-link" style="display: block;">${urlPat}</a>
                             </div>
                         `;

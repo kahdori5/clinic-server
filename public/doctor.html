@@ -10,67 +10,60 @@
         [data-theme="dark"] { --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --accent: #10b981; --border: #334155; --muted: #94a3b8; }
         body { font-family: 'Tajawal', sans-serif; background: var(--bg); color: var(--text); margin: 0; min-height: 100vh; display: flex; transition: 0.3s; overflow: hidden; }
         
-        /* الشريط الجانبي للطبيب */
-        .sidebar { width: 260px; background: var(--card); border-inline-end: 1px solid var(--border); display: flex; flex-direction: column; padding: 25px 0; z-index: 10; transition: 0.3s; }
-        .logo { font-size: 1.5rem; font-weight: 800; text-align: center; margin-bottom: 40px; color: var(--text); }
-        .nav-item { padding: 16px 25px; color: var(--muted); text-decoration: none; display: flex; align-items: center; gap: 10px; font-weight: 500; transition: 0.3s; cursor: pointer; border-inline-end: 4px solid transparent; font-size: 1.05rem; }
+        .sidebar { width: 260px; background: var(--card); border-inline-end: 1px solid var(--border); display: flex; flex-direction: column; padding: 25px 0; z-index: 10; justify-content: space-between; }
+        .logo { font-size: 1.5rem; font-weight: 800; text-align: center; margin-bottom: 20px; color: var(--text); }
+        .nav-item { padding: 16px 25px; color: var(--muted); text-decoration: none; display: flex; align-items: center; gap: 10px; font-weight: 500; cursor: pointer; border-inline-end: 4px solid transparent; }
         .nav-item:hover, .nav-item.active { background: rgba(16, 185, 129, 0.1); color: var(--accent); border-color: var(--accent); }
         
+        .support-box { padding: 20px; margin: 15px; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 16px; text-align: center; }
+        .support-box span { font-size: 0.85rem; color: var(--muted); display: block; margin-bottom: 8px; }
+        .support-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: var(--accent); color: white; padding: 10px 15px; border-radius: 10px; text-decoration: none; font-weight: bold; font-size: 0.9rem; width: 100%; box-sizing: border-box; }
+        .support-btn:hover { filter: brightness(1.1); }
+
         .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
         header { display: flex; justify-content: space-between; align-items: center; padding: 15px 30px; border-bottom: 1px solid var(--border); background: var(--card); }
         .controls { display: flex; gap: 10px; }
-        select, .theme-btn { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 8px 15px; border-radius: 12px; cursor: pointer; outline: none; font-family: inherit; transition: 0.2s; font-weight: bold; }
+        select, .theme-btn { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 8px 15px; border-radius: 12px; cursor: pointer; outline: none; font-weight: bold; }
         
         .content-scroll { padding: 40px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; }
-        
-        /* شاشة النداء */
         .call-container { flex: 1; display: flex; justify-content: center; align-items: flex-start; }
         .control-card { background: var(--card); padding: 50px; border-radius: 24px; text-align: center; border: 1px solid var(--border); width: 100%; max-width: 450px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
         .number-display { font-size: 8rem; font-weight: 800; margin: 20px 0; line-height: 1; color: var(--text); }
-        .btn { padding: 18px; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: bold; cursor: pointer; color: white; width: 100%; margin-bottom: 15px; font-family: inherit; transition: 0.2s; }
+        .btn { padding: 18px; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: bold; cursor: pointer; color: white; width: 100%; margin-bottom: 15px; }
         .btn:hover { filter: brightness(1.1); transform: translateY(-2px); }
-        .btn-call { background: var(--accent); font-size: 1.3rem; box-shadow: 0 10px 20px rgba(16, 185, 129, 0.2); }
+        .btn-call { background: var(--accent); font-size: 1.3rem; }
         .status-btns { display: flex; gap: 10px; margin-bottom: 25px; }
         .btn-done { background: #3b82f6; flex: 1; }
         .btn-absent { background: var(--danger); flex: 1; }
         
-        /* شاشة الإحصائيات (المنفصلة) */
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 25px; width: 100%; max-width: 900px; margin: 0 auto; }
-        .stat-card { background: var(--card); padding: 30px; border-radius: 24px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.02); transition: 0.3s; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-        .stat-card:hover { transform: translateY(-5px); border-color: var(--accent); box-shadow: 0 15px 35px rgba(0,0,0,0.05); }
-        .stat-card span { color: var(--muted); font-size: 1.1rem; display: block; margin-bottom: 15px; font-weight: 500; }
+        .stat-card { background: var(--card); padding: 30px; border-radius: 24px; border: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; text-align: center; }
+        .stat-card span { color: var(--muted); font-size: 1.1rem; display: block; margin-bottom: 15px; }
         .stat-card strong { font-size: 4rem; color: var(--text); line-height: 1; display: block; }
         
-        /* الإشعارات العصرية (Toasts) */
         .toast-container { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 10px; z-index: 9999; }
-        .toast { background: var(--card); color: var(--text); padding: 16px 25px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); border-inline-start: 5px solid var(--accent); font-weight: bold; display: flex; align-items: center; gap: 12px; animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), fadeOut 0.5s ease 3s forwards; font-size: 1.05rem; }
+        .toast { background: var(--card); color: var(--text); padding: 16px 25px; border-radius: 12px; border-inline-start: 5px solid var(--accent); font-weight: bold; display: flex; align-items: center; gap: 12px; animation: slideUp 0.4s ease; }
         .toast.warning { border-color: var(--warning); }
         .toast.error { border-color: var(--danger); }
         @keyframes slideUp { from { opacity: 0; transform: translateY(50px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes fadeOut { to { opacity: 0; transform: translateY(-20px); } }
-
         .tab-content { display: none; }
-        .tab-content.active { display: flex; animation: fadeIn 0.4s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* التوافق مع الشاشات الصغيرة للطبيب (الهواتف/الأجهزة اللوحية) */
-        @media (max-width: 768px) {
-            body { flex-direction: column; }
-            .sidebar { width: 100%; padding: 10px 0; border-inline-end: none; border-bottom: 1px solid var(--border); flex-direction: row; justify-content: center; gap: 15px; }
-            .logo { display: none; }
-            .nav-item { padding: 10px; border: none; border-bottom: 3px solid transparent; }
-            .nav-item:hover, .nav-item.active { border-color: var(--accent); background: transparent; }
-        }
+        .tab-content.active { display: flex; }
     </style>
 </head>
 <body>
-    
-    <!-- الشريط الجانبي للطبيب -->
     <div class="sidebar">
-        <div class="logo">Clinic<span>Flow</span><br><span style="font-size: 0.85rem; color: var(--muted); font-weight: 500;" id="clinicNameDisplay">--</span></div>
-        <div style="margin-top: 20px; display: flex; flex-direction: column; width: 100%;">
-            <div class="nav-item active" onclick="switchTab('call-tab', this)" data-i18n="menuCall">📢 شاشة النداء</div>
-            <div class="nav-item" onclick="switchTab('stats-tab', this)" data-i18n="menuStats">📊 إحصائيات العيادة</div>
+        <div>
+            <div class="logo">Clinic<span>Flow</span><br><span style="font-size: 0.85rem; color: var(--muted); font-weight: 500;" id="clinicNameDisplay">--</span></div>
+            <div style="margin-top: 20px; display: flex; flex-direction: column; width: 100%;">
+                <div class="nav-item active" onclick="switchTab('call-tab', this)" data-i18n="menuCall">📢 شاشة النداء</div>
+                <div class="nav-item" onclick="switchTab('stats-tab', this)" data-i18n="menuStats">📊 إحصائيات العيادة</div>
+            </div>
+        </div>
+        
+        <!-- زر الاتصال بالدعم الفني -->
+        <div class="support-box">
+            <span data-i18n="supportLabel">تواجه مشكلة تقنية؟</span>
+            <a href="tel:+213555000000" class="support-btn" id="supportPhoneLink">📞 اتصال بالمتحكم</a>
         </div>
     </div>
 
@@ -90,23 +83,18 @@
         </header>
 
         <div class="content-scroll">
-            
-            <!-- 1. شاشة النداء (نظيفة ومركزة) -->
             <div id="call-tab" class="tab-content active call-container">
                 <div class="control-card">
                     <h2 style="margin:0; color: var(--muted); font-size: 1.2rem;" data-i18n="insideNow">رقم المريض بالداخل</h2>
                     <div class="number-display" id="currentNumber">--</div>
-                    
                     <div class="status-btns">
                         <button class="btn btn-done" onclick="setStatus('completed')" data-i18n="btnDone">✔️ تم الكشف</button>
                         <button class="btn btn-absent" onclick="setStatus('absent')" data-i18n="btnAbsent">❌ غائب</button>
                     </div>
-                    
                     <button class="btn btn-call" onclick="callNextPatient()" data-i18n="callNext">📢 مناداة المريض التالي</button>
                 </div>
             </div>
 
-            <!-- 2. شاشة الإحصائيات (منفصلة وكبيرة) -->
             <div id="stats-tab" class="tab-content" style="flex-direction: column; align-items: center;">
                 <h2 style="margin-top: 0; margin-bottom: 30px; color: var(--text);" data-i18n="statsHeader">نظرة عامة على أداء العيادة</h2>
                 <div class="stats-grid">
@@ -128,11 +116,9 @@
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 
-    <!-- حاوية الإشعارات (Toasts) -->
     <div id="toastContainer" class="toast-container"></div>
 
     <script src="/socket.io/socket.io.js"></script>
@@ -140,24 +126,31 @@
         const CLINIC_SLUG = new URLSearchParams(window.location.search).get('clinic') || 'default-clinic';
         if(CLINIC_SLUG !== 'default-clinic') document.getElementById('clinicNameDisplay').innerText = `(${CLINIC_SLUG})`;
 
+        // قم بتعديل هذا الرقم برقم هاتفك ليتصل بك الأطباء
+        const ADMIN_PHONE = "+213555000000"; 
+        document.getElementById('supportPhoneLink').href = `tel:${ADMIN_PHONE}`;
+
         const dict = {
             ar: { 
                 menuCall: "📢 شاشة النداء", menuStats: "📊 إحصائيات العيادة", docTitle: "لوحة الطبيب", btnTheme: "🌓 الوضع الليلي", 
                 insideNow: "رقم المريض بالداخل", callNext: "📢 مناداة المريض التالي", btnDone: "✔️ تم الكشف", btnAbsent: "❌ غائب",
                 statsHeader: "نظرة عامة على أداء العيادة", statWaiting: "المرضى في الانتظار حالياً", statToday: "إجمالي مرضى اليوم", statWeekly: "مرضى هذا الأسبوع", statMonthly: "مرضى هذا الشهر",
+                supportLabel: "تواجه مشكلة تقنية؟", supportBtn: "📞 اتصال بالمتحكم",
                 errNoPatient: "⚠️ لا يوجد أي مريض في الانتظار حالياً.", errEmpty: "لا يوجد مريض بالداخل لتسجيل حالته.", successStatus: "✔️ تم تسجيل حالة المريض.", successCall: "📢 تم مناداة الرقم:"
             },
             fr: { 
                 menuCall: "📢 Écran d'appel", menuStats: "📊 Statistiques", docTitle: "Tableau du Médecin", btnTheme: "🌓 Mode Sombre", 
                 insideNow: "Patient Actuel", callNext: "📢 Appeler le Suivant", btnDone: "✔️ Terminé", btnAbsent: "❌ Absent",
                 statsHeader: "Aperçu des performances", statWaiting: "Patients en attente", statToday: "Total aujourd'hui", statWeekly: "Cette semaine", statMonthly: "Ce mois-ci",
-                errNoPatient: "⚠️ Aucun patient en attente actuellement.", errEmpty: "Aucun patient à enregistrer.", successStatus: "✔️ Statut enregistré.", successCall: "📢 Numéro appelé:"
+                supportLabel: "Problème technique ?", supportBtn: "📞 Appeler le support",
+                errNoPatient: "⚠️ Aucun patient en attente.", errEmpty: "Aucun patient à enregistrer.", successStatus: "✔️ Statut enregistré.", successCall: "📢 Appel:"
             },
             en: { 
                 menuCall: "📢 Call Screen", menuStats: "📊 Clinic Stats", docTitle: "Doctor Dashboard", btnTheme: "🌓 Dark Mode", 
                 insideNow: "Current Patient", callNext: "📢 Call Next Patient", btnDone: "✔️ Completed", btnAbsent: "❌ Absent",
-                statsHeader: "Clinic Performance Overview", statWaiting: "Patients waiting now", statToday: "Total patients today", statWeekly: "Patients this week", statMonthly: "Patients this month",
-                errNoPatient: "⚠️ No patients currently waiting.", errEmpty: "No patient to update.", successStatus: "✔️ Status updated.", successCall: "📢 Called number:"
+                statsHeader: "Clinic Performance", statWaiting: "Patients waiting", statToday: "Total today", statWeekly: "This week", statMonthly: "This month",
+                supportLabel: "Technical issue?", supportBtn: "📞 Call Admin",
+                errNoPatient: "⚠️ No patients waiting.", errEmpty: "No patient selected.", successStatus: "✔️ Updated.", successCall: "📢 Called:"
             }
         };
         
@@ -167,6 +160,7 @@
             document.documentElement.lang = lang; document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
             document.getElementById('langSelect').value = lang;
             document.querySelectorAll('[data-i18n]').forEach(el => el.innerText = dict[lang][el.getAttribute('data-i18n')]);
+            document.getElementById('supportPhoneLink').innerText = dict[lang].supportBtn;
         }
 
         const toggleTheme = () => {
@@ -175,7 +169,6 @@
             localStorage.setItem('theme', isDark ? 'dark' : 'light');
         };
 
-        // تبديل الصفحات (النداء / الإحصائيات)
         function switchTab(tabId, el) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -183,7 +176,6 @@
             el.classList.add('active');
         }
 
-        // نظام الإشعارات (Toast)
         function showToast(message, type = 'success') {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
@@ -194,12 +186,10 @@
         }
 
         let currentNum = 0;
-        
         window.onload = async () => {
             changeLang(localStorage.getItem('doc_lang') || 'ar');
             if(localStorage.getItem('theme') === 'dark') document.body.setAttribute('data-theme', 'dark');
-            await fetchStatus();
-            await fetchStats();
+            await fetchStatus(); await fetchStats();
         };
 
         async function fetchStatus() {
@@ -234,10 +224,8 @@
                     document.getElementById('currentNumber').innerText = currentNum;
                     showToast(`${dict[currentLang].successCall} ${currentNum}`, 'success');
                     fetchStats(); 
-                } else { 
-                    showToast(dict[currentLang].errNoPatient, 'warning'); 
-                }
-            } catch(e) { showToast('خطأ في الاتصال بالسيرفر', 'error'); }
+                } else { showToast(dict[currentLang].errNoPatient, 'warning'); }
+            } catch(e) {}
         }
 
         async function setStatus(statusType) {
@@ -248,14 +236,12 @@
                     body: JSON.stringify({ clinic_slug: CLINIC_SLUG, ticket_number: currentNum, status: statusType })
                 });
                 showToast(dict[currentLang].successStatus, 'success');
-            } catch(e) { showToast('خطأ في الاتصال', 'error'); }
+            } catch(e) {}
         }
 
         const socket = io('https://clinic-server-i00s.onrender.com');
         socket.on('new_ticket', (data) => {
-            if(data.clinic_slug === CLINIC_SLUG) {
-                fetchStats(); 
-            }
+            if(data.clinic_slug === CLINIC_SLUG) { fetchStats(); }
         });
     </script>
 </body>
