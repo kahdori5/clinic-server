@@ -53,14 +53,15 @@
         .stat-card span { color: var(--muted); font-size: 1.1rem; display: block; margin-bottom: 15px; }
         .stat-card strong { font-size: 4rem; color: var(--text); line-height: 1; display: block; }
         
-        .search-bar { width: 100%; max-width: 600px; padding: 15px 20px; border-radius: 12px; border: 2px solid var(--border); background: var(--card); color: var(--text); font-size: 1.1rem; margin-bottom: 30px; outline: none; transition: 0.3s; font-family: inherit; }
+        .archive-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 25px; }
+        .search-bar { flex: 1; min-width: 260px; max-width: 500px; padding: 14px 20px; border-radius: 12px; border: 2px solid var(--border); background: var(--card); color: var(--text); font-size: 1.05rem; outline: none; transition: 0.3s; font-family: inherit; }
         .search-bar:focus { border-color: var(--accent); }
         .patients-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
         .patient-card { background: var(--card); padding: 25px; border-radius: 16px; border: 1px solid var(--border); transition: 0.3s; display: flex; flex-direction: column; justify-content: space-between; }
         .patient-card:hover { transform: translateY(-3px); border-color: var(--accent); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
         .patient-name { font-size: 1.2rem; font-weight: bold; color: var(--text); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
         .patient-details { font-size: 0.9rem; color: var(--muted); line-height: 1.6; margin-bottom: 15px; }
-        .btn-small { padding: 8px 15px; font-size: 0.9rem; margin-bottom: 0; background: rgba(16, 185, 129, 0.1); color: var(--accent); border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s;}
+        .btn-small { padding: 10px 15px; font-size: 0.95rem; margin-bottom: 0; background: rgba(16, 185, 129, 0.1); color: var(--accent); border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; width: 100%; }
         .btn-small:hover { background: var(--accent); color: white; }
 
         .toast-container { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 10px; z-index: 9999; }
@@ -127,6 +128,11 @@
                     <div class="medical-card" id="medicalCard">
                         <h3 data-i18n="medicalFileTitle">📋 الملف الطبي <span style="font-size:0.8rem; background:var(--bg); padding:4px 10px; border-radius:10px; color:var(--muted);" data-i18n="optional">اختياري</span></h3>
                         
+                        <div class="input-group" style="margin-bottom: 15px;">
+                            <label data-i18n="lblPatientName">اسم المريض:</label>
+                            <input type="text" id="mPatientNameInput" placeholder="اسم المريض الثلاثي...">
+                        </div>
+
                         <div class="form-grid">
                             <div class="input-group">
                                 <label data-i18n="lblAge">العمر:</label>
@@ -166,11 +172,12 @@
             </div>
 
             <div id="patients-tab" class="tab-content" style="display: none; padding: 0 20px;">
-                <h2 style="margin-top: 0; color: var(--text); display: flex; justify-content: space-between; align-items: center;" data-i18n="archiveTitle">
-                    📂 أرشيف ومراجعات المرضى
-                </h2>
+                <div class="archive-header">
+                    <h2 style="margin: 0; color: var(--text);" data-i18n="archiveTitle">📂 أرشيف ومراجعات المرضى</h2>
+                    <button class="btn" style="width: auto; margin: 0; padding: 12px 20px; background: var(--accent);" onclick="openNewPatientFile()" data-i18n="btnNewPatient">+ إضافة ملف مريض جديد</button>
+                </div>
                 
-                <input type="text" id="searchInput" class="search-bar" placeholder="🔍 ابحث عن مريض بالاسم..." onkeyup="filterPatients()" data-i18n="searchPlaceholder">
+                <input type="text" id="searchInput" class="search-bar" placeholder="🔍 ابحث عن مريض بالاسم..." onkeyup="filterPatients()" style="margin-bottom: 25px; width: 100%; box-sizing: border-box;">
                 
                 <div class="patients-list" id="patientsListContainer">
                     <p style="color: var(--muted); text-align: center; width: 100%;" data-i18n="loading">جاري تحميل البيانات...</p>
@@ -199,7 +206,7 @@
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const CLINIC_SLUG = new URLSearchParams(window.location.search).get('clinic') || 'default-clinic';
-        if(CLINIC_SLUG !== 'default-clinic') document.getElementById('clinicNameDisplay').innerText = `(${CLINIC_SLUG})`;
+        if (CLINIC_SLUG !== 'default-clinic') document.getElementById('clinicNameDisplay').innerText = `(${CLINIC_SLUG})`;
 
         const ADMIN_PHONE = "+213555000000"; 
         document.getElementById('supportPhoneLink').href = `tel:${ADMIN_PHONE}`;
@@ -208,26 +215,26 @@
             ar: { 
                 menuCall: "📢 شاشة النداء", menuPatients: "📂 أرشيف المرضى", menuStats: "📊 إحصائيات العيادة", docTitle: "لوحة الطبيب", btnTheme: "🌓 الوضع الليلي", 
                 supportLabel: "تواجه مشكلة تقنية؟", supportBtn: "📞 اتصال بالمتحكم", insideNow: "رقم المريض بالداخل", callNext: "📢 مناداة المريض التالي", btnDone: "✔️ تم الكشف", btnAbsent: "❌ غائب",
-                medicalFileTitle: "📋 الملف الطبي", optional: "اختياري", lblAge: "العمر:", lblBlood: "فصيلة الدم:", lblAllergy: "حساسية للأدوية:", lblChronic: "أمراض مزمنة:", lblNotes: "التشخيص والملاحظات:", btnSaveFile: "💾 حفظ الملف الطبي للمريض", prescTitle: "💊 الوصفة الطبية (Ordonnance)", btnPrintPresc: "🖨️ طباعة الوصفة الطبية",
-                archiveTitle: "📂 أرشيف ومراجعات المرضى", searchPlaceholder: "🔍 ابحث عن مريض بالاسم...", loading: "جاري التحميل...", noPatients: "لا يوجد مرضى مسجلين بعد.", reviewBtn: "✏️ مراجعة الملف",
+                medicalFileTitle: "📋 الملف الطبي", optional: "اختياري", lblPatientName: "اسم المريض:", lblAge: "العمر:", lblBlood: "فصيلة الدم:", lblAllergy: "حساسية للأدوية:", lblChronic: "أمراض مزمنة:", lblNotes: "التشخيص والملاحظات:", btnSaveFile: "💾 حفظ الملف الطبي للمريض", prescTitle: "💊 الوصفة الطبية (Ordonnance)", btnPrintPresc: "🖨️ طباعة الوصفة الطبية",
+                archiveTitle: "📂 أرشيف ومراجعات المرضى", btnNewPatient: "+ إضافة ملف مريض جديد", searchPlaceholder: "🔍 ابحث عن مريض بالاسم...", loading: "جاري التحميل...", noPatients: "لا يوجد مرضى مسجلين في الأرشيف بعد. قم بحفظ ملف مريض ليظهر هنا.", reviewBtn: "✏️ فتح ومراجعة الملف",
                 statsHeader: "نظرة عامة على أداء العيادة", statWaiting: "المرضى في الانتظار حالياً", statToday: "إجمالي مرضى اليوم",
-                errNoPatient: "⚠️ لا يوجد أي مريض في الانتظار.", errEmpty: "لا يوجد مريض لتسجيل حالته.", successStatus: "✔️ تم تسجيل الحالة.", successCall: "📢 تم مناداة الرقم:", errSave: "خطأ أثناء الحفظ"
+                errNoPatient: "⚠️ لا يوجد أي مريض في الانتظار.", errEmpty: "لا يوجد مريض لتسجيل حالته.", successStatus: "✔️ تم الحفظ بنجاح.", successCall: "📢 تم مناداة الرقم:", errSave: "خطأ أثناء الحفظ"
             },
             fr: { 
                 menuCall: "📢 Appel", menuPatients: "📂 Archives Patients", menuStats: "📊 Statistiques", docTitle: "Tableau du Médecin", btnTheme: "🌓 Mode Sombre", 
                 supportLabel: "Problème technique ?", supportBtn: "📞 Contacter Support", insideNow: "Patient Actuel", callNext: "📢 Patient Suivant", btnDone: "✔️ Terminé", btnAbsent: "❌ Absent",
-                medicalFileTitle: "📋 Dossier Médical", optional: "Optionnel", lblAge: "Âge:", lblBlood: "Groupe Sanguin:", lblAllergy: "Allergies:", lblChronic: "Maladies chroniques:", lblNotes: "Diagnostic / Notes:", btnSaveFile: "💾 Enregistrer le dossier", prescTitle: "💊 Ordonnance", btnPrintPresc: "🖨️ Imprimer l'ordonnance",
-                archiveTitle: "📂 Archives des Patients", searchPlaceholder: "🔍 Rechercher un patient...", loading: "Chargement...", noPatients: "Aucun patient enregistré.", reviewBtn: "✏️ Réviser",
+                medicalFileTitle: "📋 Dossier Médical", optional: "Optionnel", lblPatientName: "Nom du patient:", lblAge: "Âge:", lblBlood: "Groupe Sanguin:", lblAllergy: "Allergies:", lblChronic: "Maladies chroniques:", lblNotes: "Diagnostic / Notes:", btnSaveFile: "💾 Enregistrer le dossier", prescTitle: "💊 Ordonnance", btnPrintPresc: "🖨️ Imprimer l'ordonnance",
+                archiveTitle: "📂 Archives des Patients", btnNewPatient: "+ Nouveau Dossier", searchPlaceholder: "🔍 Rechercher un patient...", loading: "Chargement...", noPatients: "Aucun patient enregistré dans les archives.", reviewBtn: "✏️ Ouvrir le dossier",
                 statsHeader: "Aperçu des performances", statWaiting: "Patients en attente", statToday: "Total aujourd'hui",
-                errNoPatient: "⚠️ Aucun patient en attente.", errEmpty: "Aucun patient.", successStatus: "✔️ Statut enregistré.", successCall: "📢 Appel:", errSave: "Erreur lors de l'enregistrement"
+                errNoPatient: "⚠️ Aucun patient en attente.", errEmpty: "Aucun patient.", successStatus: "✔️ Enregistré avec succès.", successCall: "📢 Appel:", errSave: "Erreur lors de l'enregistrement"
             },
             en: { 
                 menuCall: "📢 Call Screen", menuPatients: "📂 Patients Archive", menuStats: "📊 Clinic Stats", docTitle: "Doctor Dashboard", btnTheme: "🌓 Dark Mode", 
                 supportLabel: "Technical issue?", supportBtn: "📞 Call Support", insideNow: "Current Patient", callNext: "📢 Call Next", btnDone: "✔️ Done", btnAbsent: "❌ Absent",
-                medicalFileTitle: "📋 Medical Record", optional: "Optional", lblAge: "Age:", lblBlood: "Blood Type:", lblAllergy: "Allergies:", lblChronic: "Chronic Diseases:", lblNotes: "Diagnosis & Notes:", btnSaveFile: "💾 Save Medical Record", prescTitle: "💊 Prescription", btnPrintPresc: "🖨️ Print Prescription",
-                archiveTitle: "📂 Patients Archive", searchPlaceholder: "🔍 Search patient by name...", loading: "Loading...", noPatients: "No patients registered yet.", reviewBtn: "✏️ Review File",
+                medicalFileTitle: "📋 Medical Record", optional: "Optional", lblPatientName: "Patient Name:", lblAge: "Age:", lblBlood: "Blood Type:", lblAllergy: "Allergies:", lblChronic: "Chronic Diseases:", lblNotes: "Diagnosis & Notes:", btnSaveFile: "💾 Save Medical Record", prescTitle: "💊 Prescription", btnPrintPresc: "🖨️ Print Prescription",
+                archiveTitle: "📂 Patients Archive", btnNewPatient: "+ Add New Patient File", searchPlaceholder: "🔍 Search patient by name...", loading: "Loading...", noPatients: "No patients registered in archive yet.", reviewBtn: "✏️ Open & Review File",
                 statsHeader: "Clinic Performance", statWaiting: "Patients waiting", statToday: "Total today",
-                errNoPatient: "⚠️ No patients waiting.", errEmpty: "No patient selected.", successStatus: "✔️ Status updated.", successCall: "📢 Called:", errSave: "Error saving"
+                errNoPatient: "⚠️ No patients waiting.", errEmpty: "No patient selected.", successStatus: "✔️ Saved successfully.", successCall: "📢 Called:", errSave: "Error saving"
             }
         };
         
@@ -237,11 +244,11 @@
             document.documentElement.lang = lang; document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
             document.getElementById('langSelect').value = lang;
             document.querySelectorAll('[data-i18n]').forEach(el => {
-                if (el.tagName.toLowerCase() === 'input' && el.type === 'text') el.placeholder = dict[lang][el.getAttribute('data-i18n')];
-                else el.innerText = dict[lang][el.getAttribute('data-i18n')];
+                const key = el.getAttribute('data-i18n');
+                if (dict[lang][key]) el.innerText = dict[lang][key];
             });
             document.getElementById('supportPhoneLink').innerText = dict[lang].supportBtn;
-            if(document.getElementById('searchInput')) document.getElementById('searchInput').placeholder = dict[lang].searchPlaceholder;
+            if (document.getElementById('searchInput')) document.getElementById('searchInput').placeholder = dict[lang].searchPlaceholder;
         }
 
         const toggleTheme = () => {
@@ -256,7 +263,7 @@
             document.getElementById(tabId).style.display = 'block';
             el.classList.add('active');
             
-            if(tabId === 'patients-tab') fetchAllPatients();
+            if (tabId === 'patients-tab') fetchAllPatients();
         }
 
         function showToast(message, type = 'success') {
@@ -275,8 +282,9 @@
 
         window.onload = async () => {
             changeLang(localStorage.getItem('doc_lang') || 'ar');
-            if(localStorage.getItem('theme') === 'dark') document.body.setAttribute('data-theme', 'dark');
-            await fetchStatus(); await fetchStats();
+            if (localStorage.getItem('theme') === 'dark') document.body.setAttribute('data-theme', 'dark');
+            await fetchStatus();
+            await fetchStats();
         };
 
         async function fetchStatus() {
@@ -284,8 +292,17 @@
                 const res = await fetch(`https://clinic-server-i00s.onrender.com/api/queue-status/${CLINIC_SLUG}`);
                 const data = await res.json();
                 currentNum = data.current_number || 0;
+                if (data.doctor_name) activeDoctorName = data.doctor_name;
                 document.getElementById('currentNumber').innerText = currentNum === 0 ? '--' : currentNum;
-            } catch(e) {}
+
+                if (currentNum > 0 && data.current_patient_name) {
+                    activePatientName = data.current_patient_name;
+                    document.getElementById('currentPatientName').innerText = `👤 ${activePatientName}`;
+                    document.getElementById('mPatientNameInput').value = activePatientName;
+                    document.getElementById('medicalCard').style.display = 'block';
+                    await loadMedicalRecord(activePatientName);
+                }
+            } catch (e) {}
         }
 
         async function fetchStats() {
@@ -294,7 +311,7 @@
                 const data = await res.json();
                 document.getElementById('statWaiting').innerText = data.waiting;
                 document.getElementById('statToday').innerText = data.today;
-            } catch(e) {}
+            } catch (e) {}
         }
 
         async function callNextPatient() {
@@ -306,18 +323,23 @@
                 const data = await res.json();
                 if (res.ok) {
                     currentNum = parseInt(data.message.match(/\d+/)[0]);
-                    activePatientName = data.patient_name;
-                    activeDoctorName = data.doctor_name;
+                    activePatientName = data.patient_name || `مريض رقم ${currentNum}`;
+                    activeDoctorName = data.doctor_name || 'الطبيب المختص';
                     
                     document.getElementById('currentNumber').innerText = currentNum;
                     document.getElementById('currentPatientName').innerText = `👤 ${activePatientName}`;
+                    document.getElementById('mPatientNameInput').value = activePatientName;
                     document.getElementById('medicalCard').style.display = 'block'; 
                     
                     showToast(`${dict[currentLang].successCall} ${currentNum}`, 'success');
                     fetchStats(); 
                     await loadMedicalRecord(activePatientName);
-                } else { showToast(dict[currentLang].errNoPatient, 'warning'); }
-            } catch(e) { showToast(dict[currentLang].errNet || 'خطأ اتصال', 'error'); }
+                } else {
+                    showToast(dict[currentLang].errNoPatient, 'warning');
+                }
+            } catch (e) {
+                showToast('خطأ اتصال بالسيرفر', 'error');
+            }
         }
 
         async function loadMedicalRecord(pName) {
@@ -327,6 +349,7 @@
                     body: JSON.stringify({ clinic_slug: CLINIC_SLUG, patient_name: pName })
                 });
                 const data = await res.json();
+                document.getElementById('mPatientNameInput').value = pName;
                 document.getElementById('mAge').value = data.age || '';
                 document.getElementById('mBlood').value = data.blood_type || '';
                 document.getElementById('mAllergy').value = data.allergies || '';
@@ -337,29 +360,39 @@
         }
 
         async function saveMedicalRecord() {
-            if(!activePatientName) return;
+            const pName = document.getElementById('mPatientNameInput').value.trim() || activePatientName;
+            if (!pName) return showToast('يرجى كتابة اسم المريض أولاً', 'warning');
+            activePatientName = pName;
+            document.getElementById('currentPatientName').innerText = `👤 ${activePatientName}`;
+
             try {
                 const payload = {
                     clinic_slug: CLINIC_SLUG,
-                    patient_name: activePatientName,
+                    patient_name: pName,
                     age: document.getElementById('mAge').value,
                     blood_type: document.getElementById('mBlood').value,
                     allergies: document.getElementById('mAllergy').value,
                     chronic: document.getElementById('mChronic').value,
                     notes: document.getElementById('mNotes').value
                 };
-                await fetch('https://clinic-server-i00s.onrender.com/api/patient/save', {
+                const res = await fetch('https://clinic-server-i00s.onrender.com/api/patient/save', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-                showToast(dict[currentLang].successStatus, 'success');
-            } catch(e) { showToast(dict[currentLang].errSave, 'error'); }
+                if (res.ok) {
+                    showToast(dict[currentLang].successStatus, 'success');
+                } else {
+                    showToast(dict[currentLang].errSave, 'error');
+                }
+            } catch (e) {
+                showToast(dict[currentLang].errSave, 'error');
+            }
         }
 
         function printPrescription() {
-            if(!activePatientName) return;
+            const pName = document.getElementById('mPatientNameInput').value.trim() || activePatientName || 'المريض';
             const prescriptionText = document.getElementById('mPrescription').value.trim();
-            if(!prescriptionText) return;
+            if (!prescriptionText) return showToast('يرجى كتابة الأدوية في الوصفة أولاً', 'warning');
 
             const ageText = document.getElementById('mAge').value.trim() || '--';
             const dateStr = new Date().toLocaleDateString('ar-DZ');
@@ -368,7 +401,7 @@
             printWindow.document.write(`
                 <html dir="rtl" lang="ar">
                 <head>
-                    <title>وصفة طبية - ${activePatientName}</title>
+                    <title>وصفة طبية - ${pName}</title>
                     <style>
                         body { font-family: Arial, sans-serif; padding: 40px; color: #333; }
                         .header { display: flex; justify-content: space-between; border-bottom: 2px solid #10b981; padding-bottom: 20px; margin-bottom: 30px; }
@@ -382,7 +415,7 @@
                 </head>
                 <body>
                     <div class="header"><div class="clinic-info">العيادة الطبية<br>${activeDoctorName}</div><div class="date-info">التاريخ: ${dateStr}</div></div>
-                    <div class="patient-info"><span>المريض: ${activePatientName}</span><span>العمر: ${ageText}</span></div>
+                    <div class="patient-info"><span>المريض: ${pName}</span><span>العمر: ${ageText}</span></div>
                     <div class="prescription-body">${prescriptionText}</div>
                     <div class="footer">توقيع الطبيب</div>
                 </body>
@@ -394,7 +427,7 @@
         }
 
         async function setStatus(statusType) {
-            if(currentNum === 0) return showToast(dict[currentLang].errEmpty, 'warning');
+            if (currentNum === 0) return showToast(dict[currentLang].errEmpty, 'warning');
             try {
                 await fetch('https://clinic-server-i00s.onrender.com/api/tickets/status', {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -404,50 +437,49 @@
                 document.getElementById('medicalCard').style.display = 'none';
                 document.getElementById('currentPatientName').innerText = '--';
                 activePatientName = '';
-            } catch(e) { showToast('Error', 'error'); }
+            } catch (e) {
+                showToast('Error', 'error');
+            }
         }
 
-        // تم إصلاح دالة جلب الأرشيف مع رسالة خطأ واضحة
         async function fetchAllPatients() {
             const container = document.getElementById('patientsListContainer');
             try {
                 const res = await fetch(`https://clinic-server-i00s.onrender.com/api/patients/all/${CLINIC_SLUG}`);
-                
-                if (!res.ok) throw new Error(`خطأ في السيرفر: ${res.status}`);
-                
                 const data = await res.json();
-                if (data.error) throw new Error(data.error);
+                if (!res.ok || data.error) throw new Error(data.error || `HTTP ${res.status}`);
                 
                 allPatientsData = data;
                 renderPatientsList(allPatientsData);
-            } catch(e) { 
+            } catch (e) { 
                 container.innerHTML = `<div style="background: rgba(239, 68, 68, 0.1); border: 1px solid var(--danger); color: var(--danger); padding: 15px; border-radius: 12px; text-align: center; width: 100%;">
-                    ⚠️ <b>تعذر تحميل الأرشيف:</b> يرجى التأكد من أنك قمت بعمل (Manual Deploy) للسيرفر بنجاح وأن قاعدة البيانات محدثة.<br><small>${e.message}</small>
+                    ⚠️ <b>تعذر تحميل الأرشيف:</b><br><small>${e.message}</small>
                 </div>`; 
             }
         }
 
         function renderPatientsList(patientsArray) {
             const container = document.getElementById('patientsListContainer');
-            if(!patientsArray || patientsArray.length === 0) {
-                container.innerHTML = `<p style="color: var(--muted); text-align: center; width: 100%;">${dict[currentLang].noPatients}</p>`;
+            if (!patientsArray || patientsArray.length === 0) {
+                container.innerHTML = `<p style="color: var(--muted); text-align: center; width: 100%; padding: 30px;">${dict[currentLang].noPatients}</p>`;
                 return;
             }
             
             let html = '';
             patientsArray.forEach(p => {
-                const lastVisit = new Date(p.updated_at).toLocaleDateString('ar-DZ');
+                const lastVisit = p.updated_at ? new Date(p.updated_at).toLocaleDateString('ar-DZ') : '--';
                 html += `
                     <div class="patient-card">
                         <div>
                             <div class="patient-name">👤 ${p.patient_name}</div>
                             <div class="patient-details">
-                                <strong>العمر:</strong> ${p.age || '--'} <br>
+                                <strong>العمر:</strong> ${p.age || '--'} | <strong>الدم:</strong> ${p.blood_type || '--'}<br>
                                 <strong>الأمراض المزمنة:</strong> ${p.chronic_diseases || 'لا يوجد'} <br>
-                                <strong>آخر زيارة:</strong> ${lastVisit}
+                                <strong>التشخيص:</strong> ${p.notes || '--'} <br>
+                                <strong>آخر تحديث:</strong> ${lastVisit}
                             </div>
                         </div>
-                        <button class="btn btn-small" onclick="reviewPatient('${p.patient_name}')">${dict[currentLang].reviewBtn}</button>
+                        <button class="btn-small" onclick="reviewPatient('${p.patient_name.replace(/'/g, "\\'")}')">${dict[currentLang].reviewBtn}</button>
                     </div>
                 `;
             });
@@ -473,9 +505,28 @@
             loadMedicalRecord(pName);
         }
 
+        function openNewPatientFile() {
+            activePatientName = '';
+            document.getElementById('currentPatientName').innerText = '👤 ملف مريض جديد';
+            document.getElementById('mPatientNameInput').value = '';
+            document.getElementById('mAge').value = '';
+            document.getElementById('mBlood').value = '';
+            document.getElementById('mAllergy').value = '';
+            document.getElementById('mChronic').value = '';
+            document.getElementById('mNotes').value = '';
+            document.getElementById('mPrescription').value = '';
+            document.getElementById('medicalCard').style.display = 'block';
+
+            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById('call-tab').style.display = 'block';
+            document.querySelector('.nav-item').classList.add('active');
+            document.getElementById('mPatientNameInput').focus();
+        }
+
         const socket = io('https://clinic-server-i00s.onrender.com');
         socket.on('new_ticket', (data) => {
-            if(data.clinic_slug === CLINIC_SLUG) { fetchStats(); }
+            if (data.clinic_slug === CLINIC_SLUG) { fetchStats(); }
         });
     </script>
 </body>
