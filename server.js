@@ -131,7 +131,6 @@ app.post('/api/tickets', async (req, res) => {
     }
 });
 
-// إلغاء الحجز وتحديث الطابور وإشعار الطبيب
 app.post('/api/tickets/cancel', async (req, res) => {
     try {
         const { clinic_slug, ticket_number } = req.body;
@@ -154,7 +153,6 @@ app.post('/api/tickets/cancel', async (req, res) => {
     }
 });
 
-// مناداة المريض التالي مع التحقق مما إذا كان قد ألغى حجزه
 app.post('/api/call-next', async (req, res) => {
     try {
         const { clinic_slug } = req.body;
@@ -185,7 +183,6 @@ app.post('/api/call-next', async (req, res) => {
     }
 });
 
-// جلب الملف الطبي للمريض
 app.post('/api/patient/get', async (req, res) => {
     try {
         await ensureArchiveTable();
@@ -201,7 +198,6 @@ app.post('/api/patient/get', async (req, res) => {
     }
 });
 
-// حفظ أو تحديث الملف الطبي للمريض في الأرشيف
 app.post('/api/patient/save', async (req, res) => {
     try {
         await ensureArchiveTable();
@@ -234,7 +230,17 @@ app.post('/api/patient/save', async (req, res) => {
     }
 });
 
-// جلب أرشيف جميع المرضى للطبيب
+// 🔥 مسار حذف مريض من الأرشيف
+app.delete('/api/patients/delete/:id', async (req, res) => {
+    try {
+        await ensureArchiveTable();
+        await db.query('DELETE FROM patient_records WHERE id::text = $1::text', [req.params.id]);
+        res.json({ message: 'تم حذف المريض من الأرشيف بنجاح' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.get('/api/patients/all/:clinic_slug', async (req, res) => {
     try {
         await ensureArchiveTable();
@@ -248,7 +254,6 @@ app.get('/api/patients/all/:clinic_slug', async (req, res) => {
     }
 });
 
-// جلب حالة الطابور مع استبعاد التذاكر الملغاة من حساب الانتظار
 app.get('/api/queue-status/:clinic_slug', async (req, res) => {
     try {
         const clinic = await db.query('SELECT id, name FROM clinics WHERE slug = $1', [req.params.clinic_slug]);
@@ -270,14 +275,12 @@ app.get('/api/queue-status/:clinic_slug', async (req, res) => {
             }
         }
 
-        // حساب عدد المنتظرين الفعليين (استثناء الملغيين)
         const waitingRes = await db.query(
             `SELECT COUNT(*) FROM tickets WHERE queue_id = $1 AND ticket_number > $2 AND status != 'cancelled'`,
             [qId, currentNum]
         );
         const waitingCount = parseInt(waitingRes.rows[0].count || 0);
 
-        // حساب عدد الأشخاص الذين يسبقون تذكرة مريض معين (استثناء الملغيين)
         let aheadCount = waitingCount;
         const myTicket = parseInt(req.query.my_ticket);
         if (!isNaN(myTicket) && myTicket > 0) {
@@ -307,7 +310,6 @@ app.get('/api/queue-status/:clinic_slug', async (req, res) => {
     }
 });
 
-// إحصائيات الطبيب مع استبعاد الملغيين
 app.get('/api/doctor-stats/:clinic_slug', async (req, res) => {
     try {
         const clinic = await db.query('SELECT id FROM clinics WHERE slug = $1', [req.params.clinic_slug]);
@@ -328,7 +330,6 @@ app.get('/api/doctor-stats/:clinic_slug', async (req, res) => {
     }
 });
 
-// قائمة أطباء العيادة لشاشة التلفاز والاستقبال مع استبعاد الملغيين
 app.get('/api/clinic-doctors/:main_slug', async (req, res) => {
     try {
         const main = await db.query('SELECT id FROM clinics WHERE slug = $1 AND is_main = true', [req.params.main_slug]);
