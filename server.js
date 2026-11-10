@@ -131,6 +131,7 @@ app.post('/api/tickets', async (req, res) => {
     }
 });
 
+// إلغاء الحجز وتحديث الطابور وإشعار الطبيب
 app.post('/api/tickets/cancel', async (req, res) => {
     try {
         const { clinic_slug, ticket_number } = req.body;
@@ -138,8 +139,13 @@ app.post('/api/tickets/cancel', async (req, res) => {
         if (clinic.rows.length > 0) {
             const queue = await db.query('SELECT id FROM queues WHERE clinic_id = $1 AND queue_date = CURRENT_DATE', [clinic.rows[0].id]);
             if (queue.rows.length > 0) {
-                await db.query('UPDATE tickets SET status = $1 WHERE queue_id = $2 AND ticket_number = $3', ['cancelled', queue.rows[0].id, ticket_number]);
+                const ticketRes = await db.query(
+                    'UPDATE tickets SET status = $1 WHERE queue_id = $2 AND ticket_number = $3 RETURNING patient_name',
+                    ['cancelled', queue.rows[0].id, ticket_number]
+                );
+                const cancelledName = ticketRes.rows.length > 0 ? ticketRes.rows[0].patient_name : 'مريض';
                 io.emit('new_ticket', { clinic_slug });
+                io.emit('ticket_cancelled', { clinic_slug, ticket_number, patient_name: cancelledName });
             }
         }
         res.json({ message: 'تم الإلغاء' });
@@ -148,6 +154,7 @@ app.post('/api/tickets/cancel', async (req, res) => {
     }
 });
 
+// مناداة المريض التالي مع التحقق مما إذا كان قد ألغى حجزه
 app.post('/api/call-next', async (req, res) => {
     try {
         const { clinic_slug } = req.body;
@@ -162,11 +169,17 @@ app.post('/api/call-next', async (req, res) => {
         const newCurrent = queue.rows[0].current_number + 1;
         await db.query('UPDATE queues SET current_number = $1 WHERE id = $2', [newCurrent, queue.rows[0].id]);
 
-        const ticket = await db.query('SELECT patient_name FROM tickets WHERE queue_id = $1 AND ticket_number = $2', [queue.rows[0].id, newCurrent]);
+        const ticket = await db.query('SELECT patient_name, status FROM tickets WHERE queue_id = $1 AND ticket_number = $2', [queue.rows[0].id, newCurrent]);
         const patientName = ticket.rows.length > 0 ? ticket.rows[0].patient_name : `مريض رقم ${newCurrent}`;
+        const ticketStatus = ticket.rows.length > 0 ? ticket.rows[0].status : 'waiting';
 
-        io.emit('call_patient', { clinic_slug, current_number: newCurrent });
-        res.status(200).json({ message: `الرقم: ${newCurrent}`, patient_name: patientName, doctor_name: clinic.rows[0].name });
+        io.emit('call_patient', { clinic_slug, current_number: newCurrent, status: ticketStatus });
+        res.status(200).json({
+            message: `الرقم: ${newCurrent}`,
+            patient_name: patientName,
+            ticket_status: ticketStatus,
+            doctor_name: clinic.rows[0].name
+        });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -235,24 +248,58 @@ app.get('/api/patients/all/:clinic_slug', async (req, res) => {
     }
 });
 
+// جلب حالة الطابور مع استبعاد التذاكر الملغاة من حساب الانتظار
 app.get('/api/queue-status/:clinic_slug', async (req, res) => {
     try {
         const clinic = await db.query('SELECT id, name FROM clinics WHERE slug = $1', [req.params.clinic_slug]);
-        if (clinic.rows.length === 0) return res.json({ current_number: 0, last_issued_number: 0 });
+        if (clinic.rows.length === 0) return res.json({ current_number: 0, last_issued_number: 0, waiting_count: 0, ahead_count: 0 });
         let queue = await db.query('SELECT id, current_number, last_issued_number, status FROM queues WHERE clinic_id = $1 AND queue_date = CURRENT_DATE', [clinic.rows[0].id]);
-        if (queue.rows.length === 0) return res.json({ current_number: 0, last_issued_number: 0, status: 'active', doctor_name: clinic.rows[0].name });
+        if (queue.rows.length === 0) return res.json({ current_number: 0, last_issued_number: 0, waiting_count: 0, ahead_count: 0, status: 'active', doctor_name: clinic.rows[0].name });
+
+        const qId = queue.rows[0].id;
+        const currentNum = queue.rows[0].current_number;
+        const lastIssued = queue.rows[0].last_issued_number;
 
         let currentPatientName = '';
-        if (queue.rows[0].current_number > 0) {
-            const t = await db.query('SELECT patient_name FROM tickets WHERE queue_id = $1 AND ticket_number = $2', [queue.rows[0].id, queue.rows[0].current_number]);
-            if (t.rows.length > 0) currentPatientName = t.rows[0].patient_name;
+        let currentTicketStatus = 'waiting';
+        if (currentNum > 0) {
+            const t = await db.query('SELECT patient_name, status FROM tickets WHERE queue_id = $1 AND ticket_number = $2', [qId, currentNum]);
+            if (t.rows.length > 0) {
+                currentPatientName = t.rows[0].patient_name;
+                currentTicketStatus = t.rows[0].status;
+            }
+        }
+
+        // حساب عدد المنتظرين الفعليين (استثناء الملغيين)
+        const waitingRes = await db.query(
+            `SELECT COUNT(*) FROM tickets WHERE queue_id = $1 AND ticket_number > $2 AND status != 'cancelled'`,
+            [qId, currentNum]
+        );
+        const waitingCount = parseInt(waitingRes.rows[0].count || 0);
+
+        // حساب عدد الأشخاص الذين يسبقون تذكرة مريض معين (استثناء الملغيين)
+        let aheadCount = waitingCount;
+        const myTicket = parseInt(req.query.my_ticket);
+        if (!isNaN(myTicket) && myTicket > 0) {
+            if (currentNum >= myTicket) {
+                aheadCount = 0;
+            } else {
+                const aheadRes = await db.query(
+                    `SELECT COUNT(*) FROM tickets WHERE queue_id = $1 AND ticket_number > $2 AND ticket_number < $3 AND status != 'cancelled'`,
+                    [qId, currentNum, myTicket]
+                );
+                aheadCount = parseInt(aheadRes.rows[0].count || 0);
+            }
         }
 
         res.json({
-            current_number: queue.rows[0].current_number,
-            last_issued_number: queue.rows[0].last_issued_number,
+            current_number: currentNum,
+            last_issued_number: lastIssued,
+            waiting_count: waitingCount,
+            ahead_count: aheadCount,
             status: queue.rows[0].status,
             current_patient_name: currentPatientName,
+            current_ticket_status: currentTicketStatus,
             doctor_name: clinic.rows[0].name
         });
     } catch (err) {
@@ -260,16 +307,20 @@ app.get('/api/queue-status/:clinic_slug', async (req, res) => {
     }
 });
 
+// إحصائيات الطبيب مع استبعاد الملغيين
 app.get('/api/doctor-stats/:clinic_slug', async (req, res) => {
     try {
         const clinic = await db.query('SELECT id FROM clinics WHERE slug = $1', [req.params.clinic_slug]);
         if (clinic.rows.length === 0) return res.json({ today: 0, waiting: 0, weekly: 0, monthly: 0 });
         const cId = clinic.rows[0].id;
-        let q = await db.query('SELECT current_number, last_issued_number FROM queues WHERE clinic_id = $1 AND queue_date = CURRENT_DATE', [cId]);
+        let q = await db.query('SELECT id, current_number, last_issued_number FROM queues WHERE clinic_id = $1 AND queue_date = CURRENT_DATE', [cId]);
         let today = 0, waiting = 0;
         if (q.rows.length > 0) {
-            today = q.rows[0].last_issued_number;
-            waiting = Math.max(0, today - q.rows[0].current_number);
+            const totalRes = await db.query(`SELECT COUNT(*) FROM tickets WHERE queue_id = $1 AND status != 'cancelled'`, [q.rows[0].id]);
+            today = parseInt(totalRes.rows[0].count || 0);
+
+            const waitRes = await db.query(`SELECT COUNT(*) FROM tickets WHERE queue_id = $1 AND ticket_number > $2 AND status != 'cancelled'`, [q.rows[0].id, q.rows[0].current_number]);
+            waiting = parseInt(waitRes.rows[0].count || 0);
         }
         res.json({ today, waiting, weekly: today, monthly: today });
     } catch (e) {
@@ -277,6 +328,7 @@ app.get('/api/doctor-stats/:clinic_slug', async (req, res) => {
     }
 });
 
+// قائمة أطباء العيادة لشاشة التلفاز والاستقبال مع استبعاد الملغيين
 app.get('/api/clinic-doctors/:main_slug', async (req, res) => {
     try {
         const main = await db.query('SELECT id FROM clinics WHERE slug = $1 AND is_main = true', [req.params.main_slug]);
@@ -284,13 +336,15 @@ app.get('/api/clinic-doctors/:main_slug', async (req, res) => {
         const doctors = await db.query('SELECT id, name, slug FROM clinics WHERE parent_id::text = $1::text', [main.rows[0].id]);
         let result = [];
         for (let doc of doctors.rows) {
-            const q = await db.query('SELECT current_number, last_issued_number, status FROM queues WHERE clinic_id = $1 AND queue_date = CURRENT_DATE', [doc.id]);
+            const q = await db.query('SELECT id, current_number, last_issued_number, status FROM queues WHERE clinic_id = $1 AND queue_date = CURRENT_DATE', [doc.id]);
             if (q.rows.length > 0) {
+                const waitRes = await db.query(`SELECT COUNT(*) FROM tickets WHERE queue_id = $1 AND ticket_number > $2 AND status != 'cancelled'`, [q.rows[0].id, q.rows[0].current_number]);
+                const waitingCount = parseInt(waitRes.rows[0].count || 0);
                 result.push({
                     name: doc.name,
                     slug: doc.slug,
                     current: q.rows[0].current_number,
-                    waiting: Math.max(0, q.rows[0].last_issued_number - q.rows[0].current_number),
+                    waiting: waitingCount,
                     status: q.rows[0].status
                 });
             } else {

@@ -31,6 +31,8 @@
         .control-card { background: var(--card); padding: 40px; border-radius: 24px; text-align: center; border: 1px solid var(--border); flex: 1; min-width: 320px; max-width: 450px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
         .number-display { font-size: 7rem; font-weight: 800; margin: 15px 0; line-height: 1; color: var(--text); }
         
+        .cancelled-banner { background: rgba(239, 68, 68, 0.12); border: 2px dashed var(--danger); color: var(--danger); padding: 12px 15px; border-radius: 12px; font-weight: 800; font-size: 1.1rem; margin-bottom: 20px; display: none; }
+
         .medical-card { background: var(--card); padding: 35px; border-radius: 24px; border: 1px solid var(--border); flex: 2; min-width: 350px; max-width: 600px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); display: none; animation: fadeIn 0.4s ease; }
         .medical-card h3 { margin-top: 0; color: var(--accent); font-size: 1.4rem; border-bottom: 2px dashed var(--border); padding-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
@@ -116,8 +118,11 @@
                     <div class="control-card">
                         <h2 style="margin:0; color: var(--muted); font-size: 1.2rem;" data-i18n="insideNow">رقم المريض بالداخل</h2>
                         <div class="number-display" id="currentNumber">--</div>
-                        <p id="currentPatientName" style="font-size: 1.2rem; font-weight: bold; color: var(--accent); margin-bottom: 25px;">--</p>
+                        <p id="currentPatientName" style="font-size: 1.2rem; font-weight: bold; color: var(--accent); margin-bottom: 20px;">--</p>
                         
+                        <!-- تنبيه يظهر للطبيب إذا كان المريض قد ألغى حجزه -->
+                        <div class="cancelled-banner" id="cancelledBanner"></div>
+
                         <div class="status-btns">
                             <button class="btn btn-done" onclick="setStatus('completed')" data-i18n="btnDone">✔️ تم الكشف</button>
                             <button class="btn btn-absent" onclick="setStatus('absent')" data-i18n="btnAbsent">❌ غائب</button>
@@ -272,7 +277,7 @@
             toast.className = `toast ${type}`;
             toast.innerText = message;
             container.appendChild(toast);
-            setTimeout(() => { toast.remove(); }, 3500);
+            setTimeout(() => { toast.remove(); }, 4500);
         }
 
         let currentNum = 0;
@@ -287,6 +292,27 @@
             await fetchStats();
         };
 
+        function displayPatientState(pName, ticketStatus) {
+            const banner = document.getElementById('cancelledBanner');
+            const nameEl = document.getElementById('currentPatientName');
+            const medCard = document.getElementById('medicalCard');
+
+            if (ticketStatus === 'cancelled') {
+                nameEl.innerText = `👤 ${pName}`;
+                nameEl.style.color = 'var(--danger)';
+                banner.innerText = `❌ تنبيه: المريض (${pName}) قام بإلغاء حجزه!`;
+                banner.style.display = 'block';
+                medCard.style.display = 'none';
+            } else {
+                nameEl.innerText = `👤 ${pName}`;
+                nameEl.style.color = 'var(--accent)';
+                banner.style.display = 'none';
+                medCard.style.display = 'block';
+                document.getElementById('mPatientNameInput').value = pName;
+                loadMedicalRecord(pName);
+            }
+        }
+
         async function fetchStatus() {
             try {
                 const res = await fetch(`https://clinic-server-i00s.onrender.com/api/queue-status/${CLINIC_SLUG}`);
@@ -297,10 +323,7 @@
 
                 if (currentNum > 0 && data.current_patient_name) {
                     activePatientName = data.current_patient_name;
-                    document.getElementById('currentPatientName').innerText = `👤 ${activePatientName}`;
-                    document.getElementById('mPatientNameInput').value = activePatientName;
-                    document.getElementById('medicalCard').style.display = 'block';
-                    await loadMedicalRecord(activePatientName);
+                    displayPatientState(activePatientName, data.current_ticket_status);
                 }
             } catch (e) {}
         }
@@ -327,13 +350,15 @@
                     activeDoctorName = data.doctor_name || 'الطبيب المختص';
                     
                     document.getElementById('currentNumber').innerText = currentNum;
-                    document.getElementById('currentPatientName').innerText = `👤 ${activePatientName}`;
-                    document.getElementById('mPatientNameInput').value = activePatientName;
-                    document.getElementById('medicalCard').style.display = 'block'; 
+                    displayPatientState(activePatientName, data.ticket_status);
+
+                    if (data.ticket_status === 'cancelled') {
+                        showToast(`⚠️ المريض (${activePatientName}) صاحب الرقم ${currentNum} قام بإلغاء حجزه!`, 'error');
+                    } else {
+                        showToast(`${dict[currentLang].successCall} ${currentNum} (${activePatientName})`, 'success');
+                    }
                     
-                    showToast(`${dict[currentLang].successCall} ${currentNum}`, 'success');
                     fetchStats(); 
-                    await loadMedicalRecord(activePatientName);
                 } else {
                     showToast(dict[currentLang].errNoPatient, 'warning');
                 }
@@ -435,6 +460,7 @@
                 });
                 showToast(dict[currentLang].successStatus, 'success');
                 document.getElementById('medicalCard').style.display = 'none';
+                document.getElementById('cancelledBanner').style.display = 'none';
                 document.getElementById('currentPatientName').innerText = '--';
                 activePatientName = '';
             } catch (e) {
@@ -494,6 +520,8 @@
 
         function reviewPatient(pName) {
             activePatientName = pName;
+            document.getElementById('cancelledBanner').style.display = 'none';
+            document.getElementById('currentPatientName').style.color = 'var(--accent)';
             document.getElementById('currentPatientName').innerText = `👤 المراجعة: ${pName}`;
             document.getElementById('medicalCard').style.display = 'block';
             
@@ -507,6 +535,8 @@
 
         function openNewPatientFile() {
             activePatientName = '';
+            document.getElementById('cancelledBanner').style.display = 'none';
+            document.getElementById('currentPatientName').style.color = 'var(--accent)';
             document.getElementById('currentPatientName').innerText = '👤 ملف مريض جديد';
             document.getElementById('mPatientNameInput').value = '';
             document.getElementById('mAge').value = '';
@@ -527,6 +557,12 @@
         const socket = io('https://clinic-server-i00s.onrender.com');
         socket.on('new_ticket', (data) => {
             if (data.clinic_slug === CLINIC_SLUG) { fetchStats(); }
+        });
+        socket.on('ticket_cancelled', (data) => {
+            if (data.clinic_slug === CLINIC_SLUG) {
+                showToast(`❌ قام المريض (${data.patient_name}) بإلغاء تذكرته رقم ${data.ticket_number}`, 'warning');
+                fetchStats();
+            }
         });
     </script>
 </body>

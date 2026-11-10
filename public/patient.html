@@ -24,7 +24,6 @@
         .btn-danger { background: var(--bg); color: var(--danger); border: 2px solid var(--danger); }
         .btn-danger:hover { background: var(--danger); color: white; }
 
-        /* صندوق المعاينة قبل الحجز */
         .preview-box { background: rgba(16, 185, 129, 0.05); border: 1px dashed var(--accent); padding: 20px; border-radius: 16px; margin-bottom: 20px; display: none; text-align: right; }
         .preview-box p { margin: 8px 0; font-size: 1rem; color: var(--text); font-weight: bold; }
         .preview-box strong { color: var(--accent); font-size: 1.2rem; margin-right: 5px; }
@@ -60,14 +59,13 @@
                 <option value="">-- اختر الطبيب أولاً --</option>
             </select>
 
-            <!-- المعاينة القبلية للحجز -->
             <div class="preview-box" id="previewBox">
                 <p>الرقم الحالي بالداخل: <strong id="prevInside">--</strong></p>
                 <p>رقم تذكرتك المتوقع: <strong id="prevExpected" style="color: var(--warning);">--</strong></p>
-                <p>عدد المرضى قبلك: <strong id="prevAhead" style="color: var(--danger);">--</strong></p>
+                <p>عدد المرضى قبلك (الفعلي): <strong id="prevAhead" style="color: var(--danger);">--</strong></p>
             </div>
 
-            <label style="display: block; text-align: start; margin-bottom: 10px; font-weight: bold; color: var(--muted);">اسم المريض (اختياري):</label>
+            <label style="display: block; text-align: start; margin-bottom: 10px; font-weight: bold; color: var(--muted);">اسم المريض:</label>
             <input type="text" id="patientName" placeholder="أدخل اسمك الكريم هنا...">
 
             <button class="btn" onclick="bookTicket()">سحب تذكرة الحجز</button>
@@ -87,7 +85,7 @@
                     <strong id="currentNumberDisplay">--</strong>
                 </div>
                 <div class="stat-box" style="background: rgba(245, 158, 11, 0.05); border-color: rgba(245, 158, 11, 0.2);">
-                    <span>أشخاص قبلك</span>
+                    <span>أشخاص قبلك (فعلياً)</span>
                     <strong id="waitingCountDisplay" style="color: #f59e0b;">--</strong>
                 </div>
             </div>
@@ -104,7 +102,7 @@
         let currentDoctorSlug = '';
         
         window.onload = async () => {
-            if(CLINIC_SLUG) document.getElementById('clinicTitle').innerText = `عيادة: ${CLINIC_SLUG}`;
+            if (CLINIC_SLUG) document.getElementById('clinicTitle').innerText = `عيادة: ${CLINIC_SLUG}`;
 
             const savedData = localStorage.getItem('clinic_my_ticket');
             if (savedData) {
@@ -123,7 +121,7 @@
                 }
             }
 
-            if(CLINIC_SLUG) {
+            if (CLINIC_SLUG) {
                 try {
                     const res = await fetch(`https://clinic-server-i00s.onrender.com/api/clinic-doctors/${CLINIC_SLUG}`);
                     const doctors = await res.json();
@@ -132,15 +130,15 @@
                     doctors.forEach(doc => {
                         select.innerHTML += `<option value="${doc.slug}">${doc.name}</option>`;
                     });
-                } catch(e) { console.error(e); }
+                } catch (e) { console.error(e); }
             }
         };
 
-        // دالة عرض المعاينة القبلية (قبل أن يحجز المريض)
+        // المعاينة قبل الحجز (بدون احتساب الملغيين)
         async function previewStats() {
             const docSlug = document.getElementById('doctorSelect').value;
             const previewBox = document.getElementById('previewBox');
-            if(!docSlug) {
+            if (!docSlug) {
                 previewBox.style.display = 'none';
                 return;
             }
@@ -149,10 +147,11 @@
                 const data = await res.json();
                 const currentNum = data.current_number || 0;
                 const lastIssued = data.last_issued_number || 0;
+                const waitingCount = data.waiting_count !== undefined ? data.waiting_count : Math.max(0, lastIssued - currentNum);
                 
                 document.getElementById('prevInside').innerText = currentNum === 0 ? '--' : currentNum;
                 document.getElementById('prevExpected').innerText = lastIssued + 1;
-                document.getElementById('prevAhead').innerText = Math.max(0, lastIssued - currentNum);
+                document.getElementById('prevAhead').innerText = waitingCount;
                 previewBox.style.display = 'block';
             } catch (e) { console.error('خطأ في جلب المعاينة'); }
         }
@@ -161,7 +160,7 @@
             currentDoctorSlug = document.getElementById('doctorSelect').value;
             const pName = document.getElementById('patientName').value.trim() || 'مريض';
             
-            if(!currentDoctorSlug) return alert('يرجى اختيار الطبيب أولاً');
+            if (!currentDoctorSlug) return alert('يرجى اختيار الطبيب أولاً');
 
             try {
                 const res = await fetch('https://clinic-server-i00s.onrender.com/api/tickets', {
@@ -169,7 +168,7 @@
                     body: JSON.stringify({ clinic_slug: currentDoctorSlug, patient_name: pName })
                 });
                 const data = await res.json();
-                if(res.ok) {
+                if (res.ok) {
                     const num = data.message.match(/\d+/)[0];
                     const ticketData = {
                         date: new Date().toLocaleDateString('ar-DZ'),
@@ -186,12 +185,11 @@
                     document.getElementById('ticketSection').style.display = 'block';
                     fetchLiveStats();
                 } else { alert(data.error); }
-            } catch(e) { alert('خطأ في الاتصال بالخادم.'); }
+            } catch (e) { alert('خطأ في الاتصال بالخادم.'); }
         }
 
-        // إلغاء الحجز ومسحه من السيرفر والهاتف
         async function cancelBooking() {
-            if(!confirm('هل أنت متأكد من رغبتك في إلغاء تذكرتك؟')) return;
+            if (!confirm('هل أنت متأكد من رغبتك في إلغاء تذكرتك؟')) return;
             const ticketNum = document.getElementById('ticketNumberDisplay').innerText;
             try {
                 await fetch('https://clinic-server-i00s.onrender.com/api/tickets/cancel', {
@@ -199,34 +197,36 @@
                     body: JSON.stringify({ clinic_slug: currentDoctorSlug, ticket_number: ticketNum })
                 });
                 localStorage.removeItem('clinic_my_ticket');
-                window.location.reload(); // إعادة تحميل الصفحة للتسجيل من جديد
-            } catch(e) { alert('حدث خطأ أثناء الإلغاء'); }
+                window.location.reload();
+            } catch (e) { alert('حدث خطأ أثناء الإلغاء'); }
         }
 
+        // جلب عدد المنتظرين الفعليين قبل تذكرة المريض (بدون الملغيين)
         async function fetchLiveStats() {
-            if(!currentDoctorSlug) return;
+            if (!currentDoctorSlug) return;
             try {
-                const res = await fetch(`https://clinic-server-i00s.onrender.com/api/queue-status/${currentDoctorSlug}`);
+                const myTicket = parseInt(document.getElementById('ticketNumberDisplay').innerText);
+                const res = await fetch(`https://clinic-server-i00s.onrender.com/api/queue-status/${currentDoctorSlug}?my_ticket=${myTicket}`);
                 const data = await res.json();
                 const currentNum = data.current_number || 0;
-                const lastIssued = data.last_issued_number || 0;
-                const myTicket = parseInt(document.getElementById('ticketNumberDisplay').innerText);
-                
-                let waiting = myTicket - currentNum - 1;
-                if(waiting < 0 || currentNum >= myTicket) waiting = 0;
+                const aheadCount = data.ahead_count !== undefined ? data.ahead_count : 0;
 
                 document.getElementById('currentNumberDisplay').innerText = currentNum === 0 ? '--' : currentNum;
-                document.getElementById('waitingCountDisplay').innerText = waiting;
-            } catch(e) { }
+                document.getElementById('waitingCountDisplay').innerText = aheadCount;
+            } catch (e) {}
         }
 
         const socket = io('https://clinic-server-i00s.onrender.com');
         socket.on('call_patient', (data) => {
-            if(data.clinic_slug === currentDoctorSlug) fetchLiveStats();
-            else if (document.getElementById('bookingSection').style.display !== 'none') previewStats(); // تحديث المعاينة للجدد
+            if (data.clinic_slug === currentDoctorSlug) fetchLiveStats();
+            else if (document.getElementById('bookingSection').style.display !== 'none') previewStats();
         });
         socket.on('new_ticket', (data) => {
-            if(data.clinic_slug === currentDoctorSlug) fetchLiveStats();
+            if (data.clinic_slug === currentDoctorSlug) fetchLiveStats();
+            else if (document.getElementById('bookingSection').style.display !== 'none') previewStats();
+        });
+        socket.on('ticket_cancelled', (data) => {
+            if (data.clinic_slug === currentDoctorSlug) fetchLiveStats();
             else if (document.getElementById('bookingSection').style.display !== 'none') previewStats();
         });
     </script>
