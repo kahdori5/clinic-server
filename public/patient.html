@@ -7,43 +7,61 @@
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #f4f7f6; --card: #ffffff; --text: #2d3748; --accent: #10b981; --border: #e2e8f0; --muted: #718096; --warning: #f59e0b; --danger: #ef4444; }
-        body { font-family: 'Tajawal', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        [data-theme="dark"] { --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --accent: #10b981; --border: #334155; --muted: #94a3b8; }
+        body { font-family: 'Tajawal', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; transition: 0.3s; }
         
-        .header { text-align: center; margin-bottom: 25px; margin-top: 10px; }
+        .top-controls { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 450px; margin-bottom: 15px; }
+        .top-controls select, .theme-btn { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 8px 14px; border-radius: 12px; cursor: pointer; font-weight: bold; font-family: inherit; outline: none; width: auto; margin: 0; font-size: 0.95rem; }
+
+        .header { text-align: center; margin-bottom: 20px; }
         .header h1 { color: var(--accent); margin: 0; font-weight: 800; font-size: 2.2rem; }
         .header p { color: var(--muted); margin-top: 5px; font-weight: bold; font-size: 1.1rem; }
 
-        .main-card { background: var(--card); padding: 35px; border-radius: 24px; width: 100%; max-width: 450px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); text-align: center; border: 1px solid var(--border); box-sizing: border-box; }
+        .main-card { background: var(--card); padding: 30px; border-radius: 24px; width: 100%; max-width: 450px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); text-align: center; border: 1px solid var(--border); box-sizing: border-box; }
         
         #bookingSection { display: block; animation: fadeIn 0.4s ease; }
-        select, input { width: 100%; padding: 16px; margin-bottom: 15px; border-radius: 12px; border: 2px solid var(--border); background: var(--bg); color: var(--text); font-family: inherit; font-size: 1.1rem; box-sizing: border-box; outline: none; transition: 0.3s; }
-        select:focus, input:focus { border-color: var(--accent); }
+        select.doc-select, input { width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 12px; border: 2px solid var(--border); background: var(--bg); color: var(--text); font-family: inherit; font-size: 1.05rem; box-sizing: border-box; outline: none; transition: 0.3s; }
+        select.doc-select:focus, input:focus { border-color: var(--accent); }
         
-        .btn { background: var(--accent); color: white; padding: 18px; border: none; border-radius: 12px; font-size: 1.2rem; font-weight: bold; cursor: pointer; width: 100%; transition: 0.2s; font-family: inherit; margin-bottom: 15px; }
+        .btn { background: var(--accent); color: #ffffff !important; padding: 18px; border: none; border-radius: 12px; font-size: 1.2rem; font-weight: bold; cursor: pointer; width: 100%; transition: 0.2s; font-family: inherit; margin-bottom: 10px; }
         .btn:hover { filter: brightness(1.1); transform: translateY(-2px); }
-        .btn-danger { background: var(--bg); color: var(--danger); border: 2px solid var(--danger); }
-        .btn-danger:hover { background: var(--danger); color: white; }
+        .btn-danger { background: transparent !important; color: var(--danger) !important; border: 2px solid var(--danger); }
+        .btn-danger:hover { background: var(--danger) !important; color: #ffffff !important; }
 
-        .preview-box { background: rgba(16, 185, 129, 0.05); border: 1px dashed var(--accent); padding: 20px; border-radius: 16px; margin-bottom: 20px; display: none; text-align: right; }
-        .preview-box p { margin: 8px 0; font-size: 1rem; color: var(--text); font-weight: bold; }
-        .preview-box strong { color: var(--accent); font-size: 1.2rem; margin-right: 5px; }
+        .preview-box { background: rgba(16, 185, 129, 0.06); border: 2px dashed var(--accent); padding: 18px; border-radius: 16px; margin-bottom: 20px; display: none; text-align: start; }
+        .preview-box p { margin: 8px 0; font-size: 1.05rem; color: var(--text); font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        .preview-box strong { color: var(--accent); font-size: 1.4rem; }
 
         #ticketSection { display: none; animation: popIn 0.4s ease; }
-        .ticket-result { margin-top: 10px; padding: 30px; background: rgba(16, 185, 129, 0.1); border-radius: 16px; border: 2px dashed var(--accent); margin-bottom: 25px; }
-        .ticket-result h2 { margin: 15px 0; color: var(--accent); font-size: 5rem; line-height: 1; }
+        .ticket-result { margin-top: 10px; padding: 25px; background: rgba(16, 185, 129, 0.1); border-radius: 16px; border: 2px dashed var(--accent); margin-bottom: 20px; }
+        .ticket-result h2 { margin: 10px 0 0 0; color: var(--accent); font-size: 5rem; line-height: 1; }
         
+        .turn-alert { display: none; padding: 15px; border-radius: 14px; font-weight: 800; font-size: 1.1rem; margin-bottom: 20px; animation: pulseAlert 1.5s infinite; }
+        .turn-alert.near { background: rgba(245, 158, 11, 0.15); border: 2px solid var(--warning); color: var(--warning); }
+        .turn-alert.now { background: rgba(16, 185, 129, 0.2); border: 2px solid var(--accent); color: var(--accent); }
+
         .live-stats { display: flex; gap: 15px; margin-bottom: 20px; }
         .stat-box { flex: 1; background: var(--bg); border: 1px solid var(--border); padding: 15px 10px; border-radius: 16px; }
         .stat-box span { display: block; font-size: 0.9rem; color: var(--muted); font-weight: bold; margin-bottom: 8px; }
-        .stat-box strong { display: block; font-size: 2rem; color: var(--text); line-height: 1; }
+        .stat-box strong { display: block; font-size: 2.2rem; color: var(--text); line-height: 1; }
         
-        .patient-name-display { font-size: 1.2rem; font-weight: bold; color: var(--text); margin-bottom: 15px; }
+        .patient-name-display { font-size: 1.2rem; font-weight: bold; color: var(--text); margin-bottom: 10px; }
 
         @keyframes popIn { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         @keyframes fadeIn { 0% { opacity: 0; } 100% { opacity: 1; } }
+        @keyframes pulseAlert { 0% { transform: scale(1); } 50% { transform: scale(1.03); } 100% { transform: scale(1); } }
     </style>
 </head>
 <body>
+
+    <div class="top-controls">
+        <select id="langSelect" onchange="changeLang(this.value)">
+            <option value="ar">العربية</option>
+            <option value="fr">Français</option>
+            <option value="en">English</option>
+        </select>
+        <button class="theme-btn" onclick="toggleTheme()" data-i18n="btnTheme">🌓 الوضع الليلي</button>
+    </div>
 
     <div class="header">
         <h1>ClinicFlow</h1>
@@ -53,45 +71,48 @@
     <div class="main-card">
         
         <div id="bookingSection">
-            <h3 style="margin-top:0; color: var(--text);">احجز تذكرتك الآن</h3>
-            <label style="display: block; text-align: start; margin-bottom: 10px; font-weight: bold; color: var(--muted);">اختر الطبيب المعالج:</label>
-            <select id="doctorSelect" onchange="previewStats()">
-                <option value="">-- اختر الطبيب أولاً --</option>
+            <h3 style="margin-top:0; color: var(--text);" data-i18n="bookHeader">احجز تذكرتك الآن</h3>
+            
+            <label style="display: block; text-align: start; margin-bottom: 8px; font-weight: bold; color: var(--muted);" data-i18n="selectDocLbl">اختر الطبيب المعالج:</label>
+            <select id="doctorSelect" class="doc-select" onchange="previewStats()">
+                <option value="">--</option>
             </select>
 
             <div class="preview-box" id="previewBox">
-                <p>الرقم الحالي بالداخل: <strong id="prevInside">--</strong></p>
-                <p>رقم تذكرتك المتوقع: <strong id="prevExpected" style="color: var(--warning);">--</strong></p>
-                <p>عدد المرضى قبلك (الفعلي): <strong id="prevAhead" style="color: var(--danger);">--</strong></p>
+                <p><span data-i18n="prevInside">الرقم الحالي بالداخل:</span> <strong id="prevInside">--</strong></p>
+                <p><span data-i18n="prevExpected">رقم تذكرتك المتوقع:</span> <strong id="prevExpected" style="color: var(--warning);">--</strong></p>
+                <p><span data-i18n="prevAhead">عدد المرضى قبلك:</span> <strong id="prevAhead" style="color: var(--danger);">--</strong></p>
             </div>
 
-            <label style="display: block; text-align: start; margin-bottom: 10px; font-weight: bold; color: var(--muted);">اسم المريض:</label>
+            <label style="display: block; text-align: start; margin-bottom: 8px; font-weight: bold; color: var(--muted);" data-i18n="nameLbl">اسم المريض:</label>
             <input type="text" id="patientName" placeholder="أدخل اسمك الكريم هنا...">
 
-            <button class="btn" onclick="bookTicket()">سحب تذكرة الحجز</button>
+            <button class="btn" onclick="bookTicket()" data-i18n="btnBook">سحب تذكرة الحجز</button>
         </div>
 
         <div id="ticketSection">
             <div class="patient-name-display" id="displayName">--</div>
             
+            <div class="turn-alert" id="turnAlertBox"></div>
+
             <div class="ticket-result">
-                <span style="font-size: 1.2rem; font-weight: bold; color: var(--text);">رقم تذكرتك:</span>
+                <span style="font-size: 1.2rem; font-weight: bold; color: var(--text);" data-i18n="yourTicketLbl">رقم تذكرتك:</span>
                 <h2 id="ticketNumberDisplay">0</h2>
             </div>
 
             <div class="live-stats">
                 <div class="stat-box">
-                    <span>الرقم بالداخل حالياً</span>
+                    <span data-i18n="insideNowLbl">الرقم بالداخل حالياً</span>
                     <strong id="currentNumberDisplay">--</strong>
                 </div>
                 <div class="stat-box" style="background: rgba(245, 158, 11, 0.05); border-color: rgba(245, 158, 11, 0.2);">
-                    <span>أشخاص قبلك (فعلياً)</span>
+                    <span data-i18n="aheadOfYouLbl">أشخاص قبلك</span>
                     <strong id="waitingCountDisplay" style="color: #f59e0b;">--</strong>
                 </div>
             </div>
             
-            <button class="btn btn-danger" onclick="cancelBooking()">❌ إلغاء الحجز</button>
-            <p style="color: var(--muted); font-size: 0.9rem; font-weight: bold; margin-top: 15px;">تذكرتك محفوظة في الهاتف، يمكنك إغلاق الصفحة والعودة لمتابعة الطابور.</p>
+            <button class="btn btn-danger" onclick="cancelBooking()" data-i18n="btnCancel">❌ إلغاء الحجز</button>
+            <p style="color: var(--muted); font-size: 0.9rem; font-weight: bold; margin-top: 15px;" data-i18n="savedNote">تذكرتك محفوظة في الهاتف، وستتلقى تنبيهاً عند اقتراب دورك.</p>
         </div>
 
     </div>
@@ -100,18 +121,73 @@
     <script>
         const CLINIC_SLUG = new URLSearchParams(window.location.search).get('clinic');
         let currentDoctorSlug = '';
+        let lastNotifiedState = '';
+
+        const dict = {
+            ar: {
+                btnTheme: "🌓 الوضع الليلي", bookHeader: "احجز تذكرتك الآن", selectDocLbl: "اختر الطبيب المعالج:", chooseDocOpt: "-- اختر الطبيب --",
+                prevInside: "الرقم الحالي بالداخل:", prevExpected: "رقم تذكرتك المتوقع:", prevAhead: "عدد المرضى قبلك:",
+                nameLbl: "اسم المريض:", namePlaceholder: "أدخل اسمك الكريم هنا...", btnBook: "سحب تذكرة الحجز",
+                yourTicketLbl: "رقم تذكرتك:", insideNowLbl: "الرقم بالداخل حالياً", aheadOfYouLbl: "أشخاص قبلك",
+                btnCancel: "❌ إلغاء الحجز", savedNote: "تذكرتك محفوظة في الهاتف، وستتلقى تنبيهاً عند اقتراب دورك.",
+                errSelectDoc: "يرجى اختيار الطبيب أولاً", errEnterName: "يرجى كتابة اسمك قبل قطع التذكرة", confirmCancel: "هل أنت متأكد من رغبتك في إلغاء تذكرتك؟",
+                alertNear: "🔔 اقترب دورك! بقي أمامك {n} فقط، يرجى الاستعداد.", alertNow: "📢 حان دورك الآن! تفضل بالدخول للطبيب."
+            },
+            fr: {
+                btnTheme: "🌓 Mode Sombre", bookHeader: "Réservez votre ticket", selectDocLbl: "Choisir le médecin:", chooseDocOpt: "-- Choisir le médecin --",
+                prevInside: "Numéro actuel:", prevExpected: "Votre numéro prévu:", prevAhead: "Patients avant vous:",
+                nameLbl: "Votre nom:", namePlaceholder: "Entrez votre nom complet...", btnBook: "Prendre mon ticket",
+                yourTicketLbl: "Votre numéro:", insideNowLbl: "Numéro actuel", aheadOfYouLbl: "Avant vous",
+                btnCancel: "❌ Annuler la réservation", savedNote: "Votre ticket est sauvegardé sur votre téléphone.",
+                errSelectDoc: "Veuillez choisir un médecin", errEnterName: "Veuillez entrer votre nom", confirmCancel: "Voulez-vous vraiment annuler votre ticket ?",
+                alertNear: "🔔 Votre tour approche ! Il reste {n} patient(s) avant vous.", alertNow: "📢 C'est votre tour ! Veuillez entrer."
+            },
+            en: {
+                btnTheme: "🌓 Dark Mode", bookHeader: "Book Your Ticket", selectDocLbl: "Select Doctor:", chooseDocOpt: "-- Select Doctor --",
+                prevInside: "Current Active Number:", prevExpected: "Prospective Ticket Number:", prevAhead: "Patients Ahead of You:",
+                nameLbl: "Patient Name:", namePlaceholder: "Enter your name...", btnBook: "Get Ticket",
+                yourTicketLbl: "Your Ticket:", insideNowLbl: "Current Inside", aheadOfYouLbl: "Ahead of You",
+                btnCancel: "❌ Cancel Booking", savedNote: "Your ticket is saved on your phone.",
+                errSelectDoc: "Please select a doctor first", errEnterName: "Please enter your name", confirmCancel: "Are you sure you want to cancel your booking?",
+                alertNear: "🔔 Your turn is approaching! Only {n} ahead of you.", alertNow: "📢 It is your turn now! Please proceed."
+            }
+        };
+
+        let currentLang = localStorage.getItem('pat_lang') || 'ar';
+
+        function changeLang(lang) {
+            currentLang = lang;
+            localStorage.setItem('pat_lang', lang);
+            document.documentElement.lang = lang;
+            document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+            document.getElementById('langSelect').value = lang;
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (dict[lang][key]) el.innerText = dict[lang][key];
+            });
+            document.getElementById('patientName').placeholder = dict[lang].namePlaceholder;
+            if (document.getElementById('ticketSection').style.display === 'block') fetchLiveStats();
+        }
+
+        function toggleTheme() {
+            const isDark = document.body.getAttribute('data-theme') !== 'dark';
+            document.body.setAttribute('data-theme', isDark ? 'dark' : 'light');
+            localStorage.setItem('pat_theme', isDark ? 'dark' : 'light');
+        }
         
         window.onload = async () => {
-            if (CLINIC_SLUG) document.getElementById('clinicTitle').innerText = `عيادة: ${CLINIC_SLUG}`;
+            changeLang(currentLang);
+            if (localStorage.getItem('pat_theme') === 'dark') document.body.setAttribute('data-theme', 'dark');
+            if (CLINIC_SLUG) document.getElementById('clinicTitle').innerText = CLINIC_SLUG;
 
             const savedData = localStorage.getItem('clinic_my_ticket');
             if (savedData) {
                 const parsed = JSON.parse(savedData);
-                const today = new Date().toLocaleDateString('ar-DZ');
+                const today = new Date().toLocaleDateString('en-CA');
                 if (parsed.date === today && parsed.mainClinic === CLINIC_SLUG) {
                     currentDoctorSlug = parsed.doctorSlug;
                     document.getElementById('ticketNumberDisplay').innerText = parsed.ticketNumber;
-                    document.getElementById('displayName').innerText = `👤 المريض: ${parsed.patientName}`;
+                    document.getElementById('displayName').innerText = `👤 ${parsed.patientName}`;
                     document.getElementById('bookingSection').style.display = 'none';
                     document.getElementById('ticketSection').style.display = 'block';
                     fetchLiveStats();
@@ -126,15 +202,19 @@
                     const res = await fetch(`https://clinic-server-i00s.onrender.com/api/clinic-doctors/${CLINIC_SLUG}`);
                     const doctors = await res.json();
                     const select = document.getElementById('doctorSelect');
-                    select.innerHTML = `<option value="">-- اختر الطبيب أولاً --</option>`;
+                    select.innerHTML = `<option value="">${dict[currentLang].chooseDocOpt}</option>`;
                     doctors.forEach(doc => {
                         select.innerHTML += `<option value="${doc.slug}">${doc.name}</option>`;
                     });
+                    // إذا كان هناك طبيب واحد فقط، يتم اختياره تلقائياً وإظهار الأرقام فوراً
+                    if (doctors.length === 1) {
+                        select.value = doctors[0].slug;
+                        previewStats();
+                    }
                 } catch (e) { console.error(e); }
             }
         };
 
-        // المعاينة قبل الحجز (بدون احتساب الملغيين)
         async function previewStats() {
             const docSlug = document.getElementById('doctorSelect').value;
             const previewBox = document.getElementById('previewBox');
@@ -153,14 +233,15 @@
                 document.getElementById('prevExpected').innerText = lastIssued + 1;
                 document.getElementById('prevAhead').innerText = waitingCount;
                 previewBox.style.display = 'block';
-            } catch (e) { console.error('خطأ في جلب المعاينة'); }
+            } catch (e) {}
         }
 
         async function bookTicket() {
             currentDoctorSlug = document.getElementById('doctorSelect').value;
-            const pName = document.getElementById('patientName').value.trim() || 'مريض';
+            const pName = document.getElementById('patientName').value.trim();
             
-            if (!currentDoctorSlug) return alert('يرجى اختيار الطبيب أولاً');
+            if (!currentDoctorSlug) return alert(dict[currentLang].errSelectDoc);
+            if (!pName) return alert(dict[currentLang].errEnterName);
 
             try {
                 const res = await fetch('https://clinic-server-i00s.onrender.com/api/tickets', {
@@ -169,9 +250,9 @@
                 });
                 const data = await res.json();
                 if (res.ok) {
-                    const num = data.message.match(/\d+/)[0];
+                    const num = data.ticket_number || data.message.match(/\d+/)[0];
                     const ticketData = {
-                        date: new Date().toLocaleDateString('ar-DZ'),
+                        date: new Date().toLocaleDateString('en-CA'),
                         mainClinic: CLINIC_SLUG,
                         doctorSlug: currentDoctorSlug,
                         patientName: pName,
@@ -180,7 +261,7 @@
                     localStorage.setItem('clinic_my_ticket', JSON.stringify(ticketData));
 
                     document.getElementById('ticketNumberDisplay').innerText = num;
-                    document.getElementById('displayName').innerText = `👤 المريض: ${pName}`;
+                    document.getElementById('displayName').innerText = `👤 ${pName}`;
                     document.getElementById('bookingSection').style.display = 'none';
                     document.getElementById('ticketSection').style.display = 'block';
                     fetchLiveStats();
@@ -189,7 +270,7 @@
         }
 
         async function cancelBooking() {
-            if (!confirm('هل أنت متأكد من رغبتك في إلغاء تذكرتك؟')) return;
+            if (!confirm(dict[currentLang].confirmCancel)) return;
             const ticketNum = document.getElementById('ticketNumberDisplay').innerText;
             try {
                 await fetch('https://clinic-server-i00s.onrender.com/api/tickets/cancel', {
@@ -201,7 +282,14 @@
             } catch (e) { alert('حدث خطأ أثناء الإلغاء'); }
         }
 
-        // جلب عدد المنتظرين الفعليين قبل تذكرة المريض (بدون الملغيين)
+        function triggerNotificationSound() {
+            try {
+                const audio = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
+                audio.play().catch(() => {});
+                if (navigator.vibrate) navigator.vibrate([300, 150, 300]);
+            } catch (e) {}
+        }
+
         async function fetchLiveStats() {
             if (!currentDoctorSlug) return;
             try {
@@ -213,6 +301,28 @@
 
                 document.getElementById('currentNumberDisplay').innerText = currentNum === 0 ? '--' : currentNum;
                 document.getElementById('waitingCountDisplay').innerText = aheadCount;
+
+                const alertBox = document.getElementById('turnAlertBox');
+                // تنبيه المريض عندما يحين دوره أو عندما يتبقى 2 أو 3 أشخاص قبله
+                if (currentNum === myTicket) {
+                    alertBox.className = 'turn-alert now';
+                    alertBox.innerText = dict[currentLang].alertNow;
+                    alertBox.style.display = 'block';
+                    if (lastNotifiedState !== 'now') {
+                        lastNotifiedState = 'now';
+                        triggerNotificationSound();
+                    }
+                } else if (currentNum < myTicket && (aheadCount === 2 || aheadCount === 3 || aheadCount === 1)) {
+                    alertBox.className = 'turn-alert near';
+                    alertBox.innerText = dict[currentLang].alertNear.replace('{n}', aheadCount);
+                    alertBox.style.display = 'block';
+                    if (lastNotifiedState !== `near_${aheadCount}`) {
+                        lastNotifiedState = `near_${aheadCount}`;
+                        triggerNotificationSound();
+                    }
+                } else {
+                    alertBox.style.display = 'none';
+                }
             } catch (e) {}
         }
 

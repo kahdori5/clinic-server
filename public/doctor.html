@@ -21,7 +21,7 @@
         
         .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
         header { display: flex; justify-content: space-between; align-items: center; padding: 15px 30px; border-bottom: 1px solid var(--border); background: var(--card); }
-        .controls { display: flex; gap: 10px; }
+        .controls { display: flex; gap: 10px; align-items: center; }
         select, .theme-btn { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 8px 15px; border-radius: 12px; cursor: pointer; outline: none; font-weight: bold; font-family: inherit; transition: 0.3s; }
         
         .content-scroll { padding: 40px; overflow-y: auto; flex: 1; scroll-behavior: smooth; }
@@ -52,6 +52,7 @@
         .btn-done { background: #3b82f6 !important; flex: 1; }
         .btn-absent { background: #ef4444 !important; flex: 1; }
         .btn-danger { background: #ef4444 !important; color: #ffffff !important; }
+        .btn-warning { background: var(--warning) !important; color: #ffffff !important; }
         .btn-outline { background: transparent !important; border: 2px solid var(--accent) !important; color: var(--accent) !important; }
         .btn-outline:hover { background: var(--accent) !important; color: #ffffff !important; }
         .status-btns { display: flex; gap: 10px; margin-bottom: 20px; }
@@ -120,7 +121,7 @@
         </div>
         
         <button id="installAppBtn" onclick="installApp()">💻 تثبيت التطبيق</button>
-        <div style="padding: 20px; text-align: center; color: var(--muted); font-size: 0.8rem;">ClinicFlow SaaS v3.3</div>
+        <div style="padding: 20px; text-align: center; color: var(--muted); font-size: 0.8rem;">ClinicFlow SaaS v3.5</div>
     </div>
 
     <div class="main-content">
@@ -154,6 +155,7 @@
                             <button class="btn btn-absent" onclick="setStatus('absent')" data-i18n="btnAbsent">❌ غائب</button>
                         </div>
                         <button class="btn btn-call" onclick="callNextPatient()" data-i18n="callNext">📢 مناداة المريض التالي</button>
+                        <button class="btn btn-warning" id="toggleQueueBtn" onclick="toggleQueueStatus()" style="margin-bottom: 0; font-size: 1rem;">⏸️ إيقاف استقبال التذاكر مؤقتاً</button>
                     </div>
 
                     <div class="medical-card" id="medicalCard">
@@ -269,7 +271,6 @@
                 </div>
             </div>
 
-            <!-- 4. تبويبة الإعدادات (تتضمن زر حذف كلمة السر) -->
             <div id="settings-tab" class="tab-content" style="display: none;">
                 <div class="control-card" style="max-width: 600px; margin: 0 auto; text-align: start;">
                     <h2 style="color: var(--text); margin-top: 0;" data-i18n="secTitle">🛡️ إعدادات الحماية والخصوصية</h2>
@@ -282,7 +283,6 @@
                     
                     <div style="display: flex; gap: 15px; margin-top: 20px;">
                         <button class="btn" style="flex: 2; margin-bottom: 0;" onclick="saveSettingsPassword()" data-i18n="btnSavePass">💾 حفظ كلمة السر</button>
-                        <!-- زر حذف كلمة السر الجديد -->
                         <button class="btn btn-danger" style="flex: 1; margin-bottom: 0;" onclick="deleteSettingsPassword()" data-i18n="btnDeletePass">🗑️ إزالة الحماية</button>
                     </div>
                 </div>
@@ -295,17 +295,30 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        const CLINIC_SLUG = new URLSearchParams(window.location.search).get('clinic') || 'default-clinic';
+        // حفظ واسترجاع اسم العيادة تلقائياً لدعم تطبيق سطح المكتب (PWA)
+        const urlSlug = new URLSearchParams(window.location.search).get('clinic');
+        if (urlSlug) localStorage.setItem('saved_doc_clinic_slug', urlSlug);
+        const CLINIC_SLUG = urlSlug || localStorage.getItem('saved_doc_clinic_slug') || 'default-clinic';
         if (CLINIC_SLUG !== 'default-clinic') document.getElementById('clinicNameDisplay').innerText = `(${CLINIC_SLUG})`;
+
+        let currentQueueStatus = 'active';
+        let lastBusiestDayIndex = -1;
+
+        const daysDict = {
+            ar: ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'],
+            fr: ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'],
+            en: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+        };
 
         const dict = {
             ar: { 
                 menuCall: "📢 شاشة النداء", menuPatients: "📂 أرشيف المرضى", menuStats: "📊 الإحصائيات", menuSettings: "⚙️ الإعدادات", docTitle: "لوحة الطبيب", btnTheme: "🌓 الوضع الليلي", 
                 insideNow: "رقم المريض بالداخل", callNext: "📢 مناداة المريض التالي", btnDone: "✔️ تم الكشف", btnAbsent: "❌ غائب",
+                pauseQueue: "⏸️ إيقاف استقبال التذاكر مؤقتاً", resumeQueue: "▶️ تفعيل استقبال التذاكر",
                 medicalFileTitle: "📋 الملف الطبي", optional: "اختياري", lblPatientName: "اسم المريض:", lblAge: "العمر:", lblBlood: "الدم:", lblAllergy: "حساسية:", lblChronic: "أمراض مزمنة:", lblNotes: "التشخيص:", btnSaveFile: "💾 حفظ", prescTitle: "💊 الوصفة", btnPrintPresc: "🖨️ طباعة",
                 archiveTitle: "📂 أرشيف المرضى", btnNewPatient: "+ مريض جديد", searchPlaceholder: "🔍 ابحث...", loading: "تحميل...", noPatients: "لا يوجد مرضى.", 
                 viewBtn: "👁️ التفاصيل والتعديل", deleteBtn: "🗑️ حذف", editTitle: "📄 تفاصيل ملف المريض", backBtn: "⬅️ عودة", saveEditBtn: "💾 حفظ",
-                statsHeader: "لوحة الإحصائيات والأداء", statWaiting: "في الانتظار حالياً", statToday: "إجمالي اليوم", statWeekly: "هذا الأسبوع", statMonthly: "هذا الشهر", busiestDay: "أكثر الأيام استقبالاً للمرضى",
+                statsHeader: "لوحة الإحصائيات والأداء", statWaiting: "في الانتظار حالياً", statToday: "إجمالي اليوم", statWeekly: "هذا الأسبوع", statMonthly: "هذا الشهر", busiestDay: "أكثر الأيام استقبالاً للمرضى", notDefined: "غير محدد",
                 secTitle: "🛡️ إعدادات الحماية", secDesc: "لحماية عيادتك وملفات مرضاك من التطفل، قم بتعيين كلمة سر تمنع أي شخص من الدخول إلى هذه اللوحة بدونها.", lblNewPass: "كلمة السر الجديدة:", btnSavePass: "💾 حفظ كلمة السر", btnDeletePass: "🗑️ إزالة الحماية",
                 lockDesc: "هذه العيادة محمية بكلمة سر", btnUnlock: "🔓 فتح العيادة",
                 errNoPatient: "⚠️ لا يوجد مريض", errEmpty: "لا يوجد مريض", successStatus: "✔️ تم الحفظ", successCall: "📢 تم مناداة:", errSave: "خطأ"
@@ -313,10 +326,11 @@
             fr: { 
                 menuCall: "📢 Appel", menuPatients: "📂 Archives", menuStats: "📊 Stats", menuSettings: "⚙️ Paramètres", docTitle: "Tableau de bord", btnTheme: "🌓 Sombre", 
                 insideNow: "Patient Actuel", callNext: "📢 Suivant", btnDone: "✔️ Terminé", btnAbsent: "❌ Absent",
+                pauseQueue: "⏸️ Suspendre la file", resumeQueue: "▶️ Réactiver la file",
                 medicalFileTitle: "📋 Dossier", optional: "Optionnel", lblPatientName: "Nom:", lblAge: "Âge:", lblBlood: "Sang:", lblAllergy: "Allergies:", lblChronic: "Chroniques:", lblNotes: "Notes:", btnSaveFile: "💾 Enregistrer", prescTitle: "💊 Ordonnance", btnPrintPresc: "🖨️ Imprimer",
                 archiveTitle: "📂 Archives", btnNewPatient: "+ Nouveau", searchPlaceholder: "🔍 Chercher...", loading: "Chargement...", noPatients: "Aucun patient.", 
                 viewBtn: "👁️ Détails & Modifier", deleteBtn: "🗑️ Supprimer", editTitle: "📄 Modifier Dossier", backBtn: "⬅️ Retour", saveEditBtn: "💾 Enregistrer",
-                statsHeader: "Performances", statWaiting: "En attente", statToday: "Aujourd'hui", statWeekly: "Cette semaine", statMonthly: "Ce mois-ci", busiestDay: "Jour le plus chargé",
+                statsHeader: "Performances", statWaiting: "En attente", statToday: "Aujourd'hui", statWeekly: "Cette semaine", statMonthly: "Ce mois-ci", busiestDay: "Jour le plus chargé", notDefined: "Non défini",
                 secTitle: "🛡️ Sécurité", secDesc: "Ajoutez un mot de passe pour protéger les dossiers.", lblNewPass: "Nouveau MDP:", btnSavePass: "💾 Sauvegarder", btnDeletePass: "🗑️ Supprimer MDP",
                 lockDesc: "Cette clinique est protégée par un mot de passe", btnUnlock: "🔓 Déverrouiller",
                 errNoPatient: "⚠️ Aucun patient", errEmpty: "Aucun patient", successStatus: "✔️ Enregistré", successCall: "📢 Appel:", errSave: "Erreur"
@@ -324,10 +338,11 @@
             en: { 
                 menuCall: "📢 Call Screen", menuPatients: "📂 Archive", menuStats: "📊 Stats", menuSettings: "⚙️ Settings", docTitle: "Dashboard", btnTheme: "🌓 Dark", 
                 insideNow: "Current Patient", callNext: "📢 Call Next", btnDone: "✔️ Done", btnAbsent: "❌ Absent",
+                pauseQueue: "⏸️ Pause Queue", resumeQueue: "▶️ Resume Queue",
                 medicalFileTitle: "📋 Record", optional: "Optional", lblPatientName: "Name:", lblAge: "Age:", lblBlood: "Blood:", lblAllergy: "Allergies:", lblChronic: "Chronic:", lblNotes: "Notes:", btnSaveFile: "💾 Save", prescTitle: "💊 Prescription", btnPrintPresc: "🖨️ Print",
                 archiveTitle: "📂 Archive", btnNewPatient: "+ New", searchPlaceholder: "🔍 Search...", loading: "Loading...", noPatients: "No patients.", 
                 viewBtn: "👁️ Details & Edit", deleteBtn: "🗑️ Delete", editTitle: "📄 Edit Record", backBtn: "⬅️ Back", saveEditBtn: "💾 Save",
-                statsHeader: "Performance Dashboard", statWaiting: "Waiting Now", statToday: "Total Today", statWeekly: "This Week", statMonthly: "This Month", busiestDay: "Busiest Day",
+                statsHeader: "Performance Dashboard", statWaiting: "Waiting Now", statToday: "Total Today", statWeekly: "This Week", statMonthly: "This Month", busiestDay: "Busiest Day", notDefined: "Not Defined",
                 secTitle: "🛡️ Security", secDesc: "Set a password to protect records.", lblNewPass: "New Password:", btnSavePass: "💾 Save Password", btnDeletePass: "🗑️ Remove Password",
                 lockDesc: "This clinic is password protected", btnUnlock: "🔓 Unlock",
                 errNoPatient: "⚠️ No patient", errEmpty: "No patient", successStatus: "✔️ Saved", successCall: "📢 Called:", errSave: "Error"
@@ -344,6 +359,43 @@
                 if (dict[lang][key]) el.innerText = dict[lang][key];
             });
             if (document.getElementById('searchInput')) document.getElementById('searchInput').placeholder = dict[lang].searchPlaceholder;
+            updateQueueBtnText();
+            updateBusiestDayText();
+        }
+
+        function updateQueueBtnText() {
+            const btn = document.getElementById('toggleQueueBtn');
+            if (!btn) return;
+            if (currentQueueStatus === 'paused') {
+                btn.innerText = dict[currentLang].resumeQueue;
+                btn.style.background = 'var(--accent)';
+            } else {
+                btn.innerText = dict[currentLang].pauseQueue;
+                btn.style.background = 'var(--warning)';
+            }
+        }
+
+        function updateBusiestDayText() {
+            const el = document.getElementById('statBusiestDay');
+            if (!el) return;
+            if (lastBusiestDayIndex >= 0 && lastBusiestDayIndex <= 6) {
+                el.innerText = daysDict[currentLang][lastBusiestDayIndex];
+            } else {
+                el.innerText = dict[currentLang].notDefined;
+            }
+        }
+
+        async function toggleQueueStatus() {
+            try {
+                const res = await fetch('https://clinic-server-i00s.onrender.com/api/queue/toggle-status', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ clinic_slug: CLINIC_SLUG })
+                });
+                const data = await res.json();
+                currentQueueStatus = data.status;
+                updateQueueBtnText();
+                showToast(currentQueueStatus === 'paused' ? '⏸️ تم إيقاف استقبال التذاكر مؤقتاً' : '▶️ تم تفعيل استقبال التذاكر', 'success');
+            } catch (e) { showToast('خطأ اتصال', 'error'); }
         }
 
         const toggleTheme = () => {
@@ -415,7 +467,6 @@
             } catch(e) { showToast('خطأ في الحفظ', 'error'); }
         }
 
-        // دالة حذف كلمة السر نهائياً
         async function deleteSettingsPassword() {
             if(!confirm('هل أنت متأكد من رغبتك في إزالة كلمة السر وإلغاء الحماية عن العيادة؟')) return;
             try {
@@ -486,6 +537,8 @@
                 const res = await fetch(`https://clinic-server-i00s.onrender.com/api/queue-status/${CLINIC_SLUG}`);
                 const data = await res.json();
                 currentNum = data.current_number || 0;
+                currentQueueStatus = data.status || 'active';
+                updateQueueBtnText();
                 if (data.doctor_name) activeDoctorName = data.doctor_name;
                 document.getElementById('currentNumber').innerText = currentNum === 0 ? '--' : currentNum;
                 if (currentNum > 0 && data.current_patient_name) {
@@ -503,7 +556,8 @@
                 document.getElementById('statToday').innerText = data.today;
                 document.getElementById('statWeekly').innerText = data.weekly;
                 document.getElementById('statMonthly').innerText = data.monthly;
-                document.getElementById('statBusiestDay').innerText = data.busiest_day || 'غير محدد';
+                lastBusiestDayIndex = data.busiest_day_index !== undefined ? data.busiest_day_index : -1;
+                updateBusiestDayText();
             } catch (e) {}
         }
 
