@@ -17,7 +17,8 @@
         .nav-item { padding: 16px 25px; color: var(--muted); text-decoration: none; display: flex; align-items: center; gap: 10px; font-weight: 500; cursor: pointer; border-inline-end: 4px solid transparent; font-size: 1.05rem; transition: 0.3s; }
         .nav-item:hover, .nav-item.active { background: rgba(16, 185, 129, 0.1); color: var(--accent); border-color: var(--accent); }
         
-        #installAppBtn { display: none; padding: 15px; margin: 15px; background: var(--accent); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; text-align: center; font-family: inherit; font-size: 1rem; transition: 0.2s; box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3); }
+        /* زر تثبيت التطبيق ظاهر دائماً بشكل واضح للطبيب */
+        #installAppBtn { display: block; width: calc(100% - 30px); padding: 15px; margin: 15px auto; background: var(--accent); color: #ffffff !important; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; text-align: center; font-family: inherit; font-size: 1rem; transition: 0.2s; box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3); box-sizing: border-box; }
         #installAppBtn:hover { transform: translateY(-3px); filter: brightness(1.1); }
         
         .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
@@ -27,11 +28,12 @@
         
         .content-scroll { padding: 40px; overflow-y: auto; flex: 1; scroll-behavior: smooth; }
         
-        #lockScreen, #deletedScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 999999; display: flex; justify-content: center; align-items: center; flex-direction: column; }
-        .lock-card { background: var(--card); padding: 40px; border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); text-align: center; border: 1px solid var(--border); width: 100%; max-width: 420px; }
+        #lockScreen, #deletedScreen, #installHelpModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.85); z-index: 999999; display: flex; justify-content: center; align-items: center; flex-direction: column; padding: 20px; box-sizing: border-box; }
+        #lockScreen, #deletedScreen { background: var(--bg); }
+        .lock-card { background: var(--card); padding: 40px; border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.2); text-align: center; border: 1px solid var(--border); width: 100%; max-width: 440px; }
         .lock-card input { width: 100%; padding: 15px; border-radius: 12px; border: 2px solid var(--border); background: var(--bg); color: var(--text); margin-bottom: 20px; font-size: 1.2rem; text-align: center; outline: none; box-sizing: border-box; }
         .lock-card input:focus { border-color: var(--accent); }
-        .lock-card button { width: 100%; padding: 15px; border-radius: 12px; border: none; background: var(--accent); color: white; font-size: 1.1rem; font-weight: bold; cursor: pointer; font-family: inherit; }
+        .lock-card button { width: 100%; padding: 15px; border-radius: 12px; border: none; background: var(--accent); color: white; font-size: 1.1rem; font-weight: bold; cursor: pointer; font-family: inherit; margin-bottom: 10px; }
 
         .call-wrapper { display: flex; gap: 25px; flex-wrap: wrap; align-items: flex-start; justify-content: center; }
         .control-card { background: var(--card); padding: 40px; border-radius: 24px; text-align: center; border: 1px solid var(--border); flex: 1; min-width: 320px; max-width: 450px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
@@ -110,6 +112,19 @@
         </div>
     </div>
 
+    <!-- نافذة مساعدة التثبيت في حال فتح الرابط بمتصفح لا يدعم التثبيت المباشر مثل Opera -->
+    <div id="installHelpModal" style="display: none;">
+        <div class="lock-card">
+            <img src="https://cdn-icons-png.flaticon.com/512/3063/3063063.png" style="width: 70px; height: 70px; margin-bottom: 10px;" alt="ClinicFlow">
+            <h2 style="color: var(--accent); margin-top: 0;">تثبيت برنامج ClinicFlow</h2>
+            <p style="color: var(--text); font-weight: bold; line-height: 1.7; font-size: 0.95rem; margin-bottom: 20px;">
+                لتثبيت البرنامج كتطبيق سطح مكتب مستقل يظهر فوق الشاشة الرئيسية، افتحه عبر متصفح <strong>Microsoft Edge</strong> أو <strong>Google Chrome</strong>:
+            </p>
+            <button onclick="openInEdgeForInstall()" style="background: #3b82f6 !important; color: #fff !important;">🚀 فتح وتثبيت عبر Microsoft Edge تلقائياً</button>
+            <button onclick="document.getElementById('installHelpModal').style.display='none'" style="background: transparent !important; color: var(--muted) !important; border: 1px solid var(--border);">إغلاق</button>
+        </div>
+    </div>
+
     <div id="lockScreen" style="display: none;">
         <div class="lock-card">
             <h1 style="color: var(--accent); margin-top: 0;">🔒 ClinicFlow</h1>
@@ -130,8 +145,10 @@
             </div>
         </div>
         
-        <button id="installAppBtn" onclick="installApp()">💻 تثبيت التطبيق</button>
-        <div style="padding: 20px; text-align: center; color: var(--muted); font-size: 0.8rem;">ClinicFlow SaaS v3.5</div>
+        <div>
+            <button id="installAppBtn" onclick="installApp()" data-i18n="btnInstallApp">💻 تثبيت التطبيق</button>
+            <div style="padding: 10px 20px 20px; text-align: center; color: var(--muted); font-size: 0.8rem;">ClinicFlow SaaS v3.5</div>
+        </div>
     </div>
 
     <div class="main-content">
@@ -321,7 +338,7 @@
 
         const dict = {
             ar: { 
-                menuCall: "📢 شاشة النداء", menuPatients: "📂 أرشيف المرضى", menuStats: "📊 الإحصائيات", menuSettings: "⚙️ الإعدادات", docTitle: "لوحة الطبيب", btnTheme: "🌓 الوضع الليلي", 
+                menuCall: "📢 شاشة النداء", menuPatients: "📂 أرشيف المرضى", menuStats: "📊 الإحصائيات", menuSettings: "⚙️ الإعدادات", docTitle: "لوحة الطبيب", btnTheme: "🌓 الوضع الليلي", btnInstallApp: "💻 تثبيت التطبيق",
                 insideNow: "رقم المريض بالداخل", callNext: "📢 مناداة المريض التالي", btnDone: "✔️ تم الكشف", btnAbsent: "❌ غائب",
                 pauseQueue: "⏸️ إيقاف استقبال التذاكر مؤقتاً", resumeQueue: "▶️ تفعيل استقبال التذاكر",
                 medicalFileTitle: "📋 الملف الطبي", optional: "اختياري", lblPatientName: "اسم المريض:", lblAge: "العمر:", lblBlood: "الدم:", lblAllergy: "حساسية:", lblChronic: "أمراض مزمنة:", lblNotes: "التشخيص:", btnSaveFile: "💾 حفظ", prescTitle: "💊 الوصفة", btnPrintPresc: "🖨️ طباعة",
@@ -334,7 +351,7 @@
                 errNoPatient: "⚠️ لا يوجد مريض", errEmpty: "لا يوجد مريض", successStatus: "✔️ تم الحفظ", successCall: "📢 تم مناداة:", errSave: "خطأ"
             },
             fr: { 
-                menuCall: "📢 Appel", menuPatients: "📂 Archives", menuStats: "📊 Stats", menuSettings: "⚙️ Paramètres", docTitle: "Tableau de bord", btnTheme: "🌓 Sombre", 
+                menuCall: "📢 Appel", menuPatients: "📂 Archives", menuStats: "📊 Stats", menuSettings: "⚙️ Paramètres", docTitle: "Tableau de bord", btnTheme: "🌓 Sombre", btnInstallApp: "💻 Installer l'App",
                 insideNow: "Patient Actuel", callNext: "📢 Suivant", btnDone: "✔️ Terminé", btnAbsent: "❌ Absent",
                 pauseQueue: "⏸️ Suspendre la file", resumeQueue: "▶️ Réactiver la file",
                 medicalFileTitle: "📋 Dossier", optional: "Optionnel", lblPatientName: "Nom:", lblAge: "Âge:", lblBlood: "Sang:", lblAllergy: "Allergies:", lblChronic: "Chroniques:", lblNotes: "Notes:", btnSaveFile: "💾 Enregistrer", prescTitle: "💊 Ordonnance", btnPrintPresc: "🖨️ Imprimer",
@@ -347,7 +364,7 @@
                 errNoPatient: "⚠️ Aucun patient", errEmpty: "Aucun patient", successStatus: "✔️ Enregistré", successCall: "📢 Appel:", errSave: "Erreur"
             },
             en: { 
-                menuCall: "📢 Call Screen", menuPatients: "📂 Archive", menuStats: "📊 Stats", menuSettings: "⚙️ Settings", docTitle: "Dashboard", btnTheme: "🌓 Dark", 
+                menuCall: "📢 Call Screen", menuPatients: "📂 Archive", menuStats: "📊 Stats", menuSettings: "⚙️ Settings", docTitle: "Dashboard", btnTheme: "🌓 Dark", btnInstallApp: "💻 Install App",
                 insideNow: "Current Patient", callNext: "📢 Call Next", btnDone: "✔️ Done", btnAbsent: "❌ Absent",
                 pauseQueue: "⏸️ Pause Queue", resumeQueue: "▶️ Resume Queue",
                 medicalFileTitle: "📋 Record", optional: "Optional", lblPatientName: "Name:", lblAge: "Age:", lblBlood: "Blood:", lblAllergy: "Allergies:", lblChronic: "Chronic:", lblNotes: "Notes:", btnSaveFile: "💾 Save", prescTitle: "💊 Prescription", btnPrintPresc: "🖨️ Print",
@@ -505,17 +522,32 @@
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            document.getElementById('installAppBtn').style.display = 'block'; 
+            document.getElementById('installAppBtn').style.display = 'block';
+        });
+
+        window.addEventListener('appinstalled', () => {
+            document.getElementById('installAppBtn').style.display = 'none';
+            showToast('✔️ تم تثبيت تطبيق العيادة على سطح المكتب بنجاح!', 'success');
         });
 
         function installApp() {
             if (deferredPrompt) {
                 deferredPrompt.prompt();
                 deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') { document.getElementById('installAppBtn').style.display = 'none'; }
+                    if (choiceResult.outcome === 'accepted') {
+                        document.getElementById('installAppBtn').style.display = 'none';
+                    }
                     deferredPrompt = null;
                 });
+            } else {
+                document.getElementById('installHelpModal').style.display = 'flex';
             }
+        }
+
+        function openInEdgeForInstall() {
+            const fullUrl = window.location.origin + '/doctor.html?clinic=' + encodeURIComponent(CLINIC_SLUG);
+            window.location.href = 'microsoft-edge:' + fullUrl;
+            document.getElementById('installHelpModal').style.display = 'none';
         }
 
         let currentNum = 0;
@@ -527,10 +559,15 @@
         window.onload = async () => {
             changeLang(localStorage.getItem('doc_lang') || 'ar');
             if (localStorage.getItem('theme') === 'dark') document.body.setAttribute('data-theme', 'dark');
+            if (window.matchMedia('(display-mode: standalone)').matches) {
+                document.getElementById('installAppBtn').style.display = 'none';
+            }
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW failed', err));
+            }
             await checkInitialLock();
             await fetchStatus();
             await fetchStats();
-            if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW failed', err)); }
         };
 
         function displayPatientState(pName, ticketStatus) {
