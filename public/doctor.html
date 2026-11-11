@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ClinicFlow - لوحة الطبيب</title>
+    <title>ClinicFlow - Doctor Dashboard</title>
     <link rel="manifest" href="/manifest.json">
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%2310b981'/><text x='50%' y='55%' dominant-baseline='central' text-anchor='middle' font-size='65'>👨‍⚕️</text></svg>">
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/3063/3063063.png">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
     <style>
         :root { --bg: #f4f7f6; --card: #ffffff; --text: #2d3748; --accent: #10b981; --border: #e2e8f0; --muted: #718096; --danger: #ef4444; --warning: #f59e0b; }
@@ -17,7 +17,7 @@
         .nav-item { padding: 16px 25px; color: var(--muted); text-decoration: none; display: flex; align-items: center; gap: 10px; font-weight: 500; cursor: pointer; border-inline-end: 4px solid transparent; font-size: 1.05rem; transition: 0.3s; }
         .nav-item:hover, .nav-item.active { background: rgba(16, 185, 129, 0.1); color: var(--accent); border-color: var(--accent); }
         
-        #installAppBtn { display: block; width: calc(100% - 30px); padding: 15px; margin: 15px auto; background: var(--accent); color: #ffffff !important; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; text-align: center; font-family: inherit; font-size: 1rem; transition: 0.2s; box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3); box-sizing: border-box; }
+        #installAppBtn { display: none; padding: 15px; margin: 15px; background: var(--accent); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; text-align: center; font-family: inherit; font-size: 1rem; transition: 0.2s; box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3); }
         #installAppBtn:hover { transform: translateY(-3px); filter: brightness(1.1); }
         
         .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
@@ -27,8 +27,8 @@
         
         .content-scroll { padding: 40px; overflow-y: auto; flex: 1; scroll-behavior: smooth; }
         
-        #lockScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 999999; display: flex; justify-content: center; align-items: center; flex-direction: column; }
-        .lock-card { background: var(--card); padding: 40px; border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); text-align: center; border: 1px solid var(--border); width: 100%; max-width: 400px; }
+        #lockScreen, #deletedScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 999999; display: flex; justify-content: center; align-items: center; flex-direction: column; }
+        .lock-card { background: var(--card); padding: 40px; border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); text-align: center; border: 1px solid var(--border); width: 100%; max-width: 420px; }
         .lock-card input { width: 100%; padding: 15px; border-radius: 12px; border: 2px solid var(--border); background: var(--bg); color: var(--text); margin-bottom: 20px; font-size: 1.2rem; text-align: center; outline: none; box-sizing: border-box; }
         .lock-card input:focus { border-color: var(--accent); }
         .lock-card button { width: 100%; padding: 15px; border-radius: 12px; border: none; background: var(--accent); color: white; font-size: 1.1rem; font-weight: bold; cursor: pointer; font-family: inherit; }
@@ -101,6 +101,15 @@
 </head>
 <body>
 
+    <!-- شاشة إيقاف الرابط عند حذف الطبيب -->
+    <div id="deletedScreen" style="display: none;">
+        <div class="lock-card" style="border: 2px solid var(--danger);">
+            <h1 style="color: var(--danger); margin-top: 0; font-size: 3rem;">⛔</h1>
+            <h2 style="color: var(--danger); margin-top: 0;" data-i18n="deletedTitle">هذا الرابط متوقف عن العمل</h2>
+            <p style="color: var(--muted); font-weight: bold; line-height: 1.8; margin-bottom: 0;" data-i18n="deletedDesc">تم حذف حساب الطبيب أو إلغاء تفعيل هذا الرابط من إدارة العيادة.</p>
+        </div>
+    </div>
+
     <div id="lockScreen" style="display: none;">
         <div class="lock-card">
             <h1 style="color: var(--accent); margin-top: 0;">🔒 ClinicFlow</h1>
@@ -112,7 +121,7 @@
     
     <div class="sidebar">
         <div>
-            <div class="logo">👨‍⚕️ Clinic<span>Flow</span><br><span style="font-size: 0.85rem; color: var(--muted); font-weight: 500;" id="clinicNameDisplay">--</span></div>
+            <div class="logo">Clinic<span>Flow</span><br><span style="font-size: 0.85rem; color: var(--muted); font-weight: 500;" id="clinicNameDisplay">--</span></div>
             <div style="margin-top: 20px; display: flex; flex-direction: column; width: 100%;">
                 <div class="nav-item active" onclick="switchTab('call-tab', this)" data-i18n="menuCall">📢 شاشة النداء</div>
                 <div class="nav-item" onclick="switchTab('patients-tab', this)" data-i18n="menuPatients">📂 أرشيف المرضى</div>
@@ -121,10 +130,8 @@
             </div>
         </div>
         
-        <div>
-            <button id="installAppBtn" onclick="installApp()" data-i18n="btnInstallApp">👨‍⚕️ تثبيت على سطح المكتب</button>
-            <div style="padding: 10px 20px 20px; text-align: center; color: var(--muted); font-size: 0.8rem;">ClinicFlow SaaS v3.5</div>
-        </div>
+        <button id="installAppBtn" onclick="installApp()">💻 تثبيت التطبيق</button>
+        <div style="padding: 20px; text-align: center; color: var(--muted); font-size: 0.8rem;">ClinicFlow SaaS v3.5</div>
     </div>
 
     <div class="main-content">
@@ -314,7 +321,7 @@
 
         const dict = {
             ar: { 
-                menuCall: "📢 شاشة النداء", menuPatients: "📂 أرشيف المرضى", menuStats: "📊 الإحصائيات", menuSettings: "⚙️ الإعدادات", docTitle: "لوحة الطبيب", btnTheme: "🌓 الوضع الليلي", btnInstallApp: "👨‍⚕️ تثبيت على سطح المكتب",
+                menuCall: "📢 شاشة النداء", menuPatients: "📂 أرشيف المرضى", menuStats: "📊 الإحصائيات", menuSettings: "⚙️ الإعدادات", docTitle: "لوحة الطبيب", btnTheme: "🌓 الوضع الليلي", 
                 insideNow: "رقم المريض بالداخل", callNext: "📢 مناداة المريض التالي", btnDone: "✔️ تم الكشف", btnAbsent: "❌ غائب",
                 pauseQueue: "⏸️ إيقاف استقبال التذاكر مؤقتاً", resumeQueue: "▶️ تفعيل استقبال التذاكر",
                 medicalFileTitle: "📋 الملف الطبي", optional: "اختياري", lblPatientName: "اسم المريض:", lblAge: "العمر:", lblBlood: "الدم:", lblAllergy: "حساسية:", lblChronic: "أمراض مزمنة:", lblNotes: "التشخيص:", btnSaveFile: "💾 حفظ", prescTitle: "💊 الوصفة", btnPrintPresc: "🖨️ طباعة",
@@ -323,10 +330,11 @@
                 statsHeader: "لوحة الإحصائيات والأداء", statWaiting: "في الانتظار حالياً", statToday: "إجمالي اليوم", statWeekly: "هذا الأسبوع", statMonthly: "هذا الشهر", busiestDay: "أكثر الأيام استقبالاً للمرضى", notDefined: "غير محدد",
                 secTitle: "🛡️ إعدادات الحماية", secDesc: "لحماية عيادتك وملفات مرضاك من التطفل، قم بتعيين كلمة سر تمنع أي شخص من الدخول إلى هذه اللوحة بدونها.", lblNewPass: "كلمة السر الجديدة:", btnSavePass: "💾 حفظ كلمة السر", btnDeletePass: "🗑️ إزالة الحماية",
                 lockDesc: "هذه العيادة محمية بكلمة سر", btnUnlock: "🔓 فتح العيادة",
+                deletedTitle: "هذا الرابط متوقف عن العمل", deletedDesc: "تم حذف حساب الطبيب أو إلغاء تفعيل هذا الرابط من إدارة العيادة.",
                 errNoPatient: "⚠️ لا يوجد مريض", errEmpty: "لا يوجد مريض", successStatus: "✔️ تم الحفظ", successCall: "📢 تم مناداة:", errSave: "خطأ"
             },
             fr: { 
-                menuCall: "📢 Appel", menuPatients: "📂 Archives", menuStats: "📊 Stats", menuSettings: "⚙️ Paramètres", docTitle: "Tableau de bord", btnTheme: "🌓 Sombre", btnInstallApp: "👨‍⚕️ Installer sur Bureau",
+                menuCall: "📢 Appel", menuPatients: "📂 Archives", menuStats: "📊 Stats", menuSettings: "⚙️ Paramètres", docTitle: "Tableau de bord", btnTheme: "🌓 Sombre", 
                 insideNow: "Patient Actuel", callNext: "📢 Suivant", btnDone: "✔️ Terminé", btnAbsent: "❌ Absent",
                 pauseQueue: "⏸️ Suspendre la file", resumeQueue: "▶️ Réactiver la file",
                 medicalFileTitle: "📋 Dossier", optional: "Optionnel", lblPatientName: "Nom:", lblAge: "Âge:", lblBlood: "Sang:", lblAllergy: "Allergies:", lblChronic: "Chroniques:", lblNotes: "Notes:", btnSaveFile: "💾 Enregistrer", prescTitle: "💊 Ordonnance", btnPrintPresc: "🖨️ Imprimer",
@@ -335,10 +343,11 @@
                 statsHeader: "Performances", statWaiting: "En attente", statToday: "Aujourd'hui", statWeekly: "Cette semaine", statMonthly: "Ce mois-ci", busiestDay: "Jour le plus chargé", notDefined: "Non défini",
                 secTitle: "🛡️ Sécurité", secDesc: "Ajoutez un mot de passe pour protéger les dossiers.", lblNewPass: "Nouveau MDP:", btnSavePass: "💾 Sauvegarder", btnDeletePass: "🗑️ Supprimer MDP",
                 lockDesc: "Cette clinique est protégée par un mot de passe", btnUnlock: "🔓 Déverrouiller",
+                deletedTitle: "Ce lien est désactivé", deletedDesc: "Le compte de ce médecin a été supprimé par l'administration.",
                 errNoPatient: "⚠️ Aucun patient", errEmpty: "Aucun patient", successStatus: "✔️ Enregistré", successCall: "📢 Appel:", errSave: "Erreur"
             },
             en: { 
-                menuCall: "📢 Call Screen", menuPatients: "📂 Archive", menuStats: "📊 Stats", menuSettings: "⚙️ Settings", docTitle: "Dashboard", btnTheme: "🌓 Dark", btnInstallApp: "👨‍⚕️ Install on Desktop",
+                menuCall: "📢 Call Screen", menuPatients: "📂 Archive", menuStats: "📊 Stats", menuSettings: "⚙️ Settings", docTitle: "Dashboard", btnTheme: "🌓 Dark", 
                 insideNow: "Current Patient", callNext: "📢 Call Next", btnDone: "✔️ Done", btnAbsent: "❌ Absent",
                 pauseQueue: "⏸️ Pause Queue", resumeQueue: "▶️ Resume Queue",
                 medicalFileTitle: "📋 Record", optional: "Optional", lblPatientName: "Name:", lblAge: "Age:", lblBlood: "Blood:", lblAllergy: "Allergies:", lblChronic: "Chronic:", lblNotes: "Notes:", btnSaveFile: "💾 Save", prescTitle: "💊 Prescription", btnPrintPresc: "🖨️ Print",
@@ -347,6 +356,7 @@
                 statsHeader: "Performance Dashboard", statWaiting: "Waiting Now", statToday: "Total Today", statWeekly: "This Week", statMonthly: "This Month", busiestDay: "Busiest Day", notDefined: "Not Defined",
                 secTitle: "🛡️ Security", secDesc: "Set a password to protect records.", lblNewPass: "New Password:", btnSavePass: "💾 Save Password", btnDeletePass: "🗑️ Remove Password",
                 lockDesc: "This clinic is password protected", btnUnlock: "🔓 Unlock",
+                deletedTitle: "This Link is Disabled", deletedDesc: "This doctor's account has been removed by the clinic administrator.",
                 errNoPatient: "⚠️ No patient", errEmpty: "No patient", successStatus: "✔️ Saved", successCall: "📢 Called:", errSave: "Error"
             }
         };
@@ -363,6 +373,13 @@
             if (document.getElementById('searchInput')) document.getElementById('searchInput').placeholder = dict[lang].searchPlaceholder;
             updateQueueBtnText();
             updateBusiestDayText();
+        }
+
+        function blockDeletedDoctor() {
+            localStorage.removeItem('saved_doc_clinic_slug');
+            sessionStorage.removeItem(`doc_auth_${CLINIC_SLUG}`);
+            document.getElementById('lockScreen').style.display = 'none';
+            document.getElementById('deletedScreen').style.display = 'flex';
         }
 
         function updateQueueBtnText() {
@@ -393,6 +410,7 @@
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ clinic_slug: CLINIC_SLUG })
                 });
+                if (res.status === 404) return blockDeletedDoctor();
                 const data = await res.json();
                 currentQueueStatus = data.status;
                 updateQueueBtnText();
@@ -431,6 +449,7 @@
         async function checkInitialLock() {
             try {
                 const res = await fetch(`https://clinic-server-i00s.onrender.com/api/doctor/auth-status/${CLINIC_SLUG}`);
+                if (res.status === 404) return blockDeletedDoctor();
                 const data = await res.json();
                 if (data.hasPassword) {
                     const savedAuth = sessionStorage.getItem(`doc_auth_${CLINIC_SLUG}`);
@@ -447,6 +466,7 @@
                     method: 'POST', headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ clinic_slug: CLINIC_SLUG, password: pass })
                 });
+                if (res.status === 404) return blockDeletedDoctor();
                 const data = await res.json();
                 if (data.success) {
                     sessionStorage.setItem(`doc_auth_${CLINIC_SLUG}`, 'true');
@@ -485,25 +505,16 @@
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
+            document.getElementById('installAppBtn').style.display = 'block'; 
         });
 
         function installApp() {
             if (deferredPrompt) {
                 deferredPrompt.prompt();
-                deferredPrompt.userChoice.then(() => {
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') { document.getElementById('installAppBtn').style.display = 'none'; }
                     deferredPrompt = null;
                 });
-            } else {
-                const targetUrl = window.location.origin + '/doctor.html?clinic=' + encodeURIComponent(CLINIC_SLUG);
-                const appHtml = `<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"><title>👨‍⚕️ عيادة ${CLINIC_SLUG}</title><link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%2310b981'/><text x='50%' y='55%' dominant-baseline='central' text-anchor='middle' font-size='65'>👨‍⚕️</text></svg>"><script>window.location.replace("${targetUrl}");<\/script></head><body style="background:#0f172a;color:#10b981;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;"><h2>👨‍⚕️ جاري فتح لوحة الطبيب...</h2></body></html>`;
-                const blob = new Blob([appHtml], { type: 'text/html;charset=utf-8' });
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = `Doctor-${CLINIC_SLUG}.html`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                showToast('✔️ تم تحميل مشغّل العيادة! ضعه على سطح المكتب وافتحه بضغطة واحدة.', 'success');
             }
         }
 
@@ -546,6 +557,7 @@
         async function fetchStatus() {
             try {
                 const res = await fetch(`https://clinic-server-i00s.onrender.com/api/queue-status/${CLINIC_SLUG}`);
+                if (res.status === 404) return blockDeletedDoctor();
                 const data = await res.json();
                 currentNum = data.current_number || 0;
                 currentQueueStatus = data.status || 'active';
@@ -562,6 +574,7 @@
         async function fetchStats() {
             try {
                 const res = await fetch(`https://clinic-server-i00s.onrender.com/api/doctor-stats/${CLINIC_SLUG}`);
+                if (res.status === 404) return blockDeletedDoctor();
                 const data = await res.json();
                 document.getElementById('statWaiting').innerText = data.waiting;
                 document.getElementById('statToday').innerText = data.today;
@@ -578,6 +591,7 @@
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ clinic_slug: CLINIC_SLUG })
                 });
+                if (res.status === 404) return blockDeletedDoctor();
                 const data = await res.json();
                 if (res.ok) {
                     currentNum = parseInt(data.message.match(/\d+/)[0]);
@@ -723,6 +737,7 @@
         const socket = io('https://clinic-server-i00s.onrender.com');
         socket.on('new_ticket', (data) => { if (data.clinic_slug === CLINIC_SLUG) fetchStats(); });
         socket.on('ticket_cancelled', (data) => { if (data.clinic_slug === CLINIC_SLUG) { showToast(`⚠️ ألغى المريض (${data.patient_name}) تذكرته`, 'warning'); fetchStats(); } });
+        socket.on('doctor_deleted', (data) => { if (data.clinic_slug === CLINIC_SLUG) blockDeletedDoctor(); });
     </script>
 </body>
 </html>

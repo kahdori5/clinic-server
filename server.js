@@ -87,11 +87,11 @@ const initDB = async () => {
 };
 initDB();
 
-// --- مسارات الحماية بكلمة السر للطبيب ---
+// --- مسارات الحماية والتحقق من صلاحية رابط الطبيب ---
 app.get('/api/doctor/auth-status/:slug', async (req, res) => {
     try {
         const clinic = await db.query('SELECT password FROM clinics WHERE slug = $1', [req.params.slug]);
-        if (clinic.rows.length === 0) return res.status(404).json({ error: 'غير موجود' });
+        if (clinic.rows.length === 0) return res.status(404).json({ error: 'deleted' });
         const hasPassword = Boolean(clinic.rows[0].password && clinic.rows[0].password.length > 0);
         res.json({ hasPassword });
     } catch (err) { res.status(500).json({ error: err.message }); }
@@ -101,7 +101,7 @@ app.post('/api/doctor/verify-password', async (req, res) => {
     try {
         const { clinic_slug, password } = req.body;
         const clinic = await db.query('SELECT password FROM clinics WHERE slug = $1', [clinic_slug]);
-        if (clinic.rows.length === 0) return res.status(404).json({ error: 'غير موجود' });
+        if (clinic.rows.length === 0) return res.status(404).json({ error: 'deleted' });
         if (clinic.rows[0].password === password) res.json({ success: true });
         else res.status(401).json({ error: 'كلمة السر غير صحيحة' });
     } catch (err) { res.status(500).json({ error: err.message }); }
@@ -150,7 +150,7 @@ app.post('/api/tickets', async (req, res) => {
     try {
         const { clinic_slug, patient_name } = req.body;
         const clinic = await db.query(`SELECT id, is_main, subscription_end as doc_sub, parent_id FROM clinics WHERE slug = $1`, [clinic_slug]);
-        if (clinic.rows.length === 0) return res.status(404).json({ error: 'الرابط غير صحيح' });
+        if (clinic.rows.length === 0) return res.status(404).json({ error: 'الرابط غير صحيح أو تم حذف الطبيب' });
 
         let subEnd = clinic.rows[0].doc_sub;
         if (!clinic.rows[0].is_main && clinic.rows[0].parent_id) {
@@ -262,7 +262,9 @@ app.get('/api/patients/all/:clinic_slug', async (req, res) => {
 app.get('/api/queue-status/:clinic_slug', async (req, res) => {
     try {
         const clinic = await db.query('SELECT id, name FROM clinics WHERE slug = $1', [req.params.clinic_slug]);
-        if (clinic.rows.length === 0) return res.json({ current_number: 0, last_issued_number: 0, waiting_count: 0, ahead_count: 0, status: 'active' });
+        // إذا تم حذف الطبيب أو لم يكن الرابط موجوداً، يرجع 404 ليتوقف الرابط فوراً
+        if (clinic.rows.length === 0) return res.status(404).json({ error: 'deleted', message: 'هذا الرابط غير صالح أو تم حذف الطبيب' });
+        
         let queue = await db.query('SELECT id, current_number, last_issued_number, status FROM queues WHERE clinic_id = $1 AND queue_date = CURRENT_DATE', [clinic.rows[0].id]);
         if (queue.rows.length === 0) return res.json({ current_number: 0, last_issued_number: 0, waiting_count: 0, ahead_count: 0, status: 'active', doctor_name: clinic.rows[0].name });
 
@@ -315,7 +317,7 @@ app.get('/api/queue-status/:clinic_slug', async (req, res) => {
 app.get('/api/doctor-stats/:clinic_slug', async (req, res) => {
     try {
         const clinic = await db.query('SELECT id FROM clinics WHERE slug = $1', [req.params.clinic_slug]);
-        if (clinic.rows.length === 0) return res.json({ today: 0, waiting: 0, weekly: 0, monthly: 0, busiest_day: 'غير محدد', busiest_day_index: -1 });
+        if (clinic.rows.length === 0) return res.status(404).json({ error: 'deleted' });
         const cId = clinic.rows[0].id;
         
         let q = await db.query('SELECT id, current_number, last_issued_number FROM queues WHERE clinic_id = $1 AND queue_date = CURRENT_DATE', [cId]);
@@ -351,14 +353,12 @@ app.get('/api/doctor-stats/:clinic_slug', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// دعم العيادات المتعددة والعيادات الفردية تلقائياً
 app.get('/api/clinic-doctors/:main_slug', async (req, res) => {
     try {
         const main = await db.query('SELECT id, name, slug FROM clinics WHERE slug = $1', [req.params.main_slug]);
         if (main.rows.length === 0) return res.json([]);
         let doctors = await db.query('SELECT id, name, slug FROM clinics WHERE parent_id::text = $1::text', [main.rows[0].id]);
         
-        // إذا كانت العيادة فردية وليس تحتها أطباء فرعيون، نستخدم العيادة نفسها كطبيب
         const docList = doctors.rows.length > 0 ? doctors.rows : [main.rows[0]];
         
         let result = [];
@@ -397,17 +397,29 @@ app.post('/api/admin/renew', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// عند حذف العيادة يتم إيقاف روابطها وروابط جميع الأطباء التابعين لها فوراً
 app.delete('/api/admin/clinics/:id', async (req, res) => {
     try {
+        const subDocs = await db.query('SELECT slug FROM clinics WHERE parent_id::text = $1::text OR id::text = $1::text', [req.params.id]);
         await db.query('DELETE FROM clinics WHERE parent_id::text = $1::text', [req.params.id]);
         await db.query('DELETE FROM clinics WHERE id::text = $1::text', [req.params.id]);
+        subDocs.rows.forEach(r => {
+            io.emit('doctor_deleted', { clinic_slug: r.slug });
+        });
         res.json({ message: 'تم الحذف بنجاح' });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// عند حذف طبيب من عيادة يتوقف الرابط الخاص به عن العمل فوراً
 app.delete('/api/admin/doctors/:id', async (req, res) => {
     try {
+        const docRes = await db.query('SELECT slug FROM clinics WHERE id::text = $1::text', [req.params.id]);
         await db.query('DELETE FROM clinics WHERE id::text = $1::text', [req.params.id]);
+        if (docRes.rows.length > 0) {
+            const deletedSlug = docRes.rows[0].slug;
+            await db.query('DELETE FROM patient_records WHERE clinic_slug = $1', [deletedSlug]);
+            io.emit('doctor_deleted', { clinic_slug: deletedSlug });
+        }
         res.json({ message: 'تم الحذف بنجاح' });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
