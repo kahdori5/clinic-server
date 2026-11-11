@@ -16,7 +16,8 @@
         .nav-item { padding: 16px 25px; color: var(--muted); text-decoration: none; display: flex; align-items: center; gap: 10px; font-weight: 500; cursor: pointer; border-inline-end: 4px solid transparent; font-size: 1.05rem; transition: 0.3s; }
         .nav-item:hover, .nav-item.active { background: rgba(16, 185, 129, 0.1); color: var(--accent); border-color: var(--accent); }
         
-        #installAppBtn { display: none; padding: 15px; margin: 15px; background: var(--accent); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; text-align: center; font-family: inherit; font-size: 1rem; transition: 0.2s; box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3); }
+        /* إظهار زر التثبيت والتحميل بشكل دائم في القائمة الجانبية */
+        #installAppBtn { display: block; width: calc(100% - 30px); padding: 15px; margin: 15px auto; background: var(--accent); color: #ffffff !important; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; text-align: center; font-family: inherit; font-size: 1rem; transition: 0.2s; box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3); box-sizing: border-box; }
         #installAppBtn:hover { transform: translateY(-3px); filter: brightness(1.1); }
         
         .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
@@ -120,8 +121,10 @@
             </div>
         </div>
         
-        <button id="installAppBtn" onclick="installApp()">💻 تثبيت التطبيق</button>
-        <div style="padding: 20px; text-align: center; color: var(--muted); font-size: 0.8rem;">ClinicFlow SaaS v3.5</div>
+        <div>
+            <button id="installAppBtn" onclick="installApp()" data-i18n="btnInstallApp">💻 تثبيت التطبيق</button>
+            <div style="padding: 10px 20px 20px; text-align: center; color: var(--muted); font-size: 0.8rem;">ClinicFlow SaaS v3.5</div>
+        </div>
     </div>
 
     <div class="main-content">
@@ -311,7 +314,7 @@
 
         const dict = {
             ar: { 
-                menuCall: "📢 شاشة النداء", menuPatients: "📂 أرشيف المرضى", menuStats: "📊 الإحصائيات", menuSettings: "⚙️ الإعدادات", docTitle: "لوحة الطبيب", btnTheme: "🌓 الوضع الليلي", 
+                menuCall: "📢 شاشة النداء", menuPatients: "📂 أرشيف المرضى", menuStats: "📊 الإحصائيات", menuSettings: "⚙️ الإعدادات", docTitle: "لوحة الطبيب", btnTheme: "🌓 الوضع الليلي", btnInstallApp: "💻 تثبيت التطبيق",
                 insideNow: "رقم المريض بالداخل", callNext: "📢 مناداة المريض التالي", btnDone: "✔️ تم الكشف", btnAbsent: "❌ غائب",
                 pauseQueue: "⏸️ إيقاف استقبال التذاكر مؤقتاً", resumeQueue: "▶️ تفعيل استقبال التذاكر",
                 medicalFileTitle: "📋 الملف الطبي", optional: "اختياري", lblPatientName: "اسم المريض:", lblAge: "العمر:", lblBlood: "الدم:", lblAllergy: "حساسية:", lblChronic: "أمراض مزمنة:", lblNotes: "التشخيص:", btnSaveFile: "💾 حفظ", prescTitle: "💊 الوصفة", btnPrintPresc: "🖨️ طباعة",
@@ -323,7 +326,7 @@
                 errNoPatient: "⚠️ لا يوجد مريض", errEmpty: "لا يوجد مريض", successStatus: "✔️ تم الحفظ", successCall: "📢 تم مناداة:", errSave: "خطأ"
             },
             fr: { 
-                menuCall: "📢 Appel", menuPatients: "📂 Archives", menuStats: "📊 Stats", menuSettings: "⚙️ Paramètres", docTitle: "Tableau de bord", btnTheme: "🌓 Sombre", 
+                menuCall: "📢 Appel", menuPatients: "📂 Archives", menuStats: "📊 Stats", menuSettings: "⚙️ Paramètres", docTitle: "Tableau de bord", btnTheme: "🌓 Sombre", btnInstallApp: "💻 Installer l'App",
                 insideNow: "Patient Actuel", callNext: "📢 Suivant", btnDone: "✔️ Terminé", btnAbsent: "❌ Absent",
                 pauseQueue: "⏸️ Suspendre la file", resumeQueue: "▶️ Réactiver la file",
                 medicalFileTitle: "📋 Dossier", optional: "Optionnel", lblPatientName: "Nom:", lblAge: "Âge:", lblBlood: "Sang:", lblAllergy: "Allergies:", lblChronic: "Chroniques:", lblNotes: "Notes:", btnSaveFile: "💾 Enregistrer", prescTitle: "💊 Ordonnance", btnPrintPresc: "🖨️ Imprimer",
@@ -335,7 +338,7 @@
                 errNoPatient: "⚠️ Aucun patient", errEmpty: "Aucun patient", successStatus: "✔️ Enregistré", successCall: "📢 Appel:", errSave: "Erreur"
             },
             en: { 
-                menuCall: "📢 Call Screen", menuPatients: "📂 Archive", menuStats: "📊 Stats", menuSettings: "⚙️ Settings", docTitle: "Dashboard", btnTheme: "🌓 Dark", 
+                menuCall: "📢 Call Screen", menuPatients: "📂 Archive", menuStats: "📊 Stats", menuSettings: "⚙️ Settings", docTitle: "Dashboard", btnTheme: "🌓 Dark", btnInstallApp: "💻 Install App",
                 insideNow: "Current Patient", callNext: "📢 Call Next", btnDone: "✔️ Done", btnAbsent: "❌ Absent",
                 pauseQueue: "⏸️ Pause Queue", resumeQueue: "▶️ Resume Queue",
                 medicalFileTitle: "📋 Record", optional: "Optional", lblPatientName: "Name:", lblAge: "Age:", lblBlood: "Blood:", lblAllergy: "Allergies:", lblChronic: "Chronic:", lblNotes: "Notes:", btnSaveFile: "💾 Save", prescTitle: "💊 Prescription", btnPrintPresc: "🖨️ Print",
@@ -482,16 +485,25 @@
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            document.getElementById('installAppBtn').style.display = 'block'; 
         });
 
         function installApp() {
             if (deferredPrompt) {
                 deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') { document.getElementById('installAppBtn').style.display = 'none'; }
+                deferredPrompt.userChoice.then(() => {
                     deferredPrompt = null;
                 });
+            } else {
+                const targetUrl = window.location.origin + '/doctor.html?clinic=' + CLINIC_SLUG;
+                const shortcutContent = `[InternetShortcut]\r\nURL=${targetUrl}\r\n`;
+                const blob = new Blob([shortcutContent], { type: 'application/internet-shortcut' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = `ClinicFlow-${CLINIC_SLUG}.url`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                showToast('✔️ تم تحميل أيقونة سطح المكتب! ضعها على الشاشة الرئيسية.', 'success');
             }
         }
 
@@ -692,6 +704,12 @@
                 const res = await fetch(`https://clinic-server-i00s.onrender.com/api/patients/delete/${id}`, { method: 'DELETE' });
                 if (res.ok) { showToast('✔️ تم الحذف', 'success'); fetchAllPatients(); if (currentSelectedPatientId === id) closePatientDetail(); }
             } catch (e) { showToast('خطأ', 'error'); }
+        }
+
+        function deleteCurrentDetailPatient() {
+            if (currentSelectedPatientId) {
+                deletePatientRecord(currentSelectedPatientId);
+            }
         }
 
         function openNewPatientFile() {
