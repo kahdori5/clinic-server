@@ -17,7 +17,6 @@
         .nav-item { padding: 16px 25px; color: var(--muted); text-decoration: none; display: flex; align-items: center; gap: 10px; font-weight: 500; cursor: pointer; border-inline-end: 4px solid transparent; font-size: 1.05rem; transition: 0.3s; }
         .nav-item:hover, .nav-item.active { background: rgba(16, 185, 129, 0.1); color: var(--accent); border-color: var(--accent); }
         
-        /* زر تثبيت التطبيق ظاهر دائماً بشكل واضح للطبيب */
         #installAppBtn { display: block; width: calc(100% - 30px); padding: 15px; margin: 15px auto; background: var(--accent); color: #ffffff !important; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; text-align: center; font-family: inherit; font-size: 1rem; transition: 0.2s; box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3); box-sizing: border-box; }
         #installAppBtn:hover { transform: translateY(-3px); filter: brightness(1.1); }
         
@@ -103,7 +102,6 @@
 </head>
 <body>
 
-    <!-- شاشة إيقاف الرابط عند حذف الطبيب -->
     <div id="deletedScreen" style="display: none;">
         <div class="lock-card" style="border: 2px solid var(--danger);">
             <h1 style="color: var(--danger); margin-top: 0; font-size: 3rem;">⛔</h1>
@@ -112,7 +110,6 @@
         </div>
     </div>
 
-    <!-- نافذة مساعدة التثبيت في حال فتح الرابط بمتصفح لا يدعم التثبيت المباشر مثل Opera -->
     <div id="installHelpModal" style="display: none;">
         <div class="lock-card">
             <img src="https://cdn-icons-png.flaticon.com/512/3063/3063063.png" style="width: 70px; height: 70px; margin-bottom: 10px;" alt="ClinicFlow">
@@ -142,12 +139,13 @@
                 <div class="nav-item" onclick="switchTab('patients-tab', this)" data-i18n="menuPatients">📂 أرشيف المرضى</div>
                 <div class="nav-item" onclick="switchTab('stats-tab', this)" data-i18n="menuStats">📊 الإحصائيات</div>
                 <div class="nav-item" onclick="switchTab('settings-tab', this)" data-i18n="menuSettings">⚙️ الإعدادات والحماية</div>
+                <a class="nav-item" href="/directory.html" target="_blank" style="color: var(--accent); font-weight: 700;">🌐 الدليل والكود الجماعي</a>
             </div>
         </div>
         
         <div>
             <button id="installAppBtn" onclick="installApp()" data-i18n="btnInstallApp">💻 تثبيت التطبيق</button>
-            <div style="padding: 10px 20px 20px; text-align: center; color: var(--muted); font-size: 0.8rem;">ClinicFlow SaaS v3.5</div>
+            <div style="padding: 10px 20px 20px; text-align: center; color: var(--muted); font-size: 0.8rem;">ClinicFlow SaaS v3.6</div>
         </div>
     </div>
 
@@ -299,6 +297,16 @@
             </div>
 
             <div id="settings-tab" class="tab-content" style="display: none;">
+                <div class="control-card" style="max-width: 600px; margin: 0 auto 25px; text-align: start;">
+                    <h2 style="color: var(--accent); margin-top: 0;">🩺 الاختصاص الطبي في الدليل الجماعي</h2>
+                    <p style="color: var(--muted); margin-bottom: 20px; font-weight: bold;">حدد اختصاصك الطبي ليظهر للمرضى عند مسح الكود الجماعي والبحث عن الأطباء:</p>
+                    <div class="input-group">
+                        <label>الاختصاص الطبي (مثال: طب الأسنان، طب الأطفال، طب العيون، طب عام...):</label>
+                        <input type="text" id="doctorSpecialtyInput" placeholder="اكتب الاختصاص الطبي هنا...">
+                    </div>
+                    <button class="btn" style="margin-top: 15px; margin-bottom: 0;" onclick="saveDoctorSpecialty()">💾 حفظ الاختصاص الطبي</button>
+                </div>
+
                 <div class="control-card" style="max-width: 600px; margin: 0 auto; text-align: start;">
                     <h2 style="color: var(--text); margin-top: 0;" data-i18n="secTitle">🛡️ إعدادات الحماية والخصوصية</h2>
                     <p style="color: var(--muted); margin-bottom: 25px; font-weight: bold;" data-i18n="secDesc">لحماية عيادتك وملفات مرضاك من التطفل، قم بتعيين كلمة سر تمنع أي شخص من الدخول إلى هذه اللوحة بدونها.</p>
@@ -468,11 +476,24 @@
                 const res = await fetch(`https://clinic-server-i00s.onrender.com/api/doctor/auth-status/${CLINIC_SLUG}`);
                 if (res.status === 404) return blockDeletedDoctor();
                 const data = await res.json();
+                if (data.specialty) document.getElementById('doctorSpecialtyInput').value = data.specialty;
                 if (data.hasPassword) {
                     const savedAuth = sessionStorage.getItem(`doc_auth_${CLINIC_SLUG}`);
                     if (!savedAuth) { document.getElementById('lockScreen').style.display = 'flex'; }
                 }
             } catch(e) {}
+        }
+
+        async function saveDoctorSpecialty() {
+            const sp = document.getElementById('doctorSpecialtyInput').value.trim();
+            if (!sp) return showToast('يرجى كتابة الاختصاص الطبي', 'warning');
+            try {
+                await fetch('https://clinic-server-i00s.onrender.com/api/doctor/set-specialty', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ clinic_slug: CLINIC_SLUG, specialty: sp })
+                });
+                showToast('✔️ تم حفظ الاختصاص الطبي في الدليل الجماعي', 'success');
+            } catch(e) { showToast('خطأ في الحفظ', 'error'); }
         }
 
         async function checkPassword() {
