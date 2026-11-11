@@ -3,83 +3,514 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ClinicFlow - Super Admin Dashboard</title>
+    <title>ClinicFlow - لوحة تحكم الأدمن الشاملة</title>
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/3063/3063063.png">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #f4f7f6; --card: #ffffff; --text: #2d3748; --accent: #10b981; --border: #e2e8f0; --muted: #718096; --danger: #ef4444; --warning: #f59e0b; --blue: #3b82f6; }
-        [data-theme="dark"] { --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --accent: #10b981; --border: #334155; --muted: #94a3b8; }
-        body { font-family: 'Tajawal', sans-serif; background: var(--bg); color: var(--text); margin: 0; min-height: 100vh; display: flex; transition: 0.3s; overflow: hidden; }
+        :root {
+            --bg: #f4f7f6;
+            --card: #ffffff;
+            --text: #1e293b;
+            --accent: #10b981;
+            --border: #e2e8f0;
+            --muted: #64748b;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --blue: #3b82f6;
+            --purple: #8b5cf6;
+        }
+        [data-theme="dark"] {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --text: #f8fafc;
+            --accent: #10b981;
+            --border: #334155;
+            --muted: #94a3b8;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            transition: 0.3s;
+            overflow: hidden;
+        }
 
-        .sidebar { width: 260px; background: var(--card); border-inline-end: 1px solid var(--border); display: flex; flex-direction: column; padding: 25px 0; z-index: 10; justify-content: space-between; transition: 0.3s; }
-        .logo { font-size: 1.5rem; font-weight: 800; text-align: center; margin-bottom: 20px; color: var(--text); }
+        /* القائمة الجانبية */
+        .sidebar {
+            width: 270px;
+            background: var(--card);
+            border-inline-end: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 25px 0;
+            z-index: 10;
+            justify-content: space-between;
+            transition: 0.3s;
+            flex-shrink: 0;
+        }
+        .logo {
+            font-size: 1.6rem;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--text);
+        }
         .logo span { color: var(--accent); }
-        .nav-item { padding: 16px 25px; color: var(--muted); text-decoration: none; display: flex; align-items: center; gap: 10px; font-weight: 600; cursor: pointer; border-inline-end: 4px solid transparent; font-size: 1.02rem; transition: 0.3s; }
-        .nav-item:hover, .nav-item.active { background: rgba(16, 185, 129, 0.1); color: var(--accent); border-color: var(--accent); }
+        .nav-item {
+            padding: 15px 25px;
+            color: var(--muted);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            border-inline-end: 4px solid transparent;
+            font-size: 1rem;
+            transition: 0.25s;
+        }
+        .nav-item:hover, .nav-item.active {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--accent);
+            border-color: var(--accent);
+        }
 
-        .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-        header { display: flex; justify-content: space-between; align-items: center; padding: 15px 30px; border-bottom: 1px solid var(--border); background: var(--card); flex-wrap: wrap; gap: 10px; }
-        .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-        select, .theme-btn { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 8px 15px; border-radius: 12px; cursor: pointer; outline: none; font-weight: bold; font-family: inherit; transition: 0.3s; }
+        /* المحتوى الرئيسي */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            border-bottom: 1px solid var(--border);
+            background: var(--card);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .header-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        select, .theme-btn {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 9px 15px;
+            border-radius: 12px;
+            cursor: pointer;
+            outline: none;
+            font-weight: bold;
+            font-family: inherit;
+            transition: 0.2s;
+        }
 
-        .content-scroll { padding: 30px; overflow-y: auto; flex: 1; scroll-behavior: smooth; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .content-scroll {
+            padding: 30px;
+            overflow-y: auto;
+            flex: 1;
+            scroll-behavior: smooth;
+        }
 
         /* بطاقات الإحصائيات */
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 18px; margin-bottom: 25px; }
-        .stat-card { background: var(--card); padding: 22px; border-radius: 20px; border: 1px solid var(--border); display: flex; align-items: center; gap: 16px; box-shadow: 0 5px 15px rgba(0,0,0,0.03); }
-        .stat-icon { font-size: 2.2rem; background: var(--bg); width: 62px; height: 62px; display: flex; align-items: center; justify-content: center; border-radius: 16px; }
-        .stat-info span { color: var(--muted); font-size: 0.92rem; font-weight: bold; display: block; margin-bottom: 4px; }
-        .stat-info strong { font-size: 1.9rem; color: var(--text); line-height: 1; }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 18px;
+            margin-bottom: 28px;
+        }
+        .stat-card {
+            background: var(--card);
+            padding: 22px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.03);
+            transition: 0.25s;
+        }
+        .stat-card:hover { transform: translateY(-4px); }
+        .stat-icon {
+            font-size: 2.2rem;
+            background: var(--bg);
+            width: 64px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 16px;
+            flex-shrink: 0;
+        }
+        .stat-info span {
+            color: var(--muted);
+            font-size: 0.92rem;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .stat-info strong {
+            font-size: 2rem;
+            color: var(--text);
+            line-height: 1;
+        }
 
-        /* البطاقات والنماذج */
-        .panel-card { background: var(--card); padding: 25px; border-radius: 22px; border: 1px solid var(--border); margin-bottom: 25px; box-shadow: 0 8px 25px rgba(0,0,0,0.03); }
-        .panel-card h3 { margin-top: 0; color: var(--accent); font-size: 1.3rem; border-bottom: 2px dashed var(--border); padding-bottom: 12px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 15px; }
-        input { width: 100%; padding: 13px 15px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg); color: var(--text); outline: none; font-family: inherit; font-size: 0.95rem; box-sizing: border-box; transition: 0.3s; }
+        /* خانة الكود الجماعي للأطباء (Global QR Section) */
+        .global-qr-card {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.14), rgba(59, 130, 246, 0.08));
+            border: 2px solid var(--accent);
+            border-radius: 24px;
+            padding: 28px;
+            margin-bottom: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 25px;
+            flex-wrap: wrap;
+            box-shadow: 0 12px 30px rgba(16, 185, 129, 0.08);
+        }
+        .global-qr-details {
+            flex: 1;
+            min-width: 280px;
+        }
+        .global-qr-details h2 {
+            margin: 0 0 10px;
+            color: var(--accent);
+            font-size: 1.55rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .global-qr-details p {
+            margin: 0 0 16px;
+            color: var(--text);
+            font-size: 1rem;
+            line-height: 1.7;
+            font-weight: 500;
+        }
+        .global-url-bar {
+            background: var(--card);
+            border: 1px solid var(--border);
+            padding: 11px 15px;
+            border-radius: 12px;
+            font-family: monospace;
+            font-size: 0.92rem;
+            color: var(--accent);
+            margin-bottom: 16px;
+            direction: ltr;
+            text-align: left;
+            word-break: break-all;
+            font-weight: bold;
+        }
+        .qr-frame-box {
+            background: #ffffff;
+            padding: 15px;
+            border-radius: 20px;
+            border: 4px solid var(--accent);
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+        }
+        .qr-frame-box img {
+            width: 165px;
+            height: 165px;
+            display: block;
+            margin: 0 auto 6px;
+        }
+        .qr-frame-box span {
+            color: #0f172a;
+            font-weight: 800;
+            font-size: 0.85rem;
+            display: block;
+        }
+
+        /* البطاقات العامة والنماذج */
+        .panel-card {
+            background: var(--card);
+            padding: 26px;
+            border-radius: 22px;
+            border: 1px solid var(--border);
+            margin-bottom: 28px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.03);
+        }
+        .panel-card h3 {
+            margin-top: 0;
+            color: var(--accent);
+            font-size: 1.3rem;
+            border-bottom: 2px dashed var(--border);
+            padding-bottom: 14px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+        .input-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+        input {
+            width: 100%;
+            padding: 13px 15px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            color: var(--text);
+            outline: none;
+            font-family: inherit;
+            font-size: 0.95rem;
+            transition: 0.25s;
+        }
         input:focus { border-color: var(--accent); }
 
-        .btn { padding: 12px 18px; border: none; border-radius: 12px; font-size: 0.95rem; font-weight: bold; cursor: pointer; color: #ffffff !important; background: var(--accent); font-family: inherit; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; }
+        /* الأزرار */
+        .btn {
+            padding: 12px 18px;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            color: #ffffff !important;
+            background: var(--accent);
+            font-family: inherit;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            text-decoration: none;
+        }
         .btn:hover { filter: brightness(1.08); transform: translateY(-2px); }
         .btn-blue { background: var(--blue) !important; }
         .btn-warning { background: var(--warning) !important; }
         .btn-danger { background: var(--danger) !important; }
+        .btn-purple { background: var(--purple) !important; }
         .btn-whatsapp { background: #25D366 !important; }
-        .btn-outline { background: transparent !important; border: 2px solid var(--accent) !important; color: var(--accent) !important; }
-        .btn-sm { padding: 7px 12px; font-size: 0.82rem; border-radius: 9px; }
+        .btn-outline {
+            background: transparent !important;
+            border: 2px solid var(--accent) !important;
+            color: var(--accent) !important;
+        }
+        .btn-outline:hover {
+            background: var(--accent) !important;
+            color: #ffffff !important;
+        }
+        .btn-sm {
+            padding: 7px 12px;
+            font-size: 0.82rem;
+            border-radius: 9px;
+        }
 
-        /* خانة الكود الجماعي */
-        .global-qr-banner { background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(59, 130, 246, 0.08)); border: 2px solid var(--accent); border-radius: 24px; padding: 28px; margin-bottom: 25px; display: flex; align-items: center; justify-content: space-between; gap: 25px; flex-wrap: wrap; }
-        .qr-box-white { background: #ffffff; padding: 15px; border-radius: 20px; border: 3px solid var(--accent); text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        .qr-box-white img { width: 170px; height: 170px; display: block; margin: 0 auto 6px; }
-        .qr-box-white span { color: #0f172a; font-weight: 800; font-size: 0.85rem; }
+        /* شريط البحث والفلترة */
+        .filter-bar {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 22px;
+            align-items: center;
+        }
+        .filter-bar input {
+            flex: 1;
+            min-width: 250px;
+        }
+        .filter-pills {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .filter-pill {
+            padding: 10px 16px;
+            border-radius: 12px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.9rem;
+        }
+        .filter-pill.active, .filter-pill:hover {
+            background: var(--accent);
+            color: #ffffff;
+            border-color: var(--accent);
+        }
 
-        /* بطاقات العيادات */
-        .clinics-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 20px; }
-        .clinic-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 22px; display: flex; flex-direction: column; justify-content: space-between; gap: 14px; transition: 0.3s; }
-        .clinic-card:hover { border-color: var(--accent); box-shadow: 0 12px 25px rgba(0,0,0,0.06); }
-        .badge { padding: 5px 12px; border-radius: 999px; font-size: 0.8rem; font-weight: 800; }
+        /* شبكة بطاقات العيادات */
+        .clinics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 22px;
+        }
+        .clinic-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            padding: 22px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 15px;
+            transition: 0.25s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.02);
+        }
+        .clinic-card:hover {
+            border-color: var(--accent);
+            box-shadow: 0 12px 28px rgba(0,0,0,0.07);
+        }
+        .clinic-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+            border-bottom: 1px dashed var(--border);
+            padding-bottom: 14px;
+        }
+        .spec-tag {
+            display: inline-block;
+            background: rgba(16, 185, 129, 0.12);
+            color: var(--accent);
+            padding: 4px 11px;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 800;
+            margin-top: 4px;
+        }
+        .badge {
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 800;
+            white-space: nowrap;
+        }
         .badge-active { background: rgba(16, 185, 129, 0.15); color: var(--accent); }
         .badge-expired { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
 
-        .links-list { background: var(--bg); padding: 12px; border-radius: 14px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
-        .link-item { display: flex; justify-content: space-between; align-items: center; font-size: 0.88rem; gap: 8px; flex-wrap: wrap; }
+        /* صندوق الروابط داخل بطاقة العيادة */
+        .links-box {
+            background: var(--bg);
+            padding: 13px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 9px;
+        }
+        .link-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.88rem;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .link-actions {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
 
-        .subdocs-area { background: var(--bg); padding: 12px; border-radius: 14px; border: 1px dashed var(--border); margin-top: 6px; }
-        .subdoc-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background: var(--card); border-radius: 10px; margin-bottom: 6px; border: 1px solid var(--border); flex-wrap: wrap; gap: 8px; }
+        /* قائمة الأطباء الفرعيين داخل العيادة */
+        .subdocs-box {
+            background: var(--bg);
+            padding: 13px;
+            border-radius: 16px;
+            border: 1px dashed var(--accent);
+            margin-top: 4px;
+        }
+        .subdoc-item {
+            background: var(--card);
+            padding: 10px 12px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .subdoc-item:last-child { margin-bottom: 0; }
 
-        /* النوافذ المنبثقة والتنبيهات */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.78); z-index: 9999; display: none; justify-content: center; align-items: center; padding: 15px; box-sizing: border-box; }
-        .modal-card { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 28px; width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; }
+        /* النوافذ المنبثقة */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.8);
+            z-index: 9999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+        }
+        .modal-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 28px;
+            width: 100%;
+            max-width: 520px;
+            max-height: 92vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+        }
 
-        .toast-container { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 10px; z-index: 99999; }
-        .toast { background: var(--card); color: var(--text); padding: 15px 24px; border-radius: 12px; border-inline-start: 5px solid var(--accent); font-weight: bold; box-shadow: 0 10px 35px rgba(0,0,0,0.2); }
+        /* إشعارات Toast */
+        .toast-container {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 99999;
+        }
+        .toast {
+            background: var(--card);
+            color: var(--text);
+            padding: 15px 25px;
+            border-radius: 12px;
+            border-inline-start: 5px solid var(--accent);
+            font-weight: bold;
+            box-shadow: 0 10px 35px rgba(0,0,0,0.2);
+            animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        @media (max-width: 900px) {
+            body { flex-direction: column; overflow: auto; }
+            .sidebar { width: 100%; padding: 15px 0; border-inline-end: none; border-bottom: 1px solid var(--border); }
+            .clinics-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
 
+    <!-- القائمة الجانبية -->
     <div class="sidebar">
         <div>
             <div class="logo">🛡️ Clinic<span>Flow</span><br><span style="font-size: 0.85rem; color: var(--muted); font-weight: 500;">Super Admin Panel</span></div>
@@ -89,15 +520,16 @@
                 <a class="nav-item" href="/directory.html" target="_blank" style="color: var(--accent);">🌐 فتح الدليل الطبي الشامل</a>
             </div>
         </div>
-        <div style="padding: 20px; text-align: center; color: var(--muted); font-size: 0.8rem;">ClinicFlow SaaS v3.6</div>
+        <div style="padding: 20px; text-align: center; color: var(--muted); font-size: 0.82rem;">ClinicFlow SaaS v3.6</div>
     </div>
 
+    <!-- المحتوى الرئيسي -->
     <div class="main-content">
         <header>
             <div style="font-weight: 800; font-size: 1.3rem; display: flex; align-items: center; gap: 10px;">
                 ⚙️ <span data-i18n="adminHeader">لوحة تحكم المدير العام</span>
             </div>
-            <div class="controls">
+            <div class="header-controls">
                 <button class="btn btn-sm btn-blue" onclick="exportCSVReport()" data-i18n="btnExportCsv">📥 تحميل تقرير العيادات (CSV)</button>
                 <select id="langSelect" onchange="changeLang(this.value)">
                     <option value="ar">العربية</option>
@@ -110,7 +542,7 @@
 
         <div class="content-scroll">
 
-            <!-- الإحصائيات العامة -->
+            <!-- بطاقات الإحصائيات العامة -->
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-icon">🏥</div>
@@ -142,66 +574,94 @@
                 </div>
             </div>
 
-            <!-- التبويب الأول: إدارة العيادات والاشتراكات -->
+            <!-- التبويب الأول: إدارة العيادات + خانة الكود الجماعي -->
             <div id="clinics-tab" class="tab-content active">
 
-                <!-- بطاقة مختصرة للكود الجماعي أعلى صفحة الأدمن -->
-                <div class="global-qr-banner">
-                    <div style="flex: 1; min-width: 260px;">
-                        <h2 style="margin: 0 0 8px; color: var(--accent);">📱 خانة الكود الجماعي للأطباء (Global QR Code)</h2>
-                        <p style="margin: 0 0 15px; color: var(--text); font-weight: 500; line-height: 1.6;">
-                            يمكّن المرضى من رؤية جميع الأطباء المسجلين واختصاصاتهم، البحث عن أي طبيب، وإظهار الكود الخاص به للحجز في أجل أقصاه <strong>48 ساعة</strong>.
+                <!-- الخانة الخاصة بالكود الجماعي للأطباء (Global QR Code) -->
+                <div class="global-qr-card">
+                    <div class="global-qr-details">
+                        <h2 data-i18n="globalQrCardTitle">📱 خانة الكود الجماعي للأطباء (Global QR Code)</h2>
+                        <p data-i18n="globalQrCardDesc">
+                            هذا الكود الجماعي يعرض للمرضى <strong>جميع الأطباء المسجلين في تطبيقك واختصاصاتهم</strong> مع إمكانية البحث الفوري، وعند اختيار الطبيب يظهر الكود الخاص به لحجز موعد في أجل أقصاه <strong>48 ساعة</strong>.
                         </p>
+                        <div class="global-url-bar" id="globalUrlDisplay">--</div>
                         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                            <button class="btn" onclick="printGlobalQR()">🖨️ طباعة الكود الجماعي</button>
-                            <button class="btn btn-blue" onclick="copyGlobalUrl()">📋 نسخ رابط الدليل الجماعي</button>
-                            <a class="btn btn-outline" href="/directory.html" target="_blank">🌐 معاينة صفحة الدليل</a>
+                            <button class="btn" onclick="printGlobalQR()" data-i18n="btnPrintGlobalQr">🖨️ طباعة الكود الجماعي</button>
+                            <button class="btn btn-blue" onclick="copyGlobalUrl()" data-i18n="btnCopyGlobalUrl">📋 نسخ رابط الدليل الجماعي</button>
+                            <button class="btn btn-purple" onclick="downloadGlobalQR()" data-i18n="btnDownloadQr">💾 تحميل صورة QR</button>
+                            <a class="btn btn-outline" id="openDirBtn" href="/directory.html" target="_blank" data-i18n="btnOpenDir">🌐 فتح صفحة الدليل الشامل</a>
                         </div>
                     </div>
-                    <div class="qr-box-white">
-                        <img class="global-qr-img" src="" alt="Global QR">
-                        <span>الدليل الطبي الشامل</span>
+                    <div class="qr-frame-box">
+                        <img class="global-qr-img" src="" alt="Global QR Code">
+                        <span data-i18n="qrBadgeLabel">الدليل الطبي الشامل</span>
                     </div>
                 </div>
 
-                <!-- إضافة عيادة جديدة -->
+                <!-- نموذج إضافة عيادة جديدة -->
                 <div class="panel-card">
                     <h3 data-i18n="addClinicTitle">➕ تسجيل عيادة جديدة وتفعيل الاشتراك</h3>
                     <div class="form-grid">
-                        <input type="text" id="cName" placeholder="اسم العيادة أو الطبيب (مثال: عيادة الشفاء)">
-                        <input type="text" id="cSlug" placeholder="الرابط المختصر بالإنجليزية (مثال: chifa-clinic)">
-                        <input type="text" id="cSpecialty" placeholder="الاختصاص الطبي (مثال: طب عام، طب أسنان...)">
-                        <input type="text" id="cPhone" placeholder="رقم الهاتف / الواتساب (مثال: 213660000000)">
-                        <input type="email" id="cEmail" placeholder="البريد الإلكتروني للعيادة">
+                        <div class="input-group">
+                            <label data-i18n="lblClinicName">اسم العيادة أو الطبيب:</label>
+                            <input type="text" id="cName" placeholder="مثال: عيادة الشفاء / د. محمد">
+                        </div>
+                        <div class="input-group">
+                            <label data-i18n="lblClinicSlug">الرابط المختصر (Slug بالإنجليزية):</label>
+                            <input type="text" id="cSlug" placeholder="مثال: chifa-clinic">
+                        </div>
+                        <div class="input-group">
+                            <label data-i18n="lblSpecialty">الاختصاص الطبي:</label>
+                            <input type="text" id="cSpecialty" placeholder="مثال: طب عام، طب أسنان، طب العيون...">
+                        </div>
+                        <div class="input-group">
+                            <label data-i18n="lblPhone">رقم الهاتف / واتساب:</label>
+                            <input type="text" id="cPhone" placeholder="مثال: 213661000000">
+                        </div>
+                        <div class="input-group">
+                            <label data-i18n="lblEmail">البريد الإلكتروني:</label>
+                            <input type="email" id="cEmail" placeholder="example@clinic.com">
+                        </div>
                     </div>
                     <button class="btn" onclick="createClinic()" data-i18n="btnCreateClinic">✔️ إنشاء العيادة وتوليد الروابط</button>
                 </div>
 
-                <!-- البحث وقائمة العيادات -->
+                <!-- قائمة العيادات والبحث والفلترة -->
                 <div class="panel-card">
                     <h3>
                         <span data-i18n="clinicsListTitle">📋 قائمة العيادات المشتركة وإدارة الروابط</span>
-                        <input type="text" id="searchClinicsInput" placeholder="🔍 ابحث عن عيادة بالاسم أو الرابط أو الاختصاص..." oninput="filterClinics()" style="max-width: 360px;">
+                        <span style="font-size: 0.9rem; color: var(--muted);" id="showingCountLabel"></span>
                     </h3>
+
+                    <div class="filter-bar">
+                        <input type="text" id="searchClinicsInput" placeholder="🔍 ابحث باسم العيادة، الرابط المختصر، الاختصاص، أو رقم الهاتف..." oninput="applyFilters()">
+                        <div class="filter-pills">
+                            <div class="filter-pill active" onclick="setStatusFilter('all', this)" data-i18n="filterAll">الكل</div>
+                            <div class="filter-pill" onclick="setStatusFilter('active', this)" data-i18n="filterActive">النشطة فقط</div>
+                            <div class="filter-pill" onclick="setStatusFilter('expired', this)" data-i18n="filterExpired">المنتهية فقط</div>
+                        </div>
+                    </div>
+
                     <div class="clinics-grid" id="clinicsContainer"></div>
                 </div>
             </div>
 
-            <!-- التبويب الثاني: الخانة المستقلة للكود الجماعي للأطباء -->
+            <!-- التبويب الثاني: صفحة الكود الجماعي المكبرة للطباعة والعرض -->
             <div id="global-qr-tab" class="tab-content">
-                <div class="panel-card" style="text-align: center; max-width: 680px; margin: 0 auto; padding: 40px;">
-                    <h2 style="color: var(--accent); margin-top: 0; font-size: 1.8rem;">📱 الكود الجماعي الموحد لجميع الأطباء</h2>
-                    <p style="color: var(--muted); font-weight: bold; font-size: 1.05rem; line-height: 1.8; margin-bottom: 25px;">
-                        عند مسح هذا الكود، يفتح للمريض الدليل الطبي الشامل الذي يعرض كل الأطباء المسجلين في تطبيقك واختصاصاتهم مع إمكانية البحث الفوري، وعند اختيار الطبيب يظهر الكود الخاص به للحجز في أجل أقصاه 48 ساعة.
+                <div class="panel-card" style="text-align: center; max-width: 700px; margin: 0 auto; padding: 40px;">
+                    <h2 style="color: var(--accent); margin-top: 0; font-size: 1.9rem;" data-i18n="globalQrCardTitle">📱 خانة الكود الجماعي للأطباء (Global QR Code)</h2>
+                    <p style="color: var(--muted); font-weight: bold; font-size: 1.05rem; line-height: 1.8; margin-bottom: 25px;" data-i18n="globalQrCardDesc">
+                        امسح هذا الكود لفتح الدليل الطبي الشامل لجميع الأطباء المسجلين في التطبيق مع اختصاصاتهم وإمكانية البحث والحجز في أجل أقصاه 48 ساعة.
                     </p>
-                    <div class="qr-box-white" style="display: inline-block; padding: 25px; margin-bottom: 25px;">
-                        <img class="global-qr-img" src="" alt="Global QR" style="width: 260px; height: 260px;">
-                        <span style="font-size: 1.1rem; margin-top: 10px; display: block;">امسح الكود للدخول إلى دليل الأطباء</span>
+                    <div class="qr-frame-box" style="display: inline-block; padding: 25px; margin-bottom: 25px;">
+                        <img class="global-qr-img" src="" alt="Global QR" style="width: 270px; height: 270px;">
+                        <span style="font-size: 1.1rem; margin-top: 10px;">ClinicFlow — الدليل الطبي الشامل</span>
                     </div>
-                    <div id="globalUrlText" style="background: var(--bg); padding: 14px; border-radius: 12px; border: 1px solid var(--border); font-family: monospace; direction: ltr; margin-bottom: 20px; color: var(--accent); font-weight: bold;"></div>
+                    <div class="global-url-bar" id="globalUrlDisplayTab" style="text-align: center;">--</div>
                     <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
                         <button class="btn" onclick="printGlobalQR()">🖨️ طباعة لوحة الكود الجماعي (A4)</button>
                         <button class="btn btn-blue" onclick="copyGlobalUrl()">📋 نسخ رابط الدليل الجماعي</button>
+                        <button class="btn btn-purple" onclick="downloadGlobalQR()">💾 تحميل صورة الكود</button>
                         <a class="btn btn-warning" href="/directory.html" target="_blank">🌐 فتح الدليل الطبي الآن</a>
                     </div>
                 </div>
@@ -213,31 +673,50 @@
     <!-- نافذة إضافة طبيب فرعي داخل عيادة -->
     <div class="modal-overlay" id="addDoctorModal">
         <div class="modal-card">
-            <h3 style="margin-top: 0; color: var(--accent);">👨‍⚕️ إضافة طبيب داخل العيادة</h3>
+            <h3 style="margin-top: 0; color: var(--accent);">👨‍⚕️ إضافة طبيب جديد داخل العيادة</h3>
             <input type="hidden" id="parentClinicId">
             <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
-                <input type="text" id="docName" placeholder="اسم الطبيب (مثال: د. كريم بن علي)">
-                <input type="text" id="docSlug" placeholder="الرابط المختصر للطبيب بالإنجليزية (مثال: dr-karim)">
-                <input type="text" id="docSpecialty" placeholder="الاختصاص الطبي (مثال: طب الأطفال، طب العيون...)">
-                <input type="text" id="docPhone" placeholder="رقم هاتف الطبيب (اختياري)">
-                <input type="email" id="docEmail" placeholder="البريد الإلكتروني للطبيب (اختياري)">
+                <div class="input-group">
+                    <label>اسم الطبيب:</label>
+                    <input type="text" id="docName" placeholder="مثال: د. كريم بن علي">
+                </div>
+                <div class="input-group">
+                    <label>الرابط المختصر للطبيب بالإنجليزية (Slug):</label>
+                    <input type="text" id="docSlug" placeholder="مثال: dr-karim">
+                </div>
+                <div class="input-group">
+                    <label>الاختصاص الطبي (يظهر في الدليل الجماعي):</label>
+                    <input type="text" id="docSpecialty" placeholder="مثال: طب الأطفال، طب العيون، طب الأسنان...">
+                </div>
+                <div class="input-group">
+                    <label>رقم هاتف الطبيب (اختياري):</label>
+                    <input type="text" id="docPhone" placeholder="مثال: 213661000000">
+                </div>
+                <div class="input-group">
+                    <label>البريد الإلكتروني للطبيب (اختياري):</label>
+                    <input type="email" id="docEmail" placeholder="doctor@clinic.com">
+                </div>
             </div>
             <div style="display: flex; gap: 10px;">
-                <button class="btn" style="flex: 1;" onclick="submitSubDoctor()">💾 حفظ الطبيب</button>
+                <button class="btn" style="flex: 1;" onclick="submitSubDoctor()">💾 حفظ وإضافة الطبيب</button>
                 <button class="btn btn-danger" style="flex: 1;" onclick="closeAddDoctorModal()">إلغاء</button>
             </div>
         </div>
     </div>
 
-    <!-- نافذة عرض كود QR الخاص بعيادة أو طبيب معين -->
+    <!-- نافذة عرض وطباعة كود QR الخاص بعيادة أو طبيب معين -->
     <div class="modal-overlay" id="singleQrModal">
         <div class="modal-card" style="text-align: center;">
             <h3 id="singleQrTitle" style="margin-top: 0; color: var(--accent);">--</h3>
-            <div class="qr-box-white" style="display: inline-block; margin: 15px 0;">
+            <p id="singleQrSpec" style="color: var(--muted); font-weight: bold; margin-top: -5px;">--</p>
+            <div class="qr-frame-box" style="display: inline-block; margin: 15px 0;">
                 <img id="singleQrImg" src="" style="width: 220px; height: 220px;">
+                <span>امسح الكود لحجز موعدك</span>
             </div>
-            <div style="display: flex; gap: 10px; margin-top: 15px;">
+            <div class="global-url-bar" id="singleQrUrl" style="text-align: center; font-size: 0.82rem;"></div>
+            <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
                 <button class="btn" style="flex: 1;" onclick="printSingleQR()">🖨️ طباعة الكود</button>
+                <button class="btn btn-blue" style="flex: 1;" onclick="copyLink(currentSingleQr.url)">📋 نسخ الرابط</button>
                 <button class="btn btn-danger" style="flex: 1;" onclick="document.getElementById('singleQrModal').style.display='none'">إغلاق</button>
             </div>
         </div>
@@ -246,13 +725,14 @@
     <div id="toastContainer" class="toast-container"></div>
 
     <script>
-        const API_BASE = window.location.origin.includes('localhost') || window.location.origin.includes('onrender.com')
+        const API_BASE = window.location.origin.startsWith('http')
             ? window.location.origin
             : 'https://clinic-server-i00s.onrender.com';
 
         let allClinicsData = [];
         let subDoctorsMap = {};
-        let currentSingleQr = { name: '', url: '' };
+        let currentStatusFilter = 'all';
+        let currentSingleQr = { name: '', specialty: '', url: '' };
 
         const dict = {
             ar: {
@@ -265,9 +745,24 @@
                 statActiveClinics: "العيادات النشطة",
                 statExpiredClinics: "اشتراكات منتهية",
                 statTotalDoctors: "إجمالي الأطباء",
+                globalQrCardTitle: "📱 خانة الكود الجماعي للأطباء (Global QR Code)",
+                globalQrCardDesc: "هذا الكود الجماعي يعرض للمرضى جميع الأطباء المسجلين في تطبيقك واختصاصاتهم مع إمكانية البحث الفوري، وعند اختيار الطبيب يظهر الكود الخاص به لحجز موعد في أجل أقصاه 48 ساعة.",
+                btnPrintGlobalQr: "🖨️ طباعة الكود الجماعي",
+                btnCopyGlobalUrl: "📋 نسخ رابط الدليل الجماعي",
+                btnDownloadQr: "💾 تحميل صورة QR",
+                btnOpenDir: "🌐 فتح صفحة الدليل الشامل",
+                qrBadgeLabel: "الدليل الطبي الشامل",
                 addClinicTitle: "➕ تسجيل عيادة جديدة وتفعيل الاشتراك",
+                lblClinicName: "اسم العيادة أو الطبيب:",
+                lblClinicSlug: "الرابط المختصر (Slug بالإنجليزية):",
+                lblSpecialty: "الاختصاص الطبي:",
+                lblPhone: "رقم الهاتف / واتساب:",
+                lblEmail: "البريد الإلكتروني:",
                 btnCreateClinic: "✔️ إنشاء العيادة وتوليد الروابط",
-                clinicsListTitle: "📋 قائمة العيادات المشتركة وإدارة الروابط"
+                clinicsListTitle: "📋 قائمة العيادات المشتركة وإدارة الروابط",
+                filterAll: "الكل",
+                filterActive: "النشطة فقط",
+                filterExpired: "المنتهية فقط"
             },
             fr: {
                 navClinics: "🏥 Gestion des Cliniques",
@@ -279,9 +774,24 @@
                 statActiveClinics: "Cliniques Actives",
                 statExpiredClinics: "Abonnements Expirés",
                 statTotalDoctors: "Total Médecins",
+                globalQrCardTitle: "📱 QR Code Global des Médecins",
+                globalQrCardDesc: "Ce QR Code global affiche tous les médecins inscrits et leurs spécialités avec recherche rapide et réservation jusqu'à 48h à l'avance.",
+                btnPrintGlobalQr: "🖨️ Imprimer QR Global",
+                btnCopyGlobalUrl: "📋 Copier le lien",
+                btnDownloadQr: "💾 Télécharger QR",
+                btnOpenDir: "🌐 Ouvrir l'Annuaire",
+                qrBadgeLabel: "Annuaire Médical",
                 addClinicTitle: "➕ Ajouter une nouvelle clinique",
+                lblClinicName: "Nom de la clinique / médecin:",
+                lblClinicSlug: "Lien court (Slug en anglais):",
+                lblSpecialty: "Spécialité médicale:",
+                lblPhone: "Téléphone / WhatsApp:",
+                lblEmail: "Email:",
                 btnCreateClinic: "✔️ Créer la clinique",
-                clinicsListTitle: "📋 Liste des Cliniques & Liens"
+                clinicsListTitle: "📋 Liste des Cliniques & Liens",
+                filterAll: "Tous",
+                filterActive: "Actives",
+                filterExpired: "Expirées"
             },
             en: {
                 navClinics: "🏥 Clinics & Subscriptions",
@@ -293,9 +803,24 @@
                 statActiveClinics: "Active Clinics",
                 statExpiredClinics: "Expired Subscriptions",
                 statTotalDoctors: "Total Doctors",
+                globalQrCardTitle: "📱 Global Doctors QR Code",
+                globalQrCardDesc: "This global QR code shows all registered doctors and their specialties with instant search and booking up to 48 hours in advance.",
+                btnPrintGlobalQr: "🖨️ Print Global QR",
+                btnCopyGlobalUrl: "📋 Copy Directory Link",
+                btnDownloadQr: "💾 Download QR Image",
+                btnOpenDir: "🌐 Open Directory Page",
+                qrBadgeLabel: "Medical Directory",
                 addClinicTitle: "➕ Register New Clinic",
+                lblClinicName: "Clinic or Doctor Name:",
+                lblClinicSlug: "Short Slug (in English):",
+                lblSpecialty: "Medical Specialty:",
+                lblPhone: "Phone / WhatsApp:",
+                lblEmail: "Email Address:",
                 btnCreateClinic: "✔️ Create Clinic & Generate Links",
-                clinicsListTitle: "📋 Subscribed Clinics & Links"
+                clinicsListTitle: "📋 Subscribed Clinics & Links",
+                filterAll: "All",
+                filterActive: "Active Only",
+                filterExpired: "Expired Only"
             }
         };
 
@@ -309,9 +834,9 @@
         }
 
         function switchTab(tabId, el) {
-            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById(tabId).style.display = 'block';
+            document.getElementById(tabId).classList.add('active');
             el.classList.add('active');
         }
 
@@ -328,36 +853,57 @@
             document.getElementById('langSelect').value = lang;
             document.querySelectorAll('[data-i18n]').forEach(el => {
                 const k = el.getAttribute('data-i18n');
-                if (dict[lang][k]) el.innerText = dict[lang][k];
+                if (dict[lang] && dict[lang][k]) el.innerText = dict[lang][k];
             });
         }
 
+        /* تهيئة الكود الجماعي للأطباء */
         function initGlobalQR() {
             const dirUrl = `${API_BASE}/directory.html`;
-            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(dirUrl)}`;
-            document.querySelectorAll('.global-qr-img').forEach(img => img.src = qrUrl);
-            document.getElementById('globalUrlText').innerText = dirUrl;
+            const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(dirUrl)}`;
+            document.querySelectorAll('.global-qr-img').forEach(img => img.src = qrApiUrl);
+            document.getElementById('globalUrlDisplay').innerText = dirUrl;
+            document.getElementById('globalUrlDisplayTab').innerText = dirUrl;
+            document.getElementById('openDirBtn').href = dirUrl;
         }
 
         function copyGlobalUrl() {
             const dirUrl = `${API_BASE}/directory.html`;
             navigator.clipboard.writeText(dirUrl);
-            showToast('✔️ تم نسخ رابط الدليل والكود الجماعي!');
+            showToast('✔️ تم نسخ رابط الدليل الجماعي للأطباء!');
+        }
+
+        async function downloadGlobalQR() {
+            const dirUrl = `${API_BASE}/directory.html`;
+            const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(dirUrl)}`;
+            try {
+                const res = await fetch(qrApiUrl);
+                const blob = await res.blob();
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'ClinicFlow-Global-QR.png';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                showToast('✔️ تم تحميل صورة الكود الجماعي بنجاح!');
+            } catch (e) {
+                window.open(qrApiUrl, '_blank');
+            }
         }
 
         function printGlobalQR() {
             const dirUrl = `${API_BASE}/directory.html`;
             const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=450x450&data=${encodeURIComponent(dirUrl)}`;
-            const w = window.open('', '', 'width=750,height=750');
+            const w = window.open('', '', 'width=780,height=780');
             w.document.write(`
                 <html dir="rtl" lang="ar">
                 <body style="font-family:'Tajawal',sans-serif; text-align:center; padding:40px;">
-                    <h1 style="color:#10b981; font-size:2.2rem; margin-bottom:10px;">🏥 الدليل الطبي الشامل — ClinicFlow</h1>
-                    <p style="font-size:1.3rem; font-weight:bold; color:#1e293b;">امسح كود QR بكاميرا هاتفك لعرض جميع الأطباء واختصاصاتهم وحجز موعدك (أقصاه 48 ساعة)</p>
-                    <div style="display:inline-block; padding:20px; border:5px solid #10b981; border-radius:24px; margin:25px 0;">
-                        <img src="${qrSrc}" style="width:320px; height:320px; display:block;">
+                    <h1 style="color:#10b981; font-size:2.3rem; margin-bottom:10px;">🏥 الدليل الطبي الشامل — ClinicFlow</h1>
+                    <p style="font-size:1.3rem; font-weight:bold; color:#1e293b;">امسح كود QR بكاميرا هاتفك لعرض جميع الأطباء واختصاصاتهم وحجز موعدك (في أجل أقصاه 48 ساعة)</p>
+                    <div style="display:inline-block; padding:22px; border:5px solid #10b981; border-radius:26px; margin:25px 0;">
+                        <img src="${qrSrc}" style="width:330px; height:330px; display:block;">
                     </div>
-                    <p style="color:#64748b; font-family:monospace; font-size:1rem;">${dirUrl}</p>
+                    <p style="color:#64748b; font-family:monospace; font-size:1.05rem; font-weight:bold;">${dirUrl}</p>
                 </body>
                 </html>
             `);
@@ -365,6 +911,7 @@
             setTimeout(() => { w.print(); w.close(); }, 600);
         }
 
+        /* تحميل العيادات والأطباء الفرعيين */
         async function loadClinics() {
             try {
                 const res = await fetch(`${API_BASE}/api/admin/clinics`);
@@ -391,27 +938,54 @@
                 document.getElementById('statExpiredClinics').innerText = expiredCount;
                 document.getElementById('statTotalDoctors').innerText = totalDocsCount;
 
-                renderClinics(allClinicsData);
+                applyFilters();
             } catch (e) {
-                showToast('❌ خطأ في تحميل قائمة العيادات');
+                showToast('❌ خطأ في الاتصال بالخادم لتحميل العيادات');
             }
         }
 
-        function filterClinics() {
+        function setStatusFilter(filterVal, pillEl) {
+            currentStatusFilter = filterVal;
+            document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+            pillEl.classList.add('active');
+            applyFilters();
+        }
+
+        function applyFilters() {
             const q = document.getElementById('searchClinicsInput').value.trim().toLowerCase();
-            const filtered = allClinicsData.filter(c =>
-                c.name.toLowerCase().includes(q) ||
-                c.slug.toLowerCase().includes(q) ||
-                (c.specialty || '').toLowerCase().includes(q) ||
-                (c.phone || '').toLowerCase().includes(q)
-            );
+            const today = new Date(new Date().setHours(0, 0, 0, 0));
+
+            const filtered = allClinicsData.filter(c => {
+                const subDate = c.subscription_end ? new Date(c.subscription_end) : new Date();
+                const isExpired = subDate < today;
+
+                if (currentStatusFilter === 'active' && isExpired) return false;
+                if (currentStatusFilter === 'expired' && !isExpired) return false;
+
+                const subDocs = subDoctorsMap[c.id] || [];
+                const subDocsMatch = subDocs.some(d =>
+                    d.name.toLowerCase().includes(q) ||
+                    d.slug.toLowerCase().includes(q) ||
+                    (d.specialty || '').toLowerCase().includes(q)
+                );
+
+                return !q ||
+                    c.name.toLowerCase().includes(q) ||
+                    c.slug.toLowerCase().includes(q) ||
+                    (c.specialty || '').toLowerCase().includes(q) ||
+                    (c.phone || '').toLowerCase().includes(q) ||
+                    (c.email || '').toLowerCase().includes(q) ||
+                    subDocsMatch;
+            });
+
+            document.getElementById('showingCountLabel').innerText = `(${filtered.length} / ${allClinicsData.length})`;
             renderClinics(filtered);
         }
 
         function renderClinics(list) {
             const container = document.getElementById('clinicsContainer');
             if (!list.length) {
-                container.innerHTML = `<p style="color:var(--muted); text-align:center; grid-column:1/-1; padding:30px;">لا توجد عيادات مطابقة.</p>`;
+                container.innerHTML = `<p style="color:var(--muted); text-align:center; grid-column:1/-1; padding:35px; font-weight:bold;">لا توجد عيادات مطابقة للبحث.</p>`;
                 return;
             }
 
@@ -421,6 +995,7 @@
             list.forEach(c => {
                 const subDate = c.subscription_end ? new Date(c.subscription_end) : new Date();
                 const isExpired = subDate < today;
+                const diffDays = Math.ceil((subDate - today) / (1000 * 60 * 60 * 24));
                 const dateStr = subDate.toLocaleDateString('ar-DZ');
                 const subDocs = subDoctorsMap[c.id] || [];
 
@@ -432,21 +1007,28 @@
                 let subDocsHtml = '';
                 if (subDocs.length > 0) {
                     subDocsHtml = `
-                        <div class="subdocs-area">
-                            <div style="font-weight:800; font-size:0.86rem; color:var(--accent); margin-bottom:8px;">👨‍⚕️ الأطباء التابعون للعيادة (${subDocs.length}):</div>
-                            ${subDocs.map(d => `
-                                <div class="subdoc-row">
+                        <div class="subdocs-box">
+                            <div style="font-weight:800; font-size:0.88rem; color:var(--accent); margin-bottom:8px;">👨‍⚕️ الأطباء التابعون للعيادة (${subDocs.length}):</div>
+                            ${subDocs.map(d => {
+                                const dDocUrl = `${API_BASE}/doctor.html?clinic=${d.slug}`;
+                                const dPatUrl = `${API_BASE}/patient.html?clinic=${d.slug}`;
+                                return `
+                                <div class="subdoc-item">
                                     <div>
-                                        <strong>${d.name}</strong>
-                                        <span style="color:var(--accent); font-size:0.8rem; font-weight:bold;"> (${d.specialty || 'طب عام'})</span>
+                                        <strong>👨‍⚕️ ${d.name}</strong>
+                                        <span class="spec-tag">🩺 ${d.specialty || 'طب عام'}</span>
+                                        <div style="font-size:0.78rem; color:var(--muted); margin-top:3px;">Slug: ${d.slug} ${d.phone ? ' | 📞 ' + d.phone : ''}</div>
                                     </div>
                                     <div style="display:flex; gap:5px; flex-wrap:wrap;">
-                                        <button class="btn btn-sm" onclick="copyLink('${API_BASE}/doctor.html?clinic=${d.slug}')">📋 رابط الطبيب</button>
-                                        <button class="btn btn-sm btn-blue" onclick="openSingleQrModal('${d.name}', '${API_BASE}/patient.html?clinic=${d.slug}')">📱 QR</button>
-                                        <button class="btn btn-sm btn-danger" onclick="deleteSubDoctor('${d.id}')">🗑️</button>
+                                        <button class="btn btn-sm" onclick="copyLink('${dDocUrl}')">📋 رابط الطبيب</button>
+                                        <a class="btn btn-sm btn-blue" href="${dDocUrl}" target="_blank">فتح</a>
+                                        <button class="btn btn-sm btn-warning" onclick="openSingleQrModal('${d.name}', '${d.specialty || 'طب عام'}', '${dPatUrl}')">📱 QR الطبيب</button>
+                                        <button class="btn btn-sm btn-whatsapp" onclick="sendWhatsAppLinks('${d.name}', '${d.slug}', '${d.phone || c.phone || ''}')">💬</button>
+                                        <button class="btn btn-sm btn-danger" onclick="deleteSubDoctor('${d.id}')" title="حذف الطبيب وإيقاف رابطه">🗑️</button>
                                     </div>
                                 </div>
-                            `).join('')}
+                                `;
+                            }).join('')}
                         </div>
                     `;
                 }
@@ -454,46 +1036,53 @@
                 html += `
                     <div class="clinic-card">
                         <div>
-                            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; border-bottom:1px dashed var(--border); padding-bottom:12px;">
+                            <div class="clinic-top">
                                 <div>
-                                    <h3 style="margin:0 0 5px; font-size:1.25rem;">🏥 ${c.name}</h3>
-                                    <span style="font-size:0.85rem; color:var(--accent); font-weight:800;">🩺 ${c.specialty || 'طب عام'}</span>
-                                    <div style="font-size:0.8rem; color:var(--muted); margin-top:4px;">
-                                        Slug: <strong>${c.slug}</strong> ${c.phone ? ` | 📞 ${c.phone}` : ''}
+                                    <h3 style="margin:0 0 4px; font-size:1.25rem; border:none; padding:0; color:var(--text);">🏥 ${c.name}</h3>
+                                    <span class="spec-tag">🩺 ${c.specialty || 'طب عام'}</span>
+                                    <div style="font-size:0.82rem; color:var(--muted); margin-top:6px; line-height:1.5;">
+                                        🔗 Slug: <strong>${c.slug}</strong>
+                                        ${c.phone ? `<br>📞 ${c.phone}` : ''}
+                                        ${c.email ? `<br>✉️ ${c.email}` : ''}
                                     </div>
                                 </div>
-                                <span class="badge ${isExpired ? 'badge-expired' : 'badge-active'}">
-                                    ${isExpired ? 'منتهي' : 'نشط'} (${dateStr})
-                                </span>
+                                <div style="text-align:left;">
+                                    <span class="badge ${isExpired ? 'badge-expired' : 'badge-active'}">
+                                        ${isExpired ? '⛔ منتهي' : `✅ نشط (${diffDays} يوم)`}
+                                    </span>
+                                    <div style="font-size:0.78rem; color:var(--muted); margin-top:5px; text-align:center; font-weight:bold;">📅 ${dateStr}</div>
+                                </div>
                             </div>
 
-                            <div class="links-list" style="margin-top:12px;">
-                                <div class="link-item">
+                            <!-- روابط العيادة الأربعة -->
+                            <div class="links-box" style="margin-top:12px;">
+                                <div class="link-row">
                                     <span>👨‍⚕️ <strong>لوحة الطبيب:</strong></span>
-                                    <div style="display:flex; gap:6px;">
+                                    <div class="link-actions">
                                         <button class="btn btn-sm" onclick="copyLink('${docUrl}')">نسخ</button>
                                         <a class="btn btn-sm btn-blue" href="${docUrl}" target="_blank">فتح</a>
                                     </div>
                                 </div>
-                                <div class="link-item">
-                                    <span>📺 <strong>شاشة العرض + QR:</strong></span>
-                                    <div style="display:flex; gap:6px;">
+                                <div class="link-row">
+                                    <span>📺 <strong>شاشة التلفاز + QR:</strong></span>
+                                    <div class="link-actions">
                                         <button class="btn btn-sm" onclick="copyLink('${tvUrl}')">نسخ</button>
                                         <a class="btn btn-sm btn-blue" href="${tvUrl}" target="_blank">فتح</a>
                                     </div>
                                 </div>
-                                <div class="link-item">
+                                <div class="link-row">
                                     <span>🖥️ <strong>مكتب الاستقبال:</strong></span>
-                                    <div style="display:flex; gap:6px;">
+                                    <div class="link-actions">
                                         <button class="btn btn-sm" onclick="copyLink('${recUrl}')">نسخ</button>
                                         <a class="btn btn-sm btn-blue" href="${recUrl}" target="_blank">فتح</a>
                                     </div>
                                 </div>
-                                <div class="link-item">
+                                <div class="link-row">
                                     <span>📱 <strong>صفحة المريض + QR:</strong></span>
-                                    <div style="display:flex; gap:6px;">
+                                    <div class="link-actions">
                                         <button class="btn btn-sm" onclick="copyLink('${patUrl}')">نسخ</button>
-                                        <button class="btn btn-sm btn-warning" onclick="openSingleQrModal('${c.name}', '${patUrl}')">QR</button>
+                                        <a class="btn btn-sm btn-blue" href="${patUrl}" target="_blank">فتح</a>
+                                        <button class="btn btn-sm btn-warning" onclick="openSingleQrModal('${c.name}', '${c.specialty || 'طب عام'}', '${patUrl}')">📱 QR</button>
                                     </div>
                                 </div>
                             </div>
@@ -501,16 +1090,22 @@
                             ${subDocsHtml}
                         </div>
 
+                        <!-- أزرار التحكم والتجديد والمشاركة -->
                         <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
                             <div style="display:flex; gap:6px; flex-wrap:wrap;">
                                 <button class="btn btn-sm" style="flex:1;" onclick="renewClinic('${c.id}', 1)">+ شهر</button>
+                                <button class="btn btn-sm" style="flex:1;" onclick="renewClinic('${c.id}', 3)">+ 3 أشهر</button>
                                 <button class="btn btn-sm" style="flex:1;" onclick="renewClinic('${c.id}', 6)">+ 6 أشهر</button>
                                 <button class="btn btn-sm" style="flex:1;" onclick="renewClinic('${c.id}', 12)">+ سنة</button>
-                                <button class="btn btn-sm btn-blue" style="flex:1;" onclick="openAddDoctorModal('${c.id}')">+ إضافة طبيب</button>
                             </div>
                             <div style="display:flex; gap:6px; flex-wrap:wrap;">
-                                <button class="btn btn-sm btn-whatsapp" style="flex:1;" onclick="sendWhatsAppLinks('${c.name}', '${c.slug}', '${c.phone || ''}')">💬 إرسال عبر واتساب</button>
-                                <button class="btn btn-sm btn-danger" onclick="deleteClinic('${c.id}')">🗑️ حذف العيادة</button>
+                                <button class="btn btn-sm btn-blue" style="flex:1;" onclick="openAddDoctorModal('${c.id}')">👨‍⚕️ + إضافة طبيب</button>
+                                <button class="btn btn-sm btn-purple" style="flex:1;" onclick="copyAllClinicLinks('${c.name}', '${c.slug}')">📋 نسخ كل الروابط</button>
+                            </div>
+                            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                                <button class="btn btn-sm btn-whatsapp" style="flex:1;" onclick="sendWhatsAppLinks('${c.name}', '${c.slug}', '${c.phone || ''}')">💬 واتساب</button>
+                                <button class="btn btn-sm btn-warning" style="flex:1;" onclick="sendEmailLinks('${c.name}', '${c.slug}', '${c.email || ''}')">✉️ إيميل</button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteClinic('${c.id}')">🗑️ حذف</button>
                             </div>
                         </div>
                     </div>
@@ -525,23 +1120,23 @@
             showToast('✔️ تم نسخ الرابط بنجاح!');
         }
 
-        function openSingleQrModal(name, url) {
-            currentSingleQr = { name, url };
-            document.getElementById('singleQrTitle').innerText = `📱 كود QR — ${name}`;
-            document.getElementById('singleQrImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url)}`;
-            document.getElementById('singleQrModal').style.display = 'flex';
+        function buildClinicMessage(name, slug) {
+            return `مرحباً بكم في نظام ClinicFlow 🏥 (${name})\n\n` +
+                   `👨‍⚕️ رابط لوحة الطبيب:\n${API_BASE}/doctor.html?clinic=${slug}\n\n` +
+                   `📺 رابط شاشة التلفاز + QR:\n${API_BASE}/tv.html?clinic=${slug}\n\n` +
+                   `🖥️ رابط مكتب الاستقبال:\n${API_BASE}/reception.html?clinic=${slug}\n\n` +
+                   `📱 رابط حجز المريض:\n${API_BASE}/patient.html?clinic=${slug}\n\n` +
+                   `🌐 الدليل الطبي الشامل:\n${API_BASE}/directory.html`;
         }
 
-        function printSingleQR() {
-            const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(currentSingleQr.url)}`;
-            const w = window.open('', '', 'width=700,height=700');
-            w.document.write(`<html dir="rtl" lang="ar"><body style="font-family:'Tajawal',sans-serif;text-align:center;padding:40px;"><h1 style="color:#10b981;">${currentSingleQr.name}</h1><p style="font-size:1.2rem;font-weight:bold;">امسح الكود لحجز تذكرتك ومتابعة دورك مباشرة</p><img src="${qrSrc}" style="width:300px;height:300px;border:4px solid #10b981;padding:15px;border-radius:20px;"></body></html>`);
-            w.document.close();
-            setTimeout(() => { w.print(); w.close(); }, 500);
+        function copyAllClinicLinks(name, slug) {
+            const msg = buildClinicMessage(name, slug);
+            navigator.clipboard.writeText(msg);
+            showToast(`✔️ تم نسخ جميع روابط (${name}) دفعة واحدة!`);
         }
 
         function sendWhatsAppLinks(name, slug, phone) {
-            const msg = `مرحباً بكم في نظام ClinicFlow 🏥 (${name})\n\n👨‍⚕️ رابط لوحة الطبيب:\n${API_BASE}/doctor.html?clinic=${slug}\n\n📺 رابط شاشة التلفاز:\n${API_BASE}/tv.html?clinic=${slug}\n\n🖥️ رابط مكتب الاستقبال:\n${API_BASE}/reception.html?clinic=${slug}\n\n📱 رابط حجز المريض:\n${API_BASE}/patient.html?clinic=${slug}`;
+            const msg = buildClinicMessage(name, slug);
             const cleanPhone = (phone || '').replace(/[^0-9]/g, '');
             const waUrl = cleanPhone
                 ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`
@@ -549,12 +1144,46 @@
             window.open(waUrl, '_blank');
         }
 
+        function sendEmailLinks(name, slug, email) {
+            const subject = `روابط تفعيل نظام ClinicFlow — ${name}`;
+            const body = buildClinicMessage(name, slug);
+            window.location.href = `mailto:${email || ''}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        }
+
+        function openSingleQrModal(name, specialty, url) {
+            currentSingleQr = { name, specialty, url };
+            document.getElementById('singleQrTitle').innerText = `📱 كود QR — ${name}`;
+            document.getElementById('singleQrSpec').innerText = `🩺 الاختصاص: ${specialty}`;
+            document.getElementById('singleQrUrl').innerText = url;
+            document.getElementById('singleQrImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url)}`;
+            document.getElementById('singleQrModal').style.display = 'flex';
+        }
+
+        function printSingleQR() {
+            const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=420x420&data=${encodeURIComponent(currentSingleQr.url)}`;
+            const w = window.open('', '', 'width=720,height=720');
+            w.document.write(`
+                <html dir="rtl" lang="ar">
+                <body style="font-family:'Tajawal',sans-serif;text-align:center;padding:40px;">
+                    <h1 style="color:#10b981;margin-bottom:5px;">${currentSingleQr.name}</h1>
+                    <h3 style="color:#64748b;margin-top:0;">🩺 ${currentSingleQr.specialty}</h3>
+                    <p style="font-size:1.2rem;font-weight:bold;">امسح الكود بكاميرا هاتفك لحجز تذكرتك ومتابعة دورك مباشرة</p>
+                    <img src="${qrSrc}" style="width:310px;height:310px;border:4px solid #10b981;padding:15px;border-radius:22px;margin:20px 0;">
+                    <p style="font-family:monospace;color:#64748b;">${currentSingleQr.url}</p>
+                </body>
+                </html>
+            `);
+            w.document.close();
+            setTimeout(() => { w.print(); w.close(); }, 500);
+        }
+
         function exportCSVReport() {
-            if (!allClinicsData.length) return showToast('لا توجد بيانات لتصديرها');
-            let csv = '\uFEFFاسم العيادة,الرابط المختصر,الاختصاص,الهاتف,البريد الإلكتروني,تاريخ انتهاء الاشتراك,عدد الأطباء الفرعيين\n';
+            if (!allClinicsData.length) return showToast('⚠️ لا توجد بيانات لتصديرها');
+            let csv = '\uFEFFاسم العيادة,الرابط المختصر,الاختصاص الطبي,رقم الهاتف,البريد الإلكتروني,تاريخ انتهاء الاشتراك,عدد الأطباء الفرعيين\n';
             allClinicsData.forEach(c => {
                 const subDate = c.subscription_end ? new Date(c.subscription_end).toLocaleDateString('ar-DZ') : '';
-                csv += `"${c.name}","${c.slug}","${c.specialty || 'طب عام'}","${c.phone || ''}","${c.email || ''}","${subDate}","${c.doctors_count || 0}"\n`;
+                const subCount = (subDoctorsMap[c.id] || []).length;
+                csv += `"${c.name}","${c.slug}","${c.specialty || 'طب عام'}","${c.phone || ''}","${c.email || ''}","${subDate}","${subCount}"\n`;
             });
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const a = document.createElement('a');
@@ -563,7 +1192,7 @@
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
-            showToast('✔️ تم تحميل تقرير العيادات Clinic_Report.csv');
+            showToast('✔️ تم تحميل التقرير Clinic_Report.csv بنجاح');
         }
 
         async function createClinic() {
@@ -573,30 +1202,38 @@
             const phone = document.getElementById('cPhone').value.trim();
             const email = document.getElementById('cEmail').value.trim();
 
-            if (!name || !slug) return showToast('⚠️ يرجى كتابة اسم العيادة والرابط المختصر');
+            if (!name || !slug) return showToast('⚠️ يرجى إدخال اسم العيادة والرابط المختصر');
 
-            const res = await fetch(`${API_BASE}/api/clinics`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, slug, specialty, phone, email })
-            });
-            if (res.ok) {
-                ['cName', 'cSlug', 'cSpecialty', 'cPhone', 'cEmail'].forEach(id => document.getElementById(id).value = '');
-                showToast('✔️ تم إنشاء العيادة بنجاح');
-                loadClinics();
-            } else {
-                showToast('❌ الرابط المختصر مستخدم مسبقاً');
+            try {
+                const res = await fetch(`${API_BASE}/api/clinics`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, slug, specialty, phone, email })
+                });
+                if (res.ok) {
+                    ['cName', 'cSlug', 'cSpecialty', 'cPhone', 'cEmail'].forEach(id => document.getElementById(id).value = '');
+                    showToast('✔️ تم إنشاء العيادة وتفعيل اشتراكها بنجاح!');
+                    loadClinics();
+                } else {
+                    showToast('❌ الرابط المختصر مستخدم مسبقاً، اختر رابطاً آخر');
+                }
+            } catch (e) {
+                showToast('❌ خطأ في الاتصال بالخادم');
             }
         }
 
         async function renewClinic(clinic_id, months) {
-            await fetch(`${API_BASE}/api/admin/renew`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ clinic_id, months })
-            });
-            showToast(`✔️ تم تجديد الاشتراك لمدة ${months} شهر`);
-            loadClinics();
+            try {
+                await fetch(`${API_BASE}/api/admin/renew`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ clinic_id, months })
+                });
+                showToast(`✔️ تم تمديد اشتراك العيادة لمدة ${months} شهر!`);
+                loadClinics();
+            } catch (e) {
+                showToast('❌ خطأ أثناء تجديد الاشتراك');
+            }
         }
 
         function openAddDoctorModal(clinicId) {
@@ -617,34 +1254,46 @@
             const phone = document.getElementById('docPhone').value.trim();
             const email = document.getElementById('docEmail').value.trim();
 
-            if (!name || !slug) return showToast('⚠️ اسم الطبيب والرابط المختصر مطلوبان');
+            if (!name || !slug) return showToast('⚠️ يرجى كتابة اسم الطبيب والرابط المختصر');
 
-            const res = await fetch(`${API_BASE}/api/admin/add-doctor`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ parent_id, name, slug, specialty, phone, email })
-            });
-            if (res.ok) {
-                closeAddDoctorModal();
-                showToast('✔️ تم إضافة الطبيب بنجاح');
-                loadClinics();
-            } else {
-                showToast('❌ الرابط المختصر للطبيب مستخدم مسبقاً');
+            try {
+                const res = await fetch(`${API_BASE}/api/admin/add-doctor`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ parent_id, name, slug, specialty, phone, email })
+                });
+                if (res.ok) {
+                    closeAddDoctorModal();
+                    showToast('✔️ تمت إضافة الطبيب وإدراجه في الدليل الجماعي!');
+                    loadClinics();
+                } else {
+                    showToast('❌ الرابط المختصر للطبيب مستخدم مسبقاً');
+                }
+            } catch (e) {
+                showToast('❌ خطأ في الاتصال بالخادم');
             }
         }
 
         async function deleteSubDoctor(id) {
-            if (!confirm('تأكيد حذف هذا الطبيب؟ سيتوقف رابطه عن العمل فوراً.')) return;
-            await fetch(`${API_BASE}/api/admin/doctors/${id}`, { method: 'DELETE' });
-            showToast('✔️ تم حذف الطبيب وإيقاف رابطه');
-            loadClinics();
+            if (!confirm('هل أنت متأكد من حذف هذا الطبيب؟ سيتوقف الرابط الخاص به عن العمل فوراً.')) return;
+            try {
+                await fetch(`${API_BASE}/api/admin/doctors/${id}`, { method: 'DELETE' });
+                showToast('✔️ تم حذف الطبيب وإيقاف رابطه عن العمل فوراً');
+                loadClinics();
+            } catch (e) {
+                showToast('❌ خطأ أثناء الحذف');
+            }
         }
 
         async function deleteClinic(id) {
-            if (!confirm('تأكيد حذف العيادة وجميع الأطباء التابعين لها؟')) return;
-            await fetch(`${API_BASE}/api/admin/clinics/${id}`, { method: 'DELETE' });
-            showToast('✔️ تم حذف العيادة نهائياً');
-            loadClinics();
+            if (!confirm('هل أنت متأكد من حذف هذه العيادة وجميع الأطباء التابعين لها؟ ستتوقف جميع روابطهم فوراً.')) return;
+            try {
+                await fetch(`${API_BASE}/api/admin/clinics/${id}`, { method: 'DELETE' });
+                showToast('✔️ تم حذف العيادة وإيقاف جميع روابطها نهائياً');
+                loadClinics();
+            } catch (e) {
+                showToast('❌ خطأ أثناء حذف العيادة');
+            }
         }
 
         window.onload = () => {
