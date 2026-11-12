@@ -82,7 +82,7 @@ const initDB = async () => {
         }
 
         await ensureArchiveTable();
-        console.log("✅ قاعدة البيانات والأرشيف والدليل الطبي جاهزون بالكامل!");
+        console.log("✅ قاعدة البيانات جاهزة بالكامل!");
     } catch (e) {
         console.error("❌ خطأ في تهيئة قاعدة البيانات:", e.message);
     }
@@ -125,7 +125,7 @@ app.post('/api/doctor/set-specialty', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// --- مسارات الدليل الطبي الجماعي (Global Directory & 48h Booking Preview) ---
+// --- مسارات الدليل الطبي الجماعي وحجز 48 ساعة ---
 app.get('/api/directory/doctors', async (req, res) => {
     try {
         const clinicsRes = await db.query(`
@@ -214,7 +214,7 @@ app.get('/api/directory/preview/:clinic_slug', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// --- مسار إيقاف وتفعيل الطابور مؤقتاً من طرف الطبيب ---
+// --- مسار إيقاف وتفعيل الطابور مؤقتاً ---
 app.post('/api/queue/toggle-status', async (req, res) => {
     try {
         const { clinic_slug } = req.body;
@@ -260,7 +260,6 @@ app.post('/api/tickets', async (req, res) => {
             return res.status(403).json({ error: 'اشتراك العيادة منتهي.' });
         }
 
-        // التحقق من أن تاريخ الحجز لا يتجاوز 48 ساعة (اليوم أو غداً أو بعد غد)
         let targetDateQuery = await db.query(`SELECT CURRENT_DATE::text as target_date`);
         if (booking_date) {
             const checkDate = await db.query(`
@@ -509,34 +508,43 @@ app.post('/api/admin/renew', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// دالة مساعدة لحذف جميع التذاكر والطوابير والأرشيف المرتبط بعيادة أو طبيب قبل حذفه
+async function deepDeleteClinicById(clinicId) {
+    const docRes = await db.query('SELECT id, slug FROM clinics WHERE id::text = $1::text', [clinicId]);
+    if (docRes.rows.length === 0) return null;
+    const { id, slug } = docRes.rows[0];
+
+    await db.query('DELETE FROM tickets WHERE queue_id IN (SELECT id FROM queues WHERE clinic_id = $1)', [id]);
+    await db.query('DELETE FROM queues WHERE clinic_id = $1', [id]);
+    try { await db.query('DELETE FROM patient_records WHERE clinic_slug = $1', [slug]); } catch (e) {}
+    await db.query('DELETE FROM clinics WHERE id = $1', [id]);
+    io.emit('doctor_deleted', { clinic_slug: slug });
+    return slug;
+}
+
+// حذف عيادة كاملة مع جميع الأطباء التابعين لها
 app.delete('/api/admin/clinics/:id', async (req, res) => {
     try {
-        const subDocs = await db.query('SELECT slug FROM clinics WHERE parent_id::text = $1::text OR id::text = $1::text', [req.params.id]);
-        await db.query('DELETE FROM clinics WHERE parent_id::text = $1::text', [req.params.id]);
-        await db.query('DELETE FROM clinics WHERE id::text = $1::text', [req.params.id]);
-        subDocs.rows.forEach(r => {
-            io.emit('doctor_deleted', { clinic_slug: r.slug });
-        });
-        res.json({ message: 'تم الحذف بنجاح' });
+        const subDocs = await db.query('SELECT id FROM clinics WHERE parent_id::text = $1::text', [req.params.id]);
+        for (let doc of subDocs.rows) {
+            await deepDeleteClinicById(doc.id);
+        }
+        await deepDeleteClinicById(req.params.id);
+        res.json({ message: 'تم حذف العيادة وجميع بياناتها بنجاح' });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// حذف طبيب فرعي وإيقاف رابطه فوراً
 app.delete('/api/admin/doctors/:id', async (req, res) => {
     try {
-        const docRes = await db.query('SELECT slug FROM clinics WHERE id::text = $1::text', [req.params.id]);
-        await db.query('DELETE FROM clinics WHERE id::text = $1::text', [req.params.id]);
-        if (docRes.rows.length > 0) {
-            const deletedSlug = docRes.rows[0].slug;
-            await db.query('DELETE FROM patient_records WHERE clinic_slug = $1', [deletedSlug]);
-            io.emit('doctor_deleted', { clinic_slug: deletedSlug });
-        }
-        res.json({ message: 'تم الحذف بنجاح' });
+        await deepDeleteClinicById(req.params.id);
+        res.json({ message: 'تم حذف الطبيب وإيقاف رابطه بنجاح' });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.get('/api/admin/clinic-doctors-links/:main_id', async (req, res) => {
     try {
-        const docs = await db.query('SELECT id, name, slug, phone, email, specialty FROM clinics WHERE parent_id::text = $1::text', [req.params.main_id]);
+        const docs = await db.query('SELECT id, name, slug, phone, email, specialty FROM clinics WHERE parent_id::text = $1::text ORDER BY id ASC', [req.params.main_id]);
         res.json(docs.rows);
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
