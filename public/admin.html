@@ -857,7 +857,6 @@
             });
         }
 
-        /* تهيئة الكود الجماعي للأطباء */
         function initGlobalQR() {
             const dirUrl = `${API_BASE}/directory.html`;
             const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(dirUrl)}`;
@@ -911,7 +910,6 @@
             setTimeout(() => { w.print(); w.close(); }, 600);
         }
 
-        /* تحميل العيادات والأطباء الفرعيين */
         async function loadClinics() {
             try {
                 const res = await fetch(`${API_BASE}/api/admin/clinics`);
@@ -1188,11 +1186,11 @@
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = 'Clinic_Report.csv';
+            a.download = 'Clinic Report.csv';
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
-            showToast('✔️ تم تحميل التقرير Clinic_Report.csv بنجاح');
+            showToast('✔️ تم تحميل التقرير Clinic Report.csv بنجاح');
         }
 
         async function createClinic() {
