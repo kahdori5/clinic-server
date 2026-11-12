@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ClinicFlow - لوحة تحكم الأدمن الشاملة</title>
+    <title>ClinicFlow - لوحة تحكم الأدمن</title>
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/3063/3063063.png">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
     <style>
@@ -139,8 +139,9 @@
             gap: 16px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.03);
             transition: 0.25s;
+            cursor: pointer;
         }
-        .stat-card:hover { transform: translateY(-4px); }
+        .stat-card:hover { transform: translateY(-4px); border-color: var(--accent); }
         .stat-icon {
             font-size: 2.2rem;
             background: var(--bg);
@@ -163,74 +164,6 @@
             font-size: 2rem;
             color: var(--text);
             line-height: 1;
-        }
-
-        /* خانة الكود الجماعي للأطباء (Global QR Section) */
-        .global-qr-card {
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.14), rgba(59, 130, 246, 0.08));
-            border: 2px solid var(--accent);
-            border-radius: 24px;
-            padding: 28px;
-            margin-bottom: 28px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 25px;
-            flex-wrap: wrap;
-            box-shadow: 0 12px 30px rgba(16, 185, 129, 0.08);
-        }
-        .global-qr-details {
-            flex: 1;
-            min-width: 280px;
-        }
-        .global-qr-details h2 {
-            margin: 0 0 10px;
-            color: var(--accent);
-            font-size: 1.55rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .global-qr-details p {
-            margin: 0 0 16px;
-            color: var(--text);
-            font-size: 1rem;
-            line-height: 1.7;
-            font-weight: 500;
-        }
-        .global-url-bar {
-            background: var(--card);
-            border: 1px solid var(--border);
-            padding: 11px 15px;
-            border-radius: 12px;
-            font-family: monospace;
-            font-size: 0.92rem;
-            color: var(--accent);
-            margin-bottom: 16px;
-            direction: ltr;
-            text-align: left;
-            word-break: break-all;
-            font-weight: bold;
-        }
-        .qr-frame-box {
-            background: #ffffff;
-            padding: 15px;
-            border-radius: 20px;
-            border: 4px solid var(--accent);
-            text-align: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.12);
-        }
-        .qr-frame-box img {
-            width: 165px;
-            height: 165px;
-            display: block;
-            margin: 0 auto 6px;
-        }
-        .qr-frame-box span {
-            color: #0f172a;
-            font-weight: 800;
-            font-size: 0.85rem;
-            display: block;
         }
 
         /* البطاقات العامة والنماذج */
@@ -321,7 +254,7 @@
             border-radius: 9px;
         }
 
-        /* شريط البحث والفلترة */
+        /* شريط البحث والفلترة في صفحة قائمة العيادات */
         .filter-bar {
             display: flex;
             gap: 12px;
@@ -331,7 +264,10 @@
         }
         .filter-bar input {
             flex: 1;
-            min-width: 250px;
+            min-width: 260px;
+            padding: 15px 18px;
+            font-size: 1rem;
+            border: 2px solid var(--border);
         }
         .filter-pills {
             display: flex;
@@ -339,7 +275,7 @@
             flex-wrap: wrap;
         }
         .filter-pill {
-            padding: 10px 16px;
+            padding: 11px 18px;
             border-radius: 12px;
             background: var(--bg);
             border: 1px solid var(--border);
@@ -347,7 +283,7 @@
             font-weight: bold;
             cursor: pointer;
             transition: 0.2s;
-            font-size: 0.9rem;
+            font-size: 0.92rem;
         }
         .filter-pill.active, .filter-pill:hover {
             background: var(--accent);
@@ -451,6 +387,35 @@
         }
         .subdoc-item:last-child { margin-bottom: 0; }
 
+        .qr-frame-box {
+            background: #ffffff;
+            padding: 15px;
+            border-radius: 20px;
+            border: 4px solid var(--accent);
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+        }
+        .qr-frame-box span {
+            color: #0f172a;
+            font-weight: 800;
+            font-size: 0.85rem;
+            display: block;
+        }
+        .global-url-bar {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            padding: 11px 15px;
+            border-radius: 12px;
+            font-family: monospace;
+            font-size: 0.92rem;
+            color: var(--accent);
+            margin-bottom: 16px;
+            direction: ltr;
+            text-align: center;
+            word-break: break-all;
+            font-weight: bold;
+        }
+
         /* النوافذ المنبثقة */
         .modal-overlay {
             position: fixed;
@@ -499,7 +464,8 @@
         @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 
         .tab-content { display: none; }
-        .tab-content.active { display: block; }
+        .tab-content.active { display: block; animation: fadeIn 0.25s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
         @media (max-width: 900px) {
             body { flex-direction: column; overflow: auto; }
@@ -510,17 +476,18 @@
 </head>
 <body>
 
-    <!-- القائمة الجانبية -->
+    <!-- القائمة الجانبية مقسمة بوضوح -->
     <div class="sidebar">
         <div>
             <div class="logo">🛡️ Clinic<span>Flow</span><br><span style="font-size: 0.85rem; color: var(--muted); font-weight: 500;">Super Admin Panel</span></div>
             <div style="margin-top: 20px; display: flex; flex-direction: column; width: 100%;">
-                <div class="nav-item active" onclick="switchTab('clinics-tab', this)" data-i18n="navClinics">🏥 إدارة العيادات والاشتراكات</div>
-                <div class="nav-item" onclick="switchTab('global-qr-tab', this)" data-i18n="navGlobalQr">📱 الكود الجماعي للأطباء (QR)</div>
-                <a class="nav-item" href="/directory.html" target="_blank" style="color: var(--accent);">🌐 فتح الدليل الطبي الشامل</a>
+                <div class="nav-item active" id="navManageBtn" onclick="switchTab('manage-clinic-tab', this)" data-i18n="navManage">🏥 إدارة وإضافة العيادات</div>
+                <div class="nav-item" id="navListBtn" onclick="switchTab('clinics-list-tab', this)" data-i18n="navClinicsList">📋 قائمة العيادات والبحث</div>
+                <div class="nav-item" id="navQrBtn" onclick="switchTab('global-qr-tab', this)" data-i18n="navGlobalQr">📱 الكود الجماعي (QR)</div>
+                <a class="nav-item" href="/directory.html" target="_blank" style="color: var(--accent);">🌐 صفحة دليل العيادات والبحث العام</a>
             </div>
         </div>
-        <div style="padding: 20px; text-align: center; color: var(--muted); font-size: 0.82rem;">ClinicFlow SaaS v3.6</div>
+        <div style="padding: 20px; text-align: center; color: var(--muted); font-size: 0.82rem;">ClinicFlow SaaS v3.7</div>
     </div>
 
     <!-- المحتوى الرئيسي -->
@@ -542,30 +509,30 @@
 
         <div class="content-scroll">
 
-            <!-- بطاقات الإحصائيات العامة -->
+            <!-- بطاقات الإحصائيات العامة (الضغط عليها يفتح قائمة العيادات والبحث مباشرة) -->
             <div class="stats-grid">
-                <div class="stat-card">
+                <div class="stat-card" onclick="openListWithFilter('all')">
                     <div class="stat-icon">🏥</div>
                     <div class="stat-info">
                         <span data-i18n="statTotalClinics">إجمالي العيادات</span>
                         <strong id="statTotalClinics">0</strong>
                     </div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" onclick="openListWithFilter('active')">
                     <div class="stat-icon">✅</div>
                     <div class="stat-info">
                         <span data-i18n="statActiveClinics">العيادات النشطة</span>
                         <strong id="statActiveClinics" style="color: var(--accent);">0</strong>
                     </div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" onclick="openListWithFilter('expired')">
                     <div class="stat-icon">⚠️</div>
                     <div class="stat-info">
                         <span data-i18n="statExpiredClinics">اشتراكات منتهية</span>
                         <strong id="statExpiredClinics" style="color: var(--danger);">0</strong>
                     </div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" onclick="openListWithFilter('all')">
                     <div class="stat-icon">👨‍⚕️</div>
                     <div class="stat-info">
                         <span data-i18n="statTotalDoctors">إجمالي الأطباء</span>
@@ -574,33 +541,13 @@
                 </div>
             </div>
 
-            <!-- التبويب الأول: إدارة العيادات + خانة الكود الجماعي -->
-            <div id="clinics-tab" class="tab-content active">
-
-                <!-- الخانة الخاصة بالكود الجماعي للأطباء (Global QR Code) -->
-                <div class="global-qr-card">
-                    <div class="global-qr-details">
-                        <h2 data-i18n="globalQrCardTitle">📱 خانة الكود الجماعي للأطباء (Global QR Code)</h2>
-                        <p data-i18n="globalQrCardDesc">
-                            هذا الكود الجماعي يعرض للمرضى <strong>جميع الأطباء المسجلين في تطبيقك واختصاصاتهم</strong> مع إمكانية البحث الفوري، وعند اختيار الطبيب يظهر الكود الخاص به لحجز موعد في أجل أقصاه <strong>48 ساعة</strong>.
-                        </p>
-                        <div class="global-url-bar" id="globalUrlDisplay">--</div>
-                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                            <button class="btn" onclick="printGlobalQR()" data-i18n="btnPrintGlobalQr">🖨️ طباعة الكود الجماعي</button>
-                            <button class="btn btn-blue" onclick="copyGlobalUrl()" data-i18n="btnCopyGlobalUrl">📋 نسخ رابط الدليل الجماعي</button>
-                            <button class="btn btn-purple" onclick="downloadGlobalQR()" data-i18n="btnDownloadQr">💾 تحميل صورة QR</button>
-                            <a class="btn btn-outline" id="openDirBtn" href="/directory.html" target="_blank" data-i18n="btnOpenDir">🌐 فتح صفحة الدليل الشامل</a>
-                        </div>
-                    </div>
-                    <div class="qr-frame-box">
-                        <img class="global-qr-img" src="" alt="Global QR Code">
-                        <span data-i18n="qrBadgeLabel">الدليل الطبي الشامل</span>
-                    </div>
-                </div>
-
-                <!-- نموذج إضافة عيادة جديدة -->
+            <!-- الصفحة 1: إدارة وإضافة العيادات (تم نزع الكود الجماعي منها تماماً) -->
+            <div id="manage-clinic-tab" class="tab-content active">
                 <div class="panel-card">
-                    <h3 data-i18n="addClinicTitle">➕ تسجيل عيادة جديدة وتفعيل الاشتراك</h3>
+                    <h3>
+                        <span data-i18n="addClinicTitle">➕ تسجيل عيادة جديدة وتفعيل الاشتراك</span>
+                        <button class="btn btn-sm btn-outline" onclick="switchTab('clinics-list-tab', document.getElementById('navListBtn'))">📋 الانتقال لقائمة العيادات والبحث ⬅️</button>
+                    </h3>
                     <div class="form-grid">
                         <div class="input-group">
                             <label data-i18n="lblClinicName">اسم العيادة أو الطبيب:</label>
@@ -623,22 +570,27 @@
                             <input type="email" id="cEmail" placeholder="example@clinic.com">
                         </div>
                     </div>
-                    <button class="btn" onclick="createClinic()" data-i18n="btnCreateClinic">✔️ إنشاء العيادة وتوليد الروابط</button>
+                    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                        <button class="btn" onclick="createClinic()" data-i18n="btnCreateClinic">✔️ إنشاء العيادة وتوليد الروابط</button>
+                        <button class="btn btn-blue" onclick="switchTab('clinics-list-tab', document.getElementById('navListBtn'))">🔍 عرض قائمة العيادات والبحث</button>
+                    </div>
                 </div>
+            </div>
 
-                <!-- قائمة العيادات والبحث والفلترة -->
+            <!-- الصفحة 2 الإضافية: قائمة العيادات وإمكانية البحث والفلترة -->
+            <div id="clinics-list-tab" class="tab-content">
                 <div class="panel-card">
                     <h3>
-                        <span data-i18n="clinicsListTitle">📋 قائمة العيادات المشتركة وإدارة الروابط</span>
-                        <span style="font-size: 0.9rem; color: var(--muted);" id="showingCountLabel"></span>
+                        <span data-i18n="clinicsListTitle">📋 قائمة العيادات المشتركة والبحث الشامل</span>
+                        <span style="font-size: 0.95rem; color: var(--muted);" id="showingCountLabel"></span>
                     </h3>
 
                     <div class="filter-bar">
-                        <input type="text" id="searchClinicsInput" placeholder="🔍 ابحث باسم العيادة، الرابط المختصر، الاختصاص، أو رقم الهاتف..." oninput="applyFilters()">
+                        <input type="text" id="searchClinicsInput" placeholder="🔍 ابحث باسم العيادة، الطبيب، الرابط المختصر، الاختصاص، أو رقم الهاتف..." oninput="applyFilters()">
                         <div class="filter-pills">
-                            <div class="filter-pill active" onclick="setStatusFilter('all', this)" data-i18n="filterAll">الكل</div>
-                            <div class="filter-pill" onclick="setStatusFilter('active', this)" data-i18n="filterActive">النشطة فقط</div>
-                            <div class="filter-pill" onclick="setStatusFilter('expired', this)" data-i18n="filterExpired">المنتهية فقط</div>
+                            <div class="filter-pill active" id="pillAll" onclick="setStatusFilter('all', this)" data-i18n="filterAll">الكل</div>
+                            <div class="filter-pill" id="pillActive" onclick="setStatusFilter('active', this)" data-i18n="filterActive">النشطة فقط</div>
+                            <div class="filter-pill" id="pillExpired" onclick="setStatusFilter('expired', this)" data-i18n="filterExpired">المنتهية فقط</div>
                         </div>
                     </div>
 
@@ -646,23 +598,23 @@
                 </div>
             </div>
 
-            <!-- التبويب الثاني: صفحة الكود الجماعي المكبرة للطباعة والعرض -->
+            <!-- الصفحة 3: الكود الجماعي للأطباء في صفحته المستقلة فقط -->
             <div id="global-qr-tab" class="tab-content">
                 <div class="panel-card" style="text-align: center; max-width: 700px; margin: 0 auto; padding: 40px;">
-                    <h2 style="color: var(--accent); margin-top: 0; font-size: 1.9rem;" data-i18n="globalQrCardTitle">📱 خانة الكود الجماعي للأطباء (Global QR Code)</h2>
+                    <h2 style="color: var(--accent); margin-top: 0; font-size: 1.9rem;" data-i18n="globalQrCardTitle">📱 الكود الجماعي للأطباء (Global QR Code)</h2>
                     <p style="color: var(--muted); font-weight: bold; font-size: 1.05rem; line-height: 1.8; margin-bottom: 25px;" data-i18n="globalQrCardDesc">
-                        امسح هذا الكود لفتح الدليل الطبي الشامل لجميع الأطباء المسجلين في التطبيق مع اختصاصاتهم وإمكانية البحث والحجز في أجل أقصاه 48 ساعة.
+                        امسح هذا الكود لفتح الصفحة الإضافية للدليل الطبي الشامل التي تعرض قائمة العيادات والأطباء واختصاصاتهم مع إمكانية البحث والحجز في أجل أقصاه 48 ساعة.
                     </p>
                     <div class="qr-frame-box" style="display: inline-block; padding: 25px; margin-bottom: 25px;">
-                        <img class="global-qr-img" src="" alt="Global QR" style="width: 270px; height: 270px;">
+                        <img class="global-qr-img" src="" alt="Global QR" style="width: 270px; height: 270px; display: block; margin: 0 auto;">
                         <span style="font-size: 1.1rem; margin-top: 10px;">ClinicFlow — الدليل الطبي الشامل</span>
                     </div>
-                    <div class="global-url-bar" id="globalUrlDisplayTab" style="text-align: center;">--</div>
+                    <div class="global-url-bar" id="globalUrlDisplayTab">--</div>
                     <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
                         <button class="btn" onclick="printGlobalQR()">🖨️ طباعة لوحة الكود الجماعي (A4)</button>
                         <button class="btn btn-blue" onclick="copyGlobalUrl()">📋 نسخ رابط الدليل الجماعي</button>
                         <button class="btn btn-purple" onclick="downloadGlobalQR()">💾 تحميل صورة الكود</button>
-                        <a class="btn btn-warning" href="/directory.html" target="_blank">🌐 فتح الدليل الطبي الآن</a>
+                        <a class="btn btn-warning" href="/directory.html" target="_blank">🌐 فتح صفحة قائمة العيادات للمرضى</a>
                     </div>
                 </div>
             </div>
@@ -685,7 +637,7 @@
                     <input type="text" id="docSlug" placeholder="مثال: dr-karim">
                 </div>
                 <div class="input-group">
-                    <label>الاختصاص الطبي (يظهر في الدليل الجماعي):</label>
+                    <label>الاختصاص الطبي:</label>
                     <input type="text" id="docSpecialty" placeholder="مثال: طب الأطفال، طب العيون، طب الأسنان...">
                 </div>
                 <div class="input-group">
@@ -710,10 +662,10 @@
             <h3 id="singleQrTitle" style="margin-top: 0; color: var(--accent);">--</h3>
             <p id="singleQrSpec" style="color: var(--muted); font-weight: bold; margin-top: -5px;">--</p>
             <div class="qr-frame-box" style="display: inline-block; margin: 15px 0;">
-                <img id="singleQrImg" src="" style="width: 220px; height: 220px;">
+                <img id="singleQrImg" src="" style="width: 220px; height: 220px; display: block;">
                 <span>امسح الكود لحجز موعدك</span>
             </div>
-            <div class="global-url-bar" id="singleQrUrl" style="text-align: center; font-size: 0.82rem;"></div>
+            <div class="global-url-bar" id="singleQrUrl" style="font-size: 0.82rem;"></div>
             <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
                 <button class="btn" style="flex: 1;" onclick="printSingleQR()">🖨️ طباعة الكود</button>
                 <button class="btn btn-blue" style="flex: 1;" onclick="copyLink(currentSingleQr.url)">📋 نسخ الرابط</button>
@@ -736,8 +688,9 @@
 
         const dict = {
             ar: {
-                navClinics: "🏥 إدارة العيادات والاشتراكات",
-                navGlobalQr: "📱 الكود الجماعي للأطباء (QR)",
+                navManage: "🏥 إدارة وإضافة العيادات",
+                navClinicsList: "📋 قائمة العيادات والبحث",
+                navGlobalQr: "📱 الكود الجماعي (QR)",
                 adminHeader: "لوحة تحكم المدير العام",
                 btnExportCsv: "📥 تحميل تقرير العيادات (CSV)",
                 btnTheme: "🌓 الوضع الليلي",
@@ -745,13 +698,8 @@
                 statActiveClinics: "العيادات النشطة",
                 statExpiredClinics: "اشتراكات منتهية",
                 statTotalDoctors: "إجمالي الأطباء",
-                globalQrCardTitle: "📱 خانة الكود الجماعي للأطباء (Global QR Code)",
-                globalQrCardDesc: "هذا الكود الجماعي يعرض للمرضى جميع الأطباء المسجلين في تطبيقك واختصاصاتهم مع إمكانية البحث الفوري، وعند اختيار الطبيب يظهر الكود الخاص به لحجز موعد في أجل أقصاه 48 ساعة.",
-                btnPrintGlobalQr: "🖨️ طباعة الكود الجماعي",
-                btnCopyGlobalUrl: "📋 نسخ رابط الدليل الجماعي",
-                btnDownloadQr: "💾 تحميل صورة QR",
-                btnOpenDir: "🌐 فتح صفحة الدليل الشامل",
-                qrBadgeLabel: "الدليل الطبي الشامل",
+                globalQrCardTitle: "📱 الكود الجماعي للأطباء (Global QR Code)",
+                globalQrCardDesc: "امسح هذا الكود لفتح الصفحة الإضافية للدليل الطبي الشامل التي تعرض قائمة العيادات والأطباء واختصاصاتهم مع إمكانية البحث والحجز في أجل أقصاه 48 ساعة.",
                 addClinicTitle: "➕ تسجيل عيادة جديدة وتفعيل الاشتراك",
                 lblClinicName: "اسم العيادة أو الطبيب:",
                 lblClinicSlug: "الرابط المختصر (Slug بالإنجليزية):",
@@ -759,14 +707,15 @@
                 lblPhone: "رقم الهاتف / واتساب:",
                 lblEmail: "البريد الإلكتروني:",
                 btnCreateClinic: "✔️ إنشاء العيادة وتوليد الروابط",
-                clinicsListTitle: "📋 قائمة العيادات المشتركة وإدارة الروابط",
+                clinicsListTitle: "📋 قائمة العيادات المشتركة والبحث الشامل",
                 filterAll: "الكل",
                 filterActive: "النشطة فقط",
                 filterExpired: "المنتهية فقط"
             },
             fr: {
-                navClinics: "🏥 Gestion des Cliniques",
-                navGlobalQr: "📱 QR Code Global (Annuaire)",
+                navManage: "🏥 Ajouter une Clinique",
+                navClinicsList: "📋 Liste des Cliniques & Recherche",
+                navGlobalQr: "📱 QR Code Global",
                 adminHeader: "Panneau Super Admin",
                 btnExportCsv: "📥 Exporter Rapport (CSV)",
                 btnTheme: "🌓 Mode Sombre",
@@ -775,12 +724,7 @@
                 statExpiredClinics: "Abonnements Expirés",
                 statTotalDoctors: "Total Médecins",
                 globalQrCardTitle: "📱 QR Code Global des Médecins",
-                globalQrCardDesc: "Ce QR Code global affiche tous les médecins inscrits et leurs spécialités avec recherche rapide et réservation jusqu'à 48h à l'avance.",
-                btnPrintGlobalQr: "🖨️ Imprimer QR Global",
-                btnCopyGlobalUrl: "📋 Copier le lien",
-                btnDownloadQr: "💾 Télécharger QR",
-                btnOpenDir: "🌐 Ouvrir l'Annuaire",
-                qrBadgeLabel: "Annuaire Médical",
+                globalQrCardDesc: "Scannez ce code pour ouvrir l'annuaire médical complet avec recherche et réservation sous 48h.",
                 addClinicTitle: "➕ Ajouter une nouvelle clinique",
                 lblClinicName: "Nom de la clinique / médecin:",
                 lblClinicSlug: "Lien court (Slug en anglais):",
@@ -788,13 +732,14 @@
                 lblPhone: "Téléphone / WhatsApp:",
                 lblEmail: "Email:",
                 btnCreateClinic: "✔️ Créer la clinique",
-                clinicsListTitle: "📋 Liste des Cliniques & Liens",
+                clinicsListTitle: "📋 Liste des Cliniques & Recherche",
                 filterAll: "Tous",
                 filterActive: "Actives",
                 filterExpired: "Expirées"
             },
             en: {
-                navClinics: "🏥 Clinics & Subscriptions",
+                navManage: "🏥 Add & Manage Clinics",
+                navClinicsList: "📋 Clinics List & Search",
                 navGlobalQr: "📱 Global Doctors QR",
                 adminHeader: "Super Admin Dashboard",
                 btnExportCsv: "📥 Download Report (CSV)",
@@ -804,12 +749,7 @@
                 statExpiredClinics: "Expired Subscriptions",
                 statTotalDoctors: "Total Doctors",
                 globalQrCardTitle: "📱 Global Doctors QR Code",
-                globalQrCardDesc: "This global QR code shows all registered doctors and their specialties with instant search and booking up to 48 hours in advance.",
-                btnPrintGlobalQr: "🖨️ Print Global QR",
-                btnCopyGlobalUrl: "📋 Copy Directory Link",
-                btnDownloadQr: "💾 Download QR Image",
-                btnOpenDir: "🌐 Open Directory Page",
-                qrBadgeLabel: "Medical Directory",
+                globalQrCardDesc: "Scan this code to open the full directory of clinics and doctors with search and 48h booking.",
                 addClinicTitle: "➕ Register New Clinic",
                 lblClinicName: "Clinic or Doctor Name:",
                 lblClinicSlug: "Short Slug (in English):",
@@ -817,7 +757,7 @@
                 lblPhone: "Phone / WhatsApp:",
                 lblEmail: "Email Address:",
                 btnCreateClinic: "✔️ Create Clinic & Generate Links",
-                clinicsListTitle: "📋 Subscribed Clinics & Links",
+                clinicsListTitle: "📋 Subscribed Clinics List & Search",
                 filterAll: "All",
                 filterActive: "Active Only",
                 filterExpired: "Expired Only"
@@ -837,7 +777,13 @@
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
-            el.classList.add('active');
+            if (el) el.classList.add('active');
+        }
+
+        function openListWithFilter(filterVal) {
+            switchTab('clinics-list-tab', document.getElementById('navListBtn'));
+            const pillMap = { all: 'pillAll', active: 'pillActive', expired: 'pillExpired' };
+            setStatusFilter(filterVal, document.getElementById(pillMap[filterVal]));
         }
 
         function toggleTheme() {
@@ -861,9 +807,7 @@
             const dirUrl = `${API_BASE}/directory.html`;
             const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(dirUrl)}`;
             document.querySelectorAll('.global-qr-img').forEach(img => img.src = qrApiUrl);
-            document.getElementById('globalUrlDisplay').innerText = dirUrl;
             document.getElementById('globalUrlDisplayTab').innerText = dirUrl;
-            document.getElementById('openDirBtn').href = dirUrl;
         }
 
         function copyGlobalUrl() {
@@ -945,7 +889,7 @@
         function setStatusFilter(filterVal, pillEl) {
             currentStatusFilter = filterVal;
             document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
-            pillEl.classList.add('active');
+            if (pillEl) pillEl.classList.add('active');
             applyFilters();
         }
 
@@ -1210,8 +1154,9 @@
                 });
                 if (res.ok) {
                     ['cName', 'cSlug', 'cSpecialty', 'cPhone', 'cEmail'].forEach(id => document.getElementById(id).value = '');
-                    showToast('✔️ تم إنشاء العيادة وتفعيل اشتراكها بنجاح!');
-                    loadClinics();
+                    showToast('✔️ تم إنشاء العيادة بنجاح! جاري عرضها في القائمة...');
+                    await loadClinics();
+                    switchTab('clinics-list-tab', document.getElementById('navListBtn'));
                 } else {
                     showToast('❌ الرابط المختصر مستخدم مسبقاً، اختر رابطاً آخر');
                 }
