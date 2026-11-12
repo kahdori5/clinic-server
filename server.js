@@ -13,22 +13,6 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-const ensureArchiveTable = async () => {
-    await db.query(`
-        CREATE TABLE IF NOT EXISTS patient_records (
-            id SERIAL PRIMARY KEY,
-            clinic_slug TEXT NOT NULL,
-            patient_name TEXT NOT NULL,
-            age TEXT DEFAULT '',
-            blood_type TEXT DEFAULT '',
-            allergies TEXT DEFAULT '',
-            chronic_diseases TEXT DEFAULT '',
-            notes TEXT DEFAULT '',
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-    `);
-};
-
 const initDB = async () => {
     try {
         await db.query(`
@@ -45,8 +29,6 @@ const initDB = async () => {
                 password VARCHAR(255) DEFAULT NULL,
                 specialty VARCHAR(255) DEFAULT 'طب عام'
             );
-        `);
-        await db.query(`
             CREATE TABLE IF NOT EXISTS queues (
                 id SERIAL PRIMARY KEY,
                 clinic_id INTEGER REFERENCES clinics(id) ON DELETE CASCADE,
@@ -56,8 +38,6 @@ const initDB = async () => {
                 last_issued_number INTEGER DEFAULT 0,
                 UNIQUE(clinic_id, queue_date)
             );
-        `);
-        await db.query(`
             CREATE TABLE IF NOT EXISTS tickets (
                 id SERIAL PRIMARY KEY,
                 queue_id INTEGER REFERENCES queues(id) ON DELETE CASCADE,
@@ -65,6 +45,17 @@ const initDB = async () => {
                 ticket_number INTEGER NOT NULL,
                 status VARCHAR(50) DEFAULT 'waiting',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+            CREATE TABLE IF NOT EXISTS patient_records (
+                id SERIAL PRIMARY KEY,
+                clinic_slug TEXT NOT NULL,
+                patient_name TEXT NOT NULL,
+                age TEXT DEFAULT '',
+                blood_type TEXT DEFAULT '',
+                allergies TEXT DEFAULT '',
+                chronic_diseases TEXT DEFAULT '',
+                notes TEXT DEFAULT '',
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         `);
 
@@ -78,18 +69,21 @@ const initDB = async () => {
             `ALTER TABLE clinics ADD COLUMN IF NOT EXISTS specialty VARCHAR(255) DEFAULT 'طب عام';`
         ];
         for (let q of clinicCols) {
-            try { await db.query(q); } catch (e) { try { await db.query(q.replace('IF NOT EXISTS ', '')); } catch(err){} }
+            try { await db.query(q); } catch (e) {}
         }
 
-        await ensureArchiveTable();
-        console.log("✅ قاعدة البيانات جاهزة بالكامل!");
+        await db.query(`CREATE INDEX IF NOT EXISTS idx_clinics_slug ON clinics(slug);`);
+        await db.query(`CREATE INDEX IF NOT EXISTS idx_clinics_parent ON clinics(parent_id);`);
+        await db.query(`CREATE INDEX IF NOT EXISTS idx_queues_clinic_date ON queues(clinic_id, queue_date);`);
+        await db.query(`CREATE INDEX IF NOT EXISTS idx_records_slug ON patient_records(clinic_slug);`);
+
+        console.log("🚀 قاعدة البيانات جاهزة ومُسرّعة بالكامل!");
     } catch (e) {
         console.error("❌ خطأ في تهيئة قاعدة البيانات:", e.message);
     }
 };
 initDB();
 
-// --- مسارات الحماية والاختصاص والتحقق من صلاحية رابط الطبيب ---
 app.get('/api/doctor/auth-status/:slug', async (req, res) => {
     try {
         const clinic = await db.query('SELECT password, specialty FROM clinics WHERE slug = $1', [req.params.slug]);
@@ -125,14 +119,17 @@ app.post('/api/doctor/set-specialty', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// --- مسارات الدليل الطبي الجماعي وحجز 48 ساعة ---
 app.get('/api/directory/doctors', async (req, res) => {
     try {
         const clinicsRes = await db.query(`
             SELECT c.id, c.name, c.slug, c.specialty, c.phone, c.is_main, c.parent_id, c.subscription_end,
-                   p.name as parent_clinic_name, p.subscription_end as parent_sub
+                   p.name as parent_clinic_name, p.subscription_end as parent_sub,
+                   COALESCE(q.current_number, 0) as current_number,
+                   COALESCE(q.last_issued_number, 0) + 1 as next_ticket_today,
+                   COALESCE(q.status, 'active') as status
             FROM clinics c
             LEFT JOIN clinics p ON c.parent_id::text = p.id::text
+            LEFT JOIN queues q ON q.clinic_id = c.id AND q.queue_date = CURRENT_DATE
             ORDER BY c.created_at DESC
         `);
 
@@ -143,23 +140,11 @@ app.get('/api/directory/doctors', async (req, res) => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        let directoryList = [];
+        const directoryList = [];
         for (let row of clinicsRes.rows) {
             if (row.is_main && parentIdsWithSubDocs.has(String(row.id))) continue;
-
             const effectiveSub = (!row.is_main && row.parent_sub) ? row.parent_sub : row.subscription_end;
             if (effectiveSub && new Date(effectiveSub) < today) continue;
-
-            const q = await db.query('SELECT id, current_number, last_issued_number, status FROM queues WHERE clinic_id = $1 AND queue_date = CURRENT_DATE', [row.id]);
-            let currentNum = 0;
-            let nextTicket = 1;
-            let status = 'active';
-
-            if (q.rows.length > 0) {
-                currentNum = q.rows[0].current_number;
-                nextTicket = q.rows[0].last_issued_number + 1;
-                status = q.rows[0].status;
-            }
 
             directoryList.push({
                 id: row.id,
@@ -168,9 +153,9 @@ app.get('/api/directory/doctors', async (req, res) => {
                 specialty: row.specialty || 'طب عام',
                 phone: row.phone || '',
                 clinic_name: row.parent_clinic_name || row.name,
-                current_number: currentNum,
-                next_ticket_today: nextTicket,
-                status: status
+                current_number: parseInt(row.current_number || 0),
+                next_ticket_today: parseInt(row.next_ticket_today || 1),
+                status: row.status
             });
         }
 
@@ -185,7 +170,7 @@ app.get('/api/directory/preview/:clinic_slug', async (req, res) => {
         if (clinic.rows.length === 0) return res.status(404).json({ error: 'الطبيب غير موجود' });
 
         const targetDateRes = date
-            ? await db.query('SELECT ($1::date) as d, (CURRENT_DATE) as today, (CURRENT_DATE + INTERVAL \'2 days\')::date as max_d', [date])
+            ? await db.query('SELECT ($1::date) as d, CURRENT_DATE as today, (CURRENT_DATE + INTERVAL \'2 days\')::date as max_d', [date])
             : await db.query('SELECT CURRENT_DATE as d, CURRENT_DATE as today, (CURRENT_DATE + INTERVAL \'2 days\')::date as max_d');
 
         const { d, today, max_d } = targetDateRes.rows[0];
@@ -195,13 +180,7 @@ app.get('/api/directory/preview/:clinic_slug', async (req, res) => {
 
         const q = await db.query('SELECT current_number, last_issued_number, status FROM queues WHERE clinic_id = $1 AND queue_date = $2::date', [clinic.rows[0].id, d]);
         if (q.rows.length === 0) {
-            return res.json({
-                current_number: 0,
-                prospective_number: 1,
-                status: 'active',
-                doctor_name: clinic.rows[0].name,
-                specialty: clinic.rows[0].specialty || 'طب عام'
-            });
+            return res.json({ current_number: 0, prospective_number: 1, status: 'active', doctor_name: clinic.rows[0].name, specialty: clinic.rows[0].specialty || 'طب عام' });
         }
 
         res.json({
@@ -214,7 +193,6 @@ app.get('/api/directory/preview/:clinic_slug', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// --- مسار إيقاف وتفعيل الطابور مؤقتاً ---
 app.post('/api/queue/toggle-status', async (req, res) => {
     try {
         const { clinic_slug } = req.body;
@@ -236,7 +214,6 @@ app.post('/api/queue/toggle-status', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// --- المسارات الأساسية ---
 app.post('/api/clinics', async (req, res) => {
     try {
         const { name, slug, phone, email, specialty } = req.body;
@@ -331,7 +308,6 @@ app.post('/api/call-next', async (req, res) => {
 
 app.post('/api/patient/get', async (req, res) => {
     try {
-        await ensureArchiveTable();
         const { clinic_slug, patient_name } = req.body;
         const patient = await db.query('SELECT * FROM patient_records WHERE clinic_slug = $1 AND patient_name = $2 ORDER BY updated_at DESC LIMIT 1', [clinic_slug, patient_name]);
         if (patient.rows.length > 0) res.json(patient.rows[0]);
@@ -341,7 +317,6 @@ app.post('/api/patient/get', async (req, res) => {
 
 app.post('/api/patient/save', async (req, res) => {
     try {
-        await ensureArchiveTable();
         const { clinic_slug, patient_name, age, blood_type, allergies, chronic, notes } = req.body;
         if (!patient_name) return res.status(400).json({ error: 'اسم المريض مطلوب' });
 
@@ -357,7 +332,6 @@ app.post('/api/patient/save', async (req, res) => {
 
 app.delete('/api/patients/delete/:id', async (req, res) => {
     try {
-        await ensureArchiveTable();
         await db.query('DELETE FROM patient_records WHERE id::text = $1::text', [req.params.id]);
         res.json({ message: 'تم حذف المريض من الأرشيف بنجاح' });
     } catch (err) { res.status(500).json({ error: err.message }); }
@@ -365,7 +339,6 @@ app.delete('/api/patients/delete/:id', async (req, res) => {
 
 app.get('/api/patients/all/:clinic_slug', async (req, res) => {
     try {
-        await ensureArchiveTable();
         const patientsList = await db.query('SELECT id, patient_name, age, blood_type, allergies, chronic_diseases, notes, updated_at FROM patient_records WHERE clinic_slug = $1 ORDER BY updated_at DESC', [req.params.clinic_slug]);
         res.json(patientsList.rows);
     } catch (err) { res.status(500).json({ error: err.message }); }
@@ -373,11 +346,22 @@ app.get('/api/patients/all/:clinic_slug', async (req, res) => {
 
 app.get('/api/queue-status/:clinic_slug', async (req, res) => {
     try {
-        const clinic = await db.query('SELECT id, name FROM clinics WHERE slug = $1', [req.params.clinic_slug]);
+        const clinic = await db.query('SELECT id, name, specialty FROM clinics WHERE slug = $1', [req.params.clinic_slug]);
         if (clinic.rows.length === 0) return res.status(404).json({ error: 'deleted', message: 'هذا الرابط غير صالح أو تم حذف الطبيب' });
         
         let queue = await db.query('SELECT id, current_number, last_issued_number, status FROM queues WHERE clinic_id = $1 AND queue_date = CURRENT_DATE', [clinic.rows[0].id]);
-        if (queue.rows.length === 0) return res.json({ current_number: 0, last_issued_number: 0, waiting_count: 0, ahead_count: 0, status: 'active', doctor_name: clinic.rows[0].name });
+        if (queue.rows.length === 0) {
+            return res.json({
+                current_number: 0,
+                last_issued_number: 0,
+                waiting_count: 0,
+                ahead_count: 0,
+                my_ticket_status: 'waiting',
+                status: 'active',
+                doctor_name: clinic.rows[0].name,
+                specialty: clinic.rows[0].specialty || 'طب عام'
+            });
+        }
 
         const qId = queue.rows[0].id;
         const currentNum = queue.rows[0].current_number;
@@ -420,7 +404,8 @@ app.get('/api/queue-status/:clinic_slug', async (req, res) => {
             status: queue.rows[0].status,
             current_patient_name: currentPatientName,
             current_ticket_status: currentTicketStatus,
-            doctor_name: clinic.rows[0].name
+            doctor_name: clinic.rows[0].name,
+            specialty: clinic.rows[0].specialty || 'طب عام'
         });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -488,8 +473,19 @@ app.get('/api/clinic-doctors/:main_slug', async (req, res) => {
 
 app.get('/api/admin/clinics', async (req, res) => {
     try {
-        const clinics = await db.query(`SELECT id, name, slug, subscription_end, phone, email, specialty, (SELECT COUNT(*) FROM clinics d WHERE d.parent_id::text = c.id::text) as doctors_count FROM clinics c WHERE is_main = true OR parent_id IS NULL ORDER BY created_at DESC`);
-        res.json(clinics.rows);
+        const allRes = await db.query(`SELECT id, name, slug, subscription_end, phone, email, specialty, is_main, parent_id, created_at FROM clinics ORDER BY created_at DESC`);
+        const mainClinics = allRes.rows.filter(r => r.is_main === true || !r.parent_id);
+        const subDocs = allRes.rows.filter(r => !r.is_main && r.parent_id);
+
+        const result = mainClinics.map(c => {
+            const docs = subDocs.filter(d => String(d.parent_id) === String(c.id));
+            return {
+                ...c,
+                doctors_count: docs.length,
+                sub_doctors: docs
+            };
+        });
+        res.json(result);
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -508,7 +504,6 @@ app.post('/api/admin/renew', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// دالة مساعدة لحذف جميع التذاكر والطوابير والأرشيف المرتبط بعيادة أو طبيب قبل حذفه
 async function deepDeleteClinicById(clinicId) {
     const docRes = await db.query('SELECT id, slug FROM clinics WHERE id::text = $1::text', [clinicId]);
     if (docRes.rows.length === 0) return null;
@@ -522,7 +517,6 @@ async function deepDeleteClinicById(clinicId) {
     return slug;
 }
 
-// حذف عيادة كاملة مع جميع الأطباء التابعين لها
 app.delete('/api/admin/clinics/:id', async (req, res) => {
     try {
         const subDocs = await db.query('SELECT id FROM clinics WHERE parent_id::text = $1::text', [req.params.id]);
@@ -534,7 +528,6 @@ app.delete('/api/admin/clinics/:id', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// حذف طبيب فرعي وإيقاف رابطه فوراً
 app.delete('/api/admin/doctors/:id', async (req, res) => {
     try {
         await deepDeleteClinicById(req.params.id);
@@ -549,6 +542,7 @@ app.get('/api/admin/clinic-doctors-links/:main_id', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// تحديث حالة التذكرة (تم الكشف أو غائب) وإرسال إشعار فوري لصفحة المريض
 app.post('/api/tickets/status', async (req, res) => {
     try {
         const { clinic_slug, ticket_number, status } = req.body;
@@ -557,6 +551,7 @@ app.post('/api/tickets/status', async (req, res) => {
             const queue = await db.query('SELECT id FROM queues WHERE clinic_id = $1 AND queue_date = CURRENT_DATE', [clinic.rows[0].id]);
             if (queue.rows.length > 0) {
                 await db.query('UPDATE tickets SET status = $1 WHERE queue_id = $2 AND ticket_number = $3', [status, queue.rows[0].id, ticket_number]);
+                io.emit('ticket_status_updated', { clinic_slug, ticket_number: parseInt(ticket_number), status });
             }
         }
         res.json({ message: 'تم' });

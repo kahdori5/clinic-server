@@ -29,7 +29,6 @@
         }
         * { box-sizing: border-box; }
         
-        /* إصلاح الـ Scroll ليشتغل بحرية تامة مهما زاد عدد العيادات */
         html, body {
             font-family: 'Tajawal', sans-serif;
             background: var(--bg);
@@ -47,7 +46,6 @@
             align-items: flex-start;
         }
 
-        /* القائمة الجانبية ثابتة أثناء التمرير */
         .sidebar {
             width: 270px;
             background: var(--card);
@@ -90,7 +88,6 @@
             border-color: var(--accent);
         }
 
-        /* المحتوى الرئيسي يتمدد بحرية مع التمرير */
         .main-content {
             flex: 1;
             min-width: 0;
@@ -137,7 +134,6 @@
             flex: 1;
         }
 
-        /* بطاقات الإحصائيات */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
@@ -181,7 +177,6 @@
             line-height: 1;
         }
 
-        /* البطاقات العامة والنماذج */
         .panel-card {
             background: var(--card);
             padding: 26px;
@@ -217,7 +212,6 @@
             margin-bottom: 6px;
         }
 
-        /* الأزرار */
         .btn {
             padding: 12px 18px;
             border: none;
@@ -256,7 +250,6 @@
             border-radius: 9px;
         }
 
-        /* شريط البحث والفلترة في صفحة قائمة العيادات */
         .filter-bar {
             display: grid;
             grid-template-columns: 2fr 1fr auto;
@@ -286,7 +279,6 @@
             border-color: var(--accent);
         }
 
-        /* شبكة بطاقات العيادات */
         .clinics-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
@@ -336,7 +328,6 @@
         .badge-active { background: rgba(16, 185, 129, 0.15); color: var(--accent); }
         .badge-expired { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
 
-        /* صندوق الروابط داخل بطاقة العيادة */
         .links-box {
             background: var(--bg);
             padding: 13px;
@@ -360,7 +351,6 @@
             flex-wrap: wrap;
         }
 
-        /* قائمة الأطباء الفرعيين داخل العيادة */
         .subdocs-box {
             background: var(--bg);
             padding: 13px;
@@ -411,7 +401,6 @@
             font-weight: bold;
         }
 
-        /* النوافذ المنبثقة */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0;
@@ -435,7 +424,6 @@
             box-shadow: 0 20px 50px rgba(0,0,0,0.3);
         }
 
-        /* إشعارات Toast */
         .toast-container {
             position: fixed;
             bottom: 30px;
@@ -473,7 +461,6 @@
 <body>
 
 <div class="app-layout">
-    <!-- القائمة الجانبية -->
     <div class="sidebar">
         <div>
             <div class="logo">🛡️ Clinic<span>Flow</span><br><span style="font-size: 0.85rem; color: var(--muted); font-weight: 500;">Super Admin Panel</span></div>
@@ -484,10 +471,9 @@
                 <a class="nav-item" href="/directory.html" target="_blank" style="color: var(--accent);">🌐 صفحة دليل العيادات للمرضى</a>
             </div>
         </div>
-        <div style="padding: 20px; text-align: center; color: var(--muted); font-size: 0.82rem;">ClinicFlow SaaS v3.8</div>
+        <div style="padding: 20px; text-align: center; color: var(--muted); font-size: 0.82rem;">ClinicFlow SaaS v3.9</div>
     </div>
 
-    <!-- المحتوى الرئيسي -->
     <div class="main-content">
         <header>
             <div style="font-weight: 800; font-size: 1.3rem; display: flex; align-items: center; gap: 10px;">
@@ -506,7 +492,6 @@
 
         <div class="content-scroll">
 
-            <!-- بطاقات الإحصائيات العامة -->
             <div class="stats-grid">
                 <div class="stat-card" onclick="openListWithFilter('all')">
                     <div class="stat-icon">🏥</div>
@@ -623,7 +608,6 @@
     </div>
 </div>
 
-    <!-- نافذة إضافة طبيب فرعي داخل عيادة مع قائمة التخصصات المنسدلة -->
     <div class="modal-overlay" id="addDoctorModal">
         <div class="modal-card">
             <h3 style="margin-top: 0; color: var(--accent);">👨‍⚕️ إضافة طبيب جديد داخل العيادة</h3>
@@ -657,7 +641,6 @@
         </div>
     </div>
 
-    <!-- نافذة عرض وطباعة كود QR الخاص بعيادة أو طبيب معين -->
     <div class="modal-overlay" id="singleQrModal">
         <div class="modal-card" style="text-align: center;">
             <h3 id="singleQrTitle" style="margin-top: 0; color: var(--accent);">--</h3>
@@ -682,7 +665,6 @@
             ? window.location.origin
             : 'https://clinic-server-i00s.onrender.com';
 
-        // قائمة شاملة بجميع التخصصات الطبية
         const MEDICAL_SPECIALTIES = [
             "طب عام",
             "طب الأسنان وجراحتها",
@@ -809,6 +791,7 @@
             setTimeout(() => { w.print(); w.close(); }, 600);
         }
 
+        // جلب جميع العيادات والأطباء الفرعيين في طلب واحد فائق السرعة دون حلقات بطيئة
         async function loadClinics() {
             try {
                 const res = await fetch(`${API_BASE}/api/admin/clinics`);
@@ -824,8 +807,7 @@
                     if (subDate < today) expiredCount++;
                     else activeCount++;
 
-                    const subRes = await fetch(`${API_BASE}/api/admin/clinic-doctors-links/${c.id}`);
-                    const subDocs = await subRes.json();
+                    const subDocs = c.sub_doctors || [];
                     subDoctorsMap[c.id] = subDocs;
                     totalDocsCount += subDocs.length > 0 ? subDocs.length : 1;
                 }
@@ -958,7 +940,6 @@
                                 </div>
                             </div>
 
-                            <!-- روابط العيادة الأربعة -->
                             <div class="links-box" style="margin-top:12px;">
                                 <div class="link-row">
                                     <span>👨‍⚕️ <strong>لوحة الطبيب:</strong></span>
@@ -994,7 +975,6 @@
                             ${subDocsHtml}
                         </div>
 
-                        <!-- أزرار التحكم والتجديد والحذف -->
                         <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
                             <div style="display:flex; gap:6px; flex-wrap:wrap;">
                                 <button class="btn btn-sm" style="flex:1;" onclick="renewClinic('${c.id}', 1)">+ شهر</button>

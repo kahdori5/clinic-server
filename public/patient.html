@@ -3,157 +3,396 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>حجز تذكرة - ClinicFlow</title>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet">
+    <title>ClinicFlow - بوابة المريض وحجز الدور</title>
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/3063/3063063.png">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #f4f7f6; --card: #ffffff; --text: #2d3748; --accent: #10b981; --border: #e2e8f0; --muted: #718096; --warning: #f59e0b; --danger: #ef4444; }
-        [data-theme="dark"] { --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --accent: #10b981; --border: #334155; --muted: #94a3b8; }
-        body { font-family: 'Tajawal', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; transition: 0.3s; }
-        
-        .top-controls { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 450px; margin-bottom: 15px; }
-        .top-controls select, .theme-btn { background: var(--card); border: 1px solid var(--border); color: var(--text); padding: 8px 14px; border-radius: 12px; cursor: pointer; font-weight: bold; font-family: inherit; outline: none; width: auto; margin: 0; font-size: 0.95rem; }
+        :root {
+            --bg: #f4f7f6;
+            --card: #ffffff;
+            --text: #1e293b;
+            --accent: #10b981;
+            --border: #e2e8f0;
+            --muted: #64748b;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --blue: #3b82f6;
+        }
+        [data-theme="dark"] {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --text: #f8fafc;
+            --accent: #10b981;
+            --border: #334155;
+            --muted: #94a3b8;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            transition: 0.3s;
+        }
 
-        .header { text-align: center; margin-bottom: 20px; }
-        .header h1 { color: var(--accent); margin: 0; font-weight: 800; font-size: 2.2rem; }
-        .header p { color: var(--muted); margin-top: 5px; font-weight: bold; font-size: 1.1rem; }
+        .top-bar {
+            width: 100%;
+            max-width: 480px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .logo { font-size: 1.4rem; font-weight: 800; color: var(--text); }
+        .logo span { color: var(--accent); }
+        .controls { display: flex; gap: 8px; }
+        select, .theme-btn {
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 8px 12px;
+            border-radius: 12px;
+            font-family: inherit;
+            font-weight: bold;
+            cursor: pointer;
+            outline: none;
+        }
 
-        .main-card { background: var(--card); padding: 30px; border-radius: 24px; width: 100%; max-width: 450px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); text-align: center; border: 1px solid var(--border); box-sizing: border-box; }
-        
-        #bookingSection { display: block; animation: fadeIn 0.4s ease; }
-        select.doc-select, input { width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 12px; border: 2px solid var(--border); background: var(--bg); color: var(--text); font-family: inherit; font-size: 1.05rem; box-sizing: border-box; outline: none; transition: 0.3s; }
-        select.doc-select:focus, input:focus { border-color: var(--accent); }
-        
-        .btn { background: var(--accent); color: #ffffff !important; padding: 18px; border: none; border-radius: 12px; font-size: 1.2rem; font-weight: bold; cursor: pointer; width: 100%; transition: 0.2s; font-family: inherit; margin-bottom: 10px; }
-        .btn:hover { filter: brightness(1.1); transform: translateY(-2px); }
-        .btn-danger { background: transparent !important; color: var(--danger) !important; border: 2px solid var(--danger); }
-        .btn-danger:hover { background: var(--danger) !important; color: #ffffff !important; }
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 28px 24px;
+            width: 100%;
+            max-width: 480px;
+            text-align: center;
+            box-shadow: 0 12px 35px rgba(0,0,0,0.06);
+            animation: fadeIn 0.35s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .preview-box { background: rgba(16, 185, 129, 0.06); border: 2px dashed var(--accent); padding: 18px; border-radius: 16px; margin-bottom: 20px; display: none; text-align: start; }
-        .preview-box p { margin: 8px 0; font-size: 1.05rem; color: var(--text); font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
-        .preview-box strong { color: var(--accent); font-size: 1.4rem; }
+        .clinic-badge {
+            display: inline-block;
+            background: rgba(16, 185, 129, 0.12);
+            color: var(--accent);
+            padding: 6px 16px;
+            border-radius: 999px;
+            font-weight: 800;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
 
-        #ticketSection { display: none; animation: popIn 0.4s ease; }
-        .ticket-result { margin-top: 10px; padding: 25px; background: rgba(16, 185, 129, 0.1); border-radius: 16px; border: 2px dashed var(--accent); margin-bottom: 20px; }
-        .ticket-result h2 { margin: 10px 0 0 0; color: var(--accent); font-size: 5rem; line-height: 1; }
-        
-        .turn-alert { display: none; padding: 15px; border-radius: 14px; font-weight: 800; font-size: 1.1rem; margin-bottom: 20px; animation: pulseAlert 1.5s infinite; }
-        .turn-alert.near { background: rgba(245, 158, 11, 0.15); border: 2px solid var(--warning); color: var(--warning); }
-        .turn-alert.now { background: rgba(16, 185, 129, 0.2); border: 2px solid var(--accent); color: var(--accent); }
+        .numbers-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin: 20px 0;
+        }
+        .num-box {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 16px 12px;
+        }
+        .num-box.highlight {
+            border: 2px solid var(--accent);
+            background: rgba(16, 185, 129, 0.06);
+        }
+        .num-box span {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--muted);
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        .num-box strong {
+            font-size: 2.6rem;
+            color: var(--text);
+            line-height: 1;
+        }
+        .num-box.highlight strong { color: var(--accent); }
 
-        .live-stats { display: flex; gap: 15px; margin-bottom: 20px; }
-        .stat-box { flex: 1; background: var(--bg); border: 1px solid var(--border); padding: 15px 10px; border-radius: 16px; }
-        .stat-box span { display: block; font-size: 0.9rem; color: var(--muted); font-weight: bold; margin-bottom: 8px; }
-        .stat-box strong { display: block; font-size: 2.2rem; color: var(--text); line-height: 1; }
-        
-        .patient-name-display { font-size: 1.2rem; font-weight: bold; color: var(--text); margin-bottom: 10px; }
+        input {
+            width: 100%;
+            padding: 15px;
+            border-radius: 14px;
+            border: 2px solid var(--border);
+            background: var(--bg);
+            color: var(--text);
+            font-size: 1.05rem;
+            font-family: inherit;
+            text-align: center;
+            margin-bottom: 15px;
+            outline: none;
+            transition: 0.25s;
+        }
+        input:focus { border-color: var(--accent); }
 
-        @keyframes popIn { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-        @keyframes fadeIn { 0% { opacity: 0; } 100% { opacity: 1; } }
-        @keyframes pulseAlert { 0% { transform: scale(1); } 50% { transform: scale(1.03); } 100% { transform: scale(1); } }
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 14px;
+            background: var(--accent);
+            color: #ffffff;
+            font-size: 1.1rem;
+            font-weight: 800;
+            font-family: inherit;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-bottom: 10px;
+        }
+        .btn:hover { filter: brightness(1.08); transform: translateY(-2px); }
+        .btn-danger { background: var(--danger); }
+        .btn-blue { background: var(--blue); }
+
+        /* تنبيه اقتراب الدور */
+        .proximity-alert {
+            display: none;
+            padding: 15px;
+            border-radius: 16px;
+            font-weight: 800;
+            font-size: 1.02rem;
+            margin-bottom: 18px;
+            line-height: 1.6;
+            animation: pulse 1.5s infinite;
+        }
+        .alert-near {
+            background: rgba(245, 158, 11, 0.15);
+            border: 2px solid var(--warning);
+            color: var(--warning);
+        }
+        .alert-now {
+            background: rgba(16, 185, 129, 0.18);
+            border: 2px solid var(--accent);
+            color: var(--accent);
+        }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
+
+        /* شاشة تخطي الدور أو انتهاء الكشف الجديدة */
+        .status-screen-icon {
+            font-size: 4.2rem;
+            margin-bottom: 10px;
+            line-height: 1;
+        }
+        .status-box-skipped {
+            border: 2px solid var(--danger);
+            background: rgba(239, 68, 68, 0.08);
+            padding: 20px;
+            border-radius: 18px;
+            margin: 18px 0;
+        }
+        .status-box-completed {
+            border: 2px solid var(--accent);
+            background: rgba(16, 185, 129, 0.08);
+            padding: 20px;
+            border-radius: 18px;
+            margin: 18px 0;
+        }
+        .doctors-choice-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .doc-choice-btn {
+            background: var(--bg);
+            border: 2px solid var(--border);
+            border-radius: 14px;
+            padding: 14px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: inherit;
+            color: var(--text);
+            font-weight: 800;
+            transition: 0.2s;
+        }
+        .doc-choice-btn:hover { border-color: var(--accent); }
     </style>
 </head>
 <body>
 
-    <div class="top-controls">
-        <select id="langSelect" onchange="changeLang(this.value)">
-            <option value="ar">العربية</option>
-            <option value="fr">Français</option>
-            <option value="en">English</option>
-        </select>
-        <button class="theme-btn" onclick="toggleTheme()" data-i18n="btnTheme">🌓 الوضع الليلي</button>
-    </div>
-
-    <div class="header">
-        <h1>ClinicFlow</h1>
-        <p id="clinicTitle">نظام الحجز الذكي</p>
-    </div>
-
-    <div class="main-card">
-        
-        <div id="bookingSection">
-            <h3 style="margin-top:0; color: var(--text);" data-i18n="bookHeader">احجز تذكرتك الآن</h3>
-            
-            <label style="display: block; text-align: start; margin-bottom: 8px; font-weight: bold; color: var(--muted);" data-i18n="selectDocLbl">اختر الطبيب المعالج:</label>
-            <select id="doctorSelect" class="doc-select" onchange="previewStats()">
-                <option value="">--</option>
+    <div class="top-bar">
+        <div class="logo">🏥 Clinic<span>Flow</span></div>
+        <div class="controls">
+            <select id="langSelect" onchange="changeLang(this.value)">
+                <option value="ar">العربية</option>
+                <option value="fr">Français</option>
+                <option value="en">English</option>
             </select>
+            <button class="theme-btn" onclick="toggleTheme()">🌓</button>
+        </div>
+    </div>
 
-            <div class="preview-box" id="previewBox">
-                <p><span data-i18n="prevInside">الرقم الحالي بالداخل:</span> <strong id="prevInside">--</strong></p>
-                <p><span data-i18n="prevExpected">رقم تذكرتك المتوقع:</span> <strong id="prevExpected" style="color: var(--warning);">--</strong></p>
-                <p><span data-i18n="prevAhead">عدد المرضى قبلك:</span> <strong id="prevAhead" style="color: var(--danger);">--</strong></p>
+    <!-- شاشة اختيار الطبيب إذا كانت العيادة تضم عدة أطباء -->
+    <div class="card" id="chooseDoctorView" style="display: none;">
+        <h2 style="margin-top:0; color:var(--accent);" data-i18n="chooseDocTitle">👨‍⚕️ اختر الطبيب لحجز دورك</h2>
+        <div class="doctors-choice-list" id="doctorsChoiceContainer"></div>
+    </div>
+
+    <!-- الشاشة 1: المعاينة قبل الحجز وكتابة الاسم -->
+    <div class="card" id="bookingView">
+        <div class="clinic-badge" id="specialtyBadge">🩺 طب عام</div>
+        <h2 style="margin: 5px 0 4px;" id="doctorNameHeader">العيادة الطبية</h2>
+        <p style="color: var(--muted); margin: 0 0 15px; font-weight: 600; font-size: 0.92rem;" data-i18n="previewHint">معاينة حالة الطابور الحالي قبل تأكيد حجزك</p>
+
+        <div class="numbers-grid">
+            <div class="num-box">
+                <span data-i18n="lblCurrentInside">الرقم الحالي بالعيادة</span>
+                <strong id="preCurrentNumber">--</strong>
             </div>
-
-            <label style="display: block; text-align: start; margin-bottom: 8px; font-weight: bold; color: var(--muted);" data-i18n="nameLbl">اسم المريض:</label>
-            <input type="text" id="patientName" placeholder="أدخل اسمك الكريم هنا...">
-
-            <button class="btn" onclick="bookTicket()" data-i18n="btnBook">سحب تذكرة الحجز</button>
+            <div class="num-box highlight">
+                <span data-i18n="lblProspectiveTicket">الرقم المتوقع لحجزك</span>
+                <strong id="preProspectiveNumber">#1</strong>
+            </div>
         </div>
 
-        <div id="ticketSection">
-            <div class="patient-name-display" id="displayName">--</div>
-            
-            <div class="turn-alert" id="turnAlertBox"></div>
+        <input type="text" id="patientNameInput" placeholder="✍️ اكتب اسمك الكامل هنا قبل قطع التذكرة...">
+        <button class="btn" id="bookTicketBtn" onclick="bookTicket()" data-i18n="btnBookNow">🎟️ احجز تذكرتك الآن</button>
+    </div>
 
-            <div class="ticket-result">
-                <span style="font-size: 1.2rem; font-weight: bold; color: var(--text);" data-i18n="yourTicketLbl">رقم تذكرتك:</span>
-                <h2 id="ticketNumberDisplay">0</h2>
-            </div>
+    <!-- الشاشة 2: متابعة الدور الحي بعد الحجز -->
+    <div class="card" id="activeTicketView" style="display: none;">
+        <div class="clinic-badge" id="activeSpecialtyBadge">🩺 طب عام</div>
+        <h2 style="margin: 5px 0;" id="activeDoctorHeader">العيادة الطبية</h2>
+        <p id="welcomePatientName" style="color: var(--accent); font-weight: 800; font-size: 1.1rem; margin: 4px 0 14px;">--</p>
 
-            <div class="live-stats">
-                <div class="stat-box">
-                    <span data-i18n="insideNowLbl">الرقم بالداخل حالياً</span>
-                    <strong id="currentNumberDisplay">--</strong>
-                </div>
-                <div class="stat-box" style="background: rgba(245, 158, 11, 0.05); border-color: rgba(245, 158, 11, 0.2);">
-                    <span data-i18n="aheadOfYouLbl">أشخاص قبلك</span>
-                    <strong id="waitingCountDisplay" style="color: #f59e0b;">--</strong>
-                </div>
+        <!-- إشعار اقتراب الدور (عند بقاء 2 أو 3 مرضى أو حلول الدور) -->
+        <div id="proximityBanner" class="proximity-alert"></div>
+
+        <div class="numbers-grid">
+            <div class="num-box highlight">
+                <span data-i18n="lblMyTicket">رقم تذكرتك</span>
+                <strong id="myTicketDisplay">--</strong>
             </div>
-            
-            <button class="btn btn-danger" onclick="cancelBooking()" data-i18n="btnCancel">❌ إلغاء الحجز</button>
-            <p style="color: var(--muted); font-size: 0.9rem; font-weight: bold; margin-top: 15px;" data-i18n="savedNote">تذكرتك محفوظة في الهاتف، وستتلقى تنبيهاً عند اقتراب دورك.</p>
+            <div class="num-box">
+                <span data-i18n="lblCurrentInside">الرقم الحالي بالداخل</span>
+                <strong id="liveCurrentNumber">--</strong>
+            </div>
         </div>
 
+        <div class="num-box" style="margin-bottom: 20px;">
+            <span data-i18n="lblAheadCount">عدد المرضى المتبقين قبلك</span>
+            <strong id="aheadCountDisplay" style="font-size: 2.2rem; color: var(--blue);">0</strong>
+        </div>
+
+        <button class="btn btn-danger" onclick="cancelMyTicket()" data-i18n="btnCancelTicket">❌ إلغاء التذكرة</button>
+    </div>
+
+    <!-- الشاشة 3 (الجديدة): شاشة تخطي الدور في حالة الغياب أو انتهاء الدور والتعامل معه -->
+    <div class="card" id="turnEndedView" style="display: none;">
+        <div class="status-screen-icon" id="endedIcon">⚠️</div>
+        <h2 id="endedTitle" style="margin: 0 0 10px;">تم تخطي دورك</h2>
+        
+        <div id="endedDetailsBox" class="status-box-skipped">
+            <p id="endedMessage" style="margin: 0; font-weight: 800; font-size: 1.08rem; line-height: 1.8;"></p>
+        </div>
+
+        <div class="numbers-grid">
+            <div class="num-box">
+                <span data-i18n="lblMyTicket">رقم تذكرتك السابقة</span>
+                <strong id="endedMyTicket">--</strong>
+            </div>
+            <div class="num-box">
+                <span data-i18n="lblCurrentInside">الرقم الحالي بالعيادة</span>
+                <strong id="endedCurrentNumber">--</strong>
+            </div>
+        </div>
+
+        <button class="btn btn-blue" onclick="resetForNewBooking()" data-i18n="btnBookNewTicket">🔄 حجز تذكرة جديدة</button>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        const CLINIC_SLUG = new URLSearchParams(window.location.search).get('clinic');
-        let currentDoctorSlug = '';
+        const urlParams = new URLSearchParams(window.location.search);
+        let CLINIC_SLUG = urlParams.get('clinic') || 'default-clinic';
+
+        let myTicket = parseInt(localStorage.getItem(`ticket_${CLINIC_SLUG}`)) || null;
+        let myName = localStorage.getItem(`name_${CLINIC_SLUG}`) || '';
+        let currentLang = localStorage.getItem('pat_lang') || 'ar';
         let lastNotifiedState = '';
 
         const dict = {
             ar: {
-                btnTheme: "🌓 الوضع الليلي", bookHeader: "احجز تذكرتك الآن", selectDocLbl: "اختر الطبيب المعالج:", chooseDocOpt: "-- اختر الطبيب --",
-                prevInside: "الرقم الحالي بالداخل:", prevExpected: "رقم تذكرتك المتوقع:", prevAhead: "عدد المرضى قبلك:",
-                nameLbl: "اسم المريض:", namePlaceholder: "أدخل اسمك الكريم هنا...", btnBook: "سحب تذكرة الحجز",
-                yourTicketLbl: "رقم تذكرتك:", insideNowLbl: "الرقم بالداخل حالياً", aheadOfYouLbl: "أشخاص قبلك",
-                btnCancel: "❌ إلغاء الحجز", savedNote: "تذكرتك محفوظة في الهاتف، وستتلقى تنبيهاً عند اقتراب دورك.",
-                errSelectDoc: "يرجى اختيار الطبيب أولاً", errEnterName: "يرجى كتابة اسمك قبل قطع التذكرة", confirmCancel: "هل أنت متأكد من رغبتك في إلغاء تذكرتك؟",
-                alertNear: "🔔 اقترب دورك! بقي أمامك {n} فقط، يرجى الاستعداد.", alertNow: "📢 حان دورك الآن! تفضل بالدخول للطبيب."
+                chooseDocTitle: "👨‍⚕️ اختر الطبيب لحجز دورك",
+                previewHint: "معاينة حالة الطابور الحالي قبل تأكيد حجزك",
+                lblCurrentInside: "الرقم الحالي بالعيادة",
+                lblProspectiveTicket: "الرقم المتوقع لحجزك",
+                namePlaceholder: "✍️ اكتب اسمك الكامل هنا قبل قطع التذكرة...",
+                btnBookNow: "🎟️ احجز تذكرتك الآن",
+                pausedBtn: "⏸️ استقبال التذاكر متوقف مؤقتاً",
+                lblMyTicket: "رقم تذكرتك",
+                lblAheadCount: "عدد المرضى المتبقين قبلك",
+                btnCancelTicket: "❌ إلغاء التذكرة",
+                btnBookNewTicket: "🔄 حجز تذكرة جديدة",
+                nearAlert2: "🔔 تنبيه هام: اقترب دورك! بقي أمامك مريضان (2) فقط، يرجى الاستعداد.",
+                nearAlert3: "🔔 تنبيه: اقترب دورك! بقي أمامك 3 مرضى فقط، يرجى التواجد بالقرب من العيادة.",
+                nearAlert1: "🔔 استعد! بقي مريض واحد فقط قبلك.",
+                nowTurnAlert: "🎉 حان دورك الآن! تفضل بالدخول إلى غرفة الطبيب.",
+                skippedAbsentTitle: "⚠️ تم تخطي دورك (حالة غياب)",
+                skippedAbsentMsg: "لقد قام الطبيب بالنداء على رقم تذكرتك وتم تسجيلك في حالة غياب لعدم التواجد، لذلك تم تخطي دورك. يرجى مراجعة الاستقبال أو حجز تذكرة جديدة.",
+                completedTitle: "✅ انتهى دورك وتم الكشف بنجاح",
+                completedMsg: "تم التعامل مع دورك وإنهاء الفحص الطبي بنجاح. نتمنى لك الشفاء العاجل ودوام الصحة والعافية.",
+                passedTitle: "⏭️ تم تخطي الدور أو انتهاء الموعد",
+                passedMsg: "تجاوز رقم النداء الحالي بالعيادة رقم تذكرتك؛ إما أنه تم تخطي دورك في حالة الغياب أو تم التعامل مع دورك مسبقاً.",
+                errNameRequired: "يرجى كتابة اسمك الكامل أولاً قبل قطع التذكرة"
             },
             fr: {
-                btnTheme: "🌓 Mode Sombre", bookHeader: "Réservez votre ticket", selectDocLbl: "Choisir le médecin:", chooseDocOpt: "-- Choisir le médecin --",
-                prevInside: "Numéro actuel:", prevExpected: "Votre numéro prévu:", prevAhead: "Patients avant vous:",
-                nameLbl: "Votre nom:", namePlaceholder: "Entrez votre nom complet...", btnBook: "Prendre mon ticket",
-                yourTicketLbl: "Votre numéro:", insideNowLbl: "Numéro actuel", aheadOfYouLbl: "Avant vous",
-                btnCancel: "❌ Annuler la réservation", savedNote: "Votre ticket est sauvegardé sur votre téléphone.",
-                errSelectDoc: "Veuillez choisir un médecin", errEnterName: "Veuillez entrer votre nom", confirmCancel: "Voulez-vous vraiment annuler votre ticket ?",
-                alertNear: "🔔 Votre tour approche ! Il reste {n} patient(s) avant vous.", alertNow: "📢 C'est votre tour ! Veuillez entrer."
+                chooseDocTitle: "👨‍⚕️ Choisissez le médecin",
+                previewHint: "Aperçu de la file avant de réserver votre ticket",
+                lblCurrentInside: "Numéro Actuel",
+                lblProspectiveTicket: "Votre Numéro Prévu",
+                namePlaceholder: "✍️ Entrez votre nom complet avant de réserver...",
+                btnBookNow: "🎟️ Réserver mon ticket",
+                pausedBtn: "⏸️ Réservation suspendue",
+                lblMyTicket: "Votre Ticket",
+                lblAheadCount: "Patients avant vous",
+                btnCancelTicket: "❌ Annuler mon ticket",
+                btnBookNewTicket: "🔄 Prendre un nouveau ticket",
+                nearAlert2: "🔔 Votre tour approche ! Il ne reste que 2 patients avant vous.",
+                nearAlert3: "🔔 Votre tour approche ! Il reste 3 patients avant vous.",
+                nearAlert1: "🔔 Préparez-vous ! Il reste 1 seul patient avant vous.",
+                nowTurnAlert: "🎉 C'est votre tour ! Veuillez entrer chez le médecin.",
+                skippedAbsentTitle: "⚠️ Tour dépassé (Absent)",
+                skippedAbsentMsg: "Votre numéro a été appelé mais vous étiez absent. Votre tour a été dépassé. Veuillez contacter la réception ou prendre un nouveau ticket.",
+                completedTitle: "✅ Consultation Terminée",
+                completedMsg: "Votre tour a été traité avec succès. Nous vous souhaitons un prompt rétablissement.",
+                passedTitle: "⏭️ Tour dépassé ou déjà traité",
+                passedMsg: "Le numéro actuel a dépassé votre ticket (tour dépassé en cas d'absence ou déjà traité).",
+                errNameRequired: "Veuillez entrer votre nom complet"
             },
             en: {
-                btnTheme: "🌓 Dark Mode", bookHeader: "Book Your Ticket", selectDocLbl: "Select Doctor:", chooseDocOpt: "-- Select Doctor --",
-                prevInside: "Current Active Number:", prevExpected: "Prospective Ticket Number:", prevAhead: "Patients Ahead of You:",
-                nameLbl: "Patient Name:", namePlaceholder: "Enter your name...", btnBook: "Get Ticket",
-                yourTicketLbl: "Your Ticket:", insideNowLbl: "Current Inside", aheadOfYouLbl: "Ahead of You",
-                btnCancel: "❌ Cancel Booking", savedNote: "Your ticket is saved on your phone.",
-                errSelectDoc: "Please select a doctor first", errEnterName: "Please enter your name", confirmCancel: "Are you sure you want to cancel your booking?",
-                alertNear: "🔔 Your turn is approaching! Only {n} ahead of you.", alertNow: "📢 It is your turn now! Please proceed."
+                chooseDocTitle: "👨‍⚕️ Select a Doctor",
+                previewHint: "Live queue preview before booking your ticket",
+                lblCurrentInside: "Current Active Number",
+                lblProspectiveTicket: "Your Prospective Ticket",
+                namePlaceholder: "✍️ Enter your full name before booking...",
+                btnBookNow: "🎟️ Book Ticket Now",
+                pausedBtn: "⏸️ Queue Paused Temporarily",
+                lblMyTicket: "Your Ticket Number",
+                lblAheadCount: "Patients Ahead of You",
+                btnCancelTicket: "❌ Cancel Ticket",
+                btnBookNewTicket: "🔄 Book a New Ticket",
+                nearAlert2: "🔔 Your turn is very close! Only 2 patients ahead of you.",
+                nearAlert3: "🔔 Heads up! Only 3 patients remain ahead of you.",
+                nearAlert1: "🔔 Get ready! Only 1 patient ahead of you.",
+                nowTurnAlert: "🎉 It's your turn now! Please proceed to the doctor's room.",
+                skippedAbsentTitle: "⚠️ Turn Skipped (Marked Absent)",
+                skippedAbsentMsg: "Your ticket number was called and marked as absent. Please check with reception or book a new ticket.",
+                completedTitle: "✅ Turn Completed Successfully",
+                completedMsg: "Your appointment has been handled and completed. Wishing you a speedy recovery!",
+                passedTitle: "⏭️ Turn Skipped or Already Handled",
+                passedMsg: "The active queue number has passed your ticket (either skipped due to absence or already handled).",
+                errNameRequired: "Please enter your full name first"
             }
         };
-
-        let currentLang = localStorage.getItem('pat_lang') || 'ar';
 
         function changeLang(lang) {
             currentLang = lang;
@@ -162,182 +401,255 @@
             document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
             document.getElementById('langSelect').value = lang;
             document.querySelectorAll('[data-i18n]').forEach(el => {
-                const key = el.getAttribute('data-i18n');
-                if (dict[lang][key]) el.innerText = dict[lang][key];
+                const k = el.getAttribute('data-i18n');
+                if (dict[lang][k]) el.innerText = dict[lang][k];
             });
-            document.getElementById('patientName').placeholder = dict[lang].namePlaceholder;
-            if (document.getElementById('ticketSection').style.display === 'block') fetchLiveStats();
+            document.getElementById('patientNameInput').placeholder = dict[lang].namePlaceholder;
+            refreshQueueState();
         }
 
         function toggleTheme() {
             const isDark = document.body.getAttribute('data-theme') !== 'dark';
             document.body.setAttribute('data-theme', isDark ? 'dark' : 'light');
-            localStorage.setItem('pat_theme', isDark ? 'dark' : 'light');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
         }
-        
-        window.onload = async () => {
-            changeLang(currentLang);
-            if (localStorage.getItem('pat_theme') === 'dark') document.body.setAttribute('data-theme', 'dark');
-            if (CLINIC_SLUG) document.getElementById('clinicTitle').innerText = CLINIC_SLUG;
 
-            const savedData = localStorage.getItem('clinic_my_ticket');
-            if (savedData) {
-                const parsed = JSON.parse(savedData);
-                const today = new Date().toLocaleDateString('en-CA');
-                if (parsed.date === today && parsed.mainClinic === CLINIC_SLUG) {
-                    currentDoctorSlug = parsed.doctorSlug;
-                    document.getElementById('ticketNumberDisplay').innerText = parsed.ticketNumber;
-                    document.getElementById('displayName').innerText = `👤 ${parsed.patientName}`;
-                    document.getElementById('bookingSection').style.display = 'none';
-                    document.getElementById('ticketSection').style.display = 'block';
-                    fetchLiveStats();
-                    return; 
-                } else {
-                    localStorage.removeItem('clinic_my_ticket');
-                }
-            }
-
-            if (CLINIC_SLUG) {
-                try {
-                    const res = await fetch(`https://clinic-server-i00s.onrender.com/api/clinic-doctors/${CLINIC_SLUG}`);
-                    const doctors = await res.json();
-                    const select = document.getElementById('doctorSelect');
-                    select.innerHTML = `<option value="">${dict[currentLang].chooseDocOpt}</option>`;
-                    doctors.forEach(doc => {
-                        select.innerHTML += `<option value="${doc.slug}">${doc.name}</option>`;
-                    });
-                    // إذا كان هناك طبيب واحد فقط، يتم اختياره تلقائياً وإظهار الأرقام فوراً
-                    if (doctors.length === 1) {
-                        select.value = doctors[0].slug;
-                        previewStats();
-                    }
-                } catch (e) { console.error(e); }
-            }
-        };
-
-        async function previewStats() {
-            const docSlug = document.getElementById('doctorSelect').value;
-            const previewBox = document.getElementById('previewBox');
-            if (!docSlug) {
-                previewBox.style.display = 'none';
-                return;
-            }
+        function playAlertSound(textToSpeak) {
             try {
-                const res = await fetch(`https://clinic-server-i00s.onrender.com/api/queue-status/${docSlug}`);
+                if (navigator.vibrate) navigator.vibrate([300, 150, 300]);
+                if ('speechSynthesis' in window && textToSpeak) {
+                    const utter = new SpeechSynthesisUtterance(textToSpeak);
+                    utter.lang = currentLang === 'ar' ? 'ar-SA' : (currentLang === 'fr' ? 'fr-FR' : 'en-US');
+                    window.speechSynthesis.speak(utter);
+                }
+            } catch (e) {}
+        }
+
+        async function checkMultiDoctors() {
+            try {
+                const res = await fetch(`/api/clinic-doctors/${CLINIC_SLUG}`);
+                const docs = await res.json();
+                if (docs.length > 1 && !sessionStorage.getItem('selected_subdoc')) {
+                    document.getElementById('bookingView').style.display = 'none';
+                    document.getElementById('activeTicketView').style.display = 'none';
+                    document.getElementById('chooseDoctorView').style.display = 'block';
+                    document.getElementById('doctorsChoiceContainer').innerHTML = docs.map(d => `
+                        <button class="doc-choice-btn" onclick="selectDoctorBranch('${d.slug}')">
+                            <span>👨‍⚕️ ${d.name} <small style="color:var(--accent);">(${d.specialty || 'طب عام'})</small></span>
+                            <span style="color:var(--muted); font-size:0.85rem;">في الانتظار: ${d.waiting}</span>
+                        </button>
+                    `).join('');
+                    return true;
+                }
+            } catch (e) {}
+            return false;
+        }
+
+        function selectDoctorBranch(slug) {
+            sessionStorage.setItem('selected_subdoc', slug);
+            window.location.href = `/patient.html?clinic=${encodeURIComponent(slug)}`;
+        }
+
+        function showTurnEndedScreen(mode, currentNum) {
+            document.getElementById('bookingView').style.display = 'none';
+            document.getElementById('activeTicketView').style.display = 'none';
+            document.getElementById('turnEndedView').style.display = 'block';
+
+            document.getElementById('endedMyTicket').innerText = `#${myTicket}`;
+            document.getElementById('endedCurrentNumber').innerText = currentNum === 0 ? '--' : currentNum;
+
+            const box = document.getElementById('endedDetailsBox');
+            const icon = document.getElementById('endedIcon');
+            const title = document.getElementById('endedTitle');
+            const msg = document.getElementById('endedMessage');
+
+            if (mode === 'completed') {
+                icon.innerText = '✅';
+                title.innerText = dict[currentLang].completedTitle;
+                title.style.color = 'var(--accent)';
+                box.className = 'status-box-completed';
+                msg.innerText = dict[currentLang].completedMsg;
+            } else if (mode === 'absent') {
+                icon.innerText = '⚠️';
+                title.innerText = dict[currentLang].skippedAbsentTitle;
+                title.style.color = 'var(--danger)';
+                box.className = 'status-box-skipped';
+                msg.innerText = dict[currentLang].skippedAbsentMsg;
+            } else {
+                icon.innerText = '⏭️';
+                title.innerText = dict[currentLang].passedTitle;
+                title.style.color = 'var(--warning)';
+                box.className = 'status-box-skipped';
+                msg.innerText = dict[currentLang].passedMsg;
+            }
+        }
+
+        function resetForNewBooking() {
+            localStorage.removeItem(`ticket_${CLINIC_SLUG}`);
+            localStorage.removeItem(`name_${CLINIC_SLUG}`);
+            myTicket = null;
+            myName = '';
+            lastNotifiedState = '';
+            document.getElementById('turnEndedView').style.display = 'none';
+            document.getElementById('activeTicketView').style.display = 'none';
+            document.getElementById('bookingView').style.display = 'block';
+            refreshQueueState();
+        }
+
+        async function refreshQueueState() {
+            try {
+                const queryParam = myTicket ? `?my_ticket=${myTicket}` : '';
+                const res = await fetch(`/api/queue-status/${CLINIC_SLUG}${queryParam}`);
+                if (!res.ok) return;
                 const data = await res.json();
+
+                const docName = data.doctor_name || 'العيادة الطبية';
+                const spec = data.specialty || 'طب عام';
                 const currentNum = data.current_number || 0;
-                const lastIssued = data.last_issued_number || 0;
-                const waitingCount = data.waiting_count !== undefined ? data.waiting_count : Math.max(0, lastIssued - currentNum);
-                
-                document.getElementById('prevInside').innerText = currentNum === 0 ? '--' : currentNum;
-                document.getElementById('prevExpected').innerText = lastIssued + 1;
-                document.getElementById('prevAhead').innerText = waitingCount;
-                previewBox.style.display = 'block';
+                const prospectiveNum = (data.last_issued_number || 0) + 1;
+
+                document.getElementById('doctorNameHeader').innerText = `👨‍⚕️ ${docName}`;
+                document.getElementById('specialtyBadge').innerText = `🩺 ${spec}`;
+                document.getElementById('activeDoctorHeader').innerText = `👨‍⚕️ ${docName}`;
+                document.getElementById('activeSpecialtyBadge').innerText = `🩺 ${spec}`;
+
+                document.getElementById('preCurrentNumber').innerText = currentNum === 0 ? '--' : currentNum;
+                document.getElementById('preProspectiveNumber').innerText = `#${prospectiveNum}`;
+
+                const bookBtn = document.getElementById('bookTicketBtn');
+                if (data.status === 'paused') {
+                    bookBtn.disabled = true;
+                    bookBtn.innerText = dict[currentLang].pausedBtn;
+                    bookBtn.style.background = 'var(--warning)';
+                } else {
+                    bookBtn.disabled = false;
+                    bookBtn.innerText = dict[currentLang].btnBookNow;
+                    bookBtn.style.background = 'var(--accent)';
+                }
+
+                if (myTicket) {
+                    // إذا ألغيت التذكرة أو صفر الطابور لليوم الجديد
+                    if (data.my_ticket_status === 'cancelled' || (data.last_issued_number === 0 && currentNum === 0)) {
+                        return resetForNewBooking();
+                    }
+
+                    // 1. إذا ضغط الطبيب على "تم الكشف" (completed)
+                    if (data.my_ticket_status === 'completed') {
+                        return showTurnEndedScreen('completed', currentNum);
+                    }
+
+                    // 2. إذا ضغط الطبيب على "غائب" (absent)
+                    if (data.my_ticket_status === 'absent') {
+                        return showTurnEndedScreen('absent', currentNum);
+                    }
+
+                    // 3. إذا تخطى الطبيب رقم المريض وانتقل لمن بعده (current_number > myTicket)
+                    if (currentNum > myTicket) {
+                        return showTurnEndedScreen('passed', currentNum);
+                    }
+
+                    // إذا كان المريض لا يزال في الانتظار أو دوره الآن
+                    document.getElementById('bookingView').style.display = 'none';
+                    document.getElementById('turnEndedView').style.display = 'none';
+                    document.getElementById('activeTicketView').style.display = 'block';
+
+                    document.getElementById('welcomePatientName').innerText = `👤 ${myName}`;
+                    document.getElementById('myTicketDisplay').innerText = `#${myTicket}`;
+                    document.getElementById('liveCurrentNumber').innerText = currentNum === 0 ? '--' : currentNum;
+                    document.getElementById('aheadCountDisplay').innerText = data.ahead_count;
+
+                    const banner = document.getElementById('proximityBanner');
+                    if (currentNum === myTicket) {
+                        banner.style.display = 'block';
+                        banner.className = 'proximity-alert alert-now';
+                        banner.innerText = dict[currentLang].nowTurnAlert;
+                        if (lastNotifiedState !== 'NOW') {
+                            lastNotifiedState = 'NOW';
+                            playAlertSound(dict[currentLang].nowTurnAlert);
+                        }
+                    } else if (data.ahead_count === 1) {
+                        banner.style.display = 'block';
+                        banner.className = 'proximity-alert alert-near';
+                        banner.innerText = dict[currentLang].nearAlert1;
+                    } else if (data.ahead_count === 2) {
+                        banner.style.display = 'block';
+                        banner.className = 'proximity-alert alert-near';
+                        banner.innerText = dict[currentLang].nearAlert2;
+                        if (lastNotifiedState !== 'NEAR2') {
+                            lastNotifiedState = 'NEAR2';
+                            playAlertSound(dict[currentLang].nearAlert2);
+                        }
+                    } else if (data.ahead_count === 3) {
+                        banner.style.display = 'block';
+                        banner.className = 'proximity-alert alert-near';
+                        banner.innerText = dict[currentLang].nearAlert3;
+                        if (lastNotifiedState !== 'NEAR3') {
+                            lastNotifiedState = 'NEAR3';
+                            playAlertSound(dict[currentLang].nearAlert3);
+                        }
+                    } else {
+                        banner.style.display = 'none';
+                    }
+                } else {
+                    document.getElementById('activeTicketView').style.display = 'none';
+                    document.getElementById('turnEndedView').style.display = 'none';
+                    document.getElementById('bookingView').style.display = 'block';
+                }
             } catch (e) {}
         }
 
         async function bookTicket() {
-            currentDoctorSlug = document.getElementById('doctorSelect').value;
-            const pName = document.getElementById('patientName').value.trim();
-            
-            if (!currentDoctorSlug) return alert(dict[currentLang].errSelectDoc);
-            if (!pName) return alert(dict[currentLang].errEnterName);
+            const pName = document.getElementById('patientNameInput').value.trim();
+            if (!pName) return alert(dict[currentLang].errNameRequired);
 
             try {
-                const res = await fetch('https://clinic-server-i00s.onrender.com/api/tickets', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ clinic_slug: currentDoctorSlug, patient_name: pName })
+                const res = await fetch('/api/tickets', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ clinic_slug: CLINIC_SLUG, patient_name: pName })
                 });
                 const data = await res.json();
-                if (res.ok) {
-                    const num = data.ticket_number || data.message.match(/\d+/)[0];
-                    const ticketData = {
-                        date: new Date().toLocaleDateString('en-CA'),
-                        mainClinic: CLINIC_SLUG,
-                        doctorSlug: currentDoctorSlug,
-                        patientName: pName,
-                        ticketNumber: num
-                    };
-                    localStorage.setItem('clinic_my_ticket', JSON.stringify(ticketData));
+                if (!res.ok) return alert(data.error || 'خطأ في الحجز');
 
-                    document.getElementById('ticketNumberDisplay').innerText = num;
-                    document.getElementById('displayName').innerText = `👤 ${pName}`;
-                    document.getElementById('bookingSection').style.display = 'none';
-                    document.getElementById('ticketSection').style.display = 'block';
-                    fetchLiveStats();
-                } else { alert(data.error); }
-            } catch (e) { alert('خطأ في الاتصال بالخادم.'); }
+                myTicket = data.ticket_number;
+                myName = pName;
+                localStorage.setItem(`ticket_${CLINIC_SLUG}`, myTicket);
+                localStorage.setItem(`name_${CLINIC_SLUG}`, myName);
+                lastNotifiedState = '';
+                refreshQueueState();
+            } catch (e) {
+                alert('خطأ في الاتصال بالخادم');
+            }
         }
 
-        async function cancelBooking() {
-            if (!confirm(dict[currentLang].confirmCancel)) return;
-            const ticketNum = document.getElementById('ticketNumberDisplay').innerText;
+        async function cancelMyTicket() {
+            if (!myTicket) return;
+            if (!confirm('هل أنت متأكد من رغبتك في إلغاء تذكرتك؟')) return;
             try {
-                await fetch('https://clinic-server-i00s.onrender.com/api/tickets/cancel', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ clinic_slug: currentDoctorSlug, ticket_number: ticketNum })
+                await fetch('/api/tickets/cancel', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ clinic_slug: CLINIC_SLUG, ticket_number: myTicket })
                 });
-                localStorage.removeItem('clinic_my_ticket');
-                window.location.reload();
-            } catch (e) { alert('حدث خطأ أثناء الإلغاء'); }
-        }
-
-        function triggerNotificationSound() {
-            try {
-                const audio = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
-                audio.play().catch(() => {});
-                if (navigator.vibrate) navigator.vibrate([300, 150, 300]);
+                resetForNewBooking();
             } catch (e) {}
         }
 
-        async function fetchLiveStats() {
-            if (!currentDoctorSlug) return;
-            try {
-                const myTicket = parseInt(document.getElementById('ticketNumberDisplay').innerText);
-                const res = await fetch(`https://clinic-server-i00s.onrender.com/api/queue-status/${currentDoctorSlug}?my_ticket=${myTicket}`);
-                const data = await res.json();
-                const currentNum = data.current_number || 0;
-                const aheadCount = data.ahead_count !== undefined ? data.ahead_count : 0;
+        window.onload = async () => {
+            if (localStorage.getItem('theme') === 'dark') document.body.setAttribute('data-theme', 'dark');
+            changeLang(currentLang);
+            const hasMulti = await checkMultiDoctors();
+            if (!hasMulti) refreshQueueState();
+        };
 
-                document.getElementById('currentNumberDisplay').innerText = currentNum === 0 ? '--' : currentNum;
-                document.getElementById('waitingCountDisplay').innerText = aheadCount;
-
-                const alertBox = document.getElementById('turnAlertBox');
-                // تنبيه المريض عندما يحين دوره أو عندما يتبقى 2 أو 3 أشخاص قبله
-                if (currentNum === myTicket) {
-                    alertBox.className = 'turn-alert now';
-                    alertBox.innerText = dict[currentLang].alertNow;
-                    alertBox.style.display = 'block';
-                    if (lastNotifiedState !== 'now') {
-                        lastNotifiedState = 'now';
-                        triggerNotificationSound();
-                    }
-                } else if (currentNum < myTicket && (aheadCount === 2 || aheadCount === 3 || aheadCount === 1)) {
-                    alertBox.className = 'turn-alert near';
-                    alertBox.innerText = dict[currentLang].alertNear.replace('{n}', aheadCount);
-                    alertBox.style.display = 'block';
-                    if (lastNotifiedState !== `near_${aheadCount}`) {
-                        lastNotifiedState = `near_${aheadCount}`;
-                        triggerNotificationSound();
-                    }
-                } else {
-                    alertBox.style.display = 'none';
-                }
-            } catch (e) {}
-        }
-
-        const socket = io('https://clinic-server-i00s.onrender.com');
-        socket.on('call_patient', (data) => {
-            if (data.clinic_slug === currentDoctorSlug) fetchLiveStats();
-            else if (document.getElementById('bookingSection').style.display !== 'none') previewStats();
-        });
-        socket.on('new_ticket', (data) => {
-            if (data.clinic_slug === currentDoctorSlug) fetchLiveStats();
-            else if (document.getElementById('bookingSection').style.display !== 'none') previewStats();
-        });
-        socket.on('ticket_cancelled', (data) => {
-            if (data.clinic_slug === currentDoctorSlug) fetchLiveStats();
-            else if (document.getElementById('bookingSection').style.display !== 'none') previewStats();
+        const socket = io();
+        socket.on('call_patient', (data) => { if (data.clinic_slug === CLINIC_SLUG) refreshQueueState(); });
+        socket.on('new_ticket', (data) => { if (data.clinic_slug === CLINIC_SLUG) refreshQueueState(); });
+        socket.on('queue_status_changed', (data) => { if (data.clinic_slug === CLINIC_SLUG) refreshQueueState(); });
+        socket.on('ticket_status_updated', (data) => {
+            if (data.clinic_slug === CLINIC_SLUG && myTicket && parseInt(data.ticket_number) === parseInt(myTicket)) {
+                refreshQueueState();
+            }
         });
     </script>
 </body>
