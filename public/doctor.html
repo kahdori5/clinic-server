@@ -11,9 +11,43 @@
     <style>
         :root { --bg: #f4f7f6; --card: #ffffff; --text: #2d3748; --accent: #10b981; --border: #e2e8f0; --muted: #718096; --danger: #ef4444; --warning: #f59e0b; --blue: #3b82f6; }
         [data-theme="dark"] { --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --accent: #10b981; --border: #334155; --muted: #94a3b8; }
-        body { font-family: 'Tajawal', sans-serif; background: var(--bg); color: var(--text); margin: 0; min-height: 100vh; display: flex; transition: 0.3s; overflow: hidden; }
+        * { box-sizing: border-box; }
+
+        /* تفعيل التمرير السلس (Scroll) في كامل صفحة الطبيب */
+        html, body {
+            font-family: 'Tajawal', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+            transition: 0.3s;
+        }
+        .app-layout {
+            display: flex;
+            min-height: 100vh;
+            align-items: flex-start;
+        }
         
-        .sidebar { width: 260px; background: var(--card); border-inline-end: 1px solid var(--border); display: flex; flex-direction: column; padding: 25px 0; z-index: 10; justify-content: space-between; transition: 0.3s; }
+        .sidebar {
+            width: 260px;
+            background: var(--card);
+            border-inline-end: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 25px 0;
+            z-index: 50;
+            justify-content: space-between;
+            transition: 0.3s;
+            flex-shrink: 0;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+        }
         .logo { font-size: 1.5rem; font-weight: 800; text-align: center; margin-bottom: 20px; color: var(--text); }
         .logo span { color: var(--accent); }
         .nav-item { padding: 16px 25px; color: var(--muted); text-decoration: none; display: flex; align-items: center; gap: 10px; font-weight: 500; cursor: pointer; border-inline-end: 4px solid transparent; font-size: 1.05rem; transition: 0.3s; }
@@ -22,12 +56,33 @@
         #installAppBtn { display: block; width: calc(100% - 30px); padding: 15px; margin: 15px auto; background: var(--accent); color: #ffffff !important; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; text-align: center; font-family: inherit; font-size: 1rem; transition: 0.2s; box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3); box-sizing: border-box; }
         #installAppBtn:hover { transform: translateY(-3px); filter: brightness(1.1); }
         
-        .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-        header { display: flex; justify-content: space-between; align-items: center; padding: 15px 30px; border-bottom: 1px solid var(--border); background: var(--card); }
+        .main-content {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            border-bottom: 1px solid var(--border);
+            background: var(--card);
+            position: sticky;
+            top: 0;
+            z-index: 40;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
         .controls { display: flex; gap: 10px; align-items: center; }
         select, .theme-btn { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 8px 15px; border-radius: 12px; cursor: pointer; outline: none; font-weight: bold; font-family: inherit; transition: 0.3s; }
         
-        .content-scroll { padding: 40px; overflow-y: auto; flex: 1; scroll-behavior: smooth; }
+        .content-scroll {
+            padding: 35px 30px 60px;
+            flex: 1;
+            width: 100%;
+        }
         
         #lockScreen, #deletedScreen, #installHelpModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.85); z-index: 999999; display: flex; justify-content: center; align-items: center; flex-direction: column; padding: 20px; box-sizing: border-box; }
         #lockScreen, #deletedScreen { background: var(--bg); }
@@ -113,6 +168,12 @@
         
         .tab-content { display: none; }
         .tab-content.active { display: block; animation: fadeIn 0.4s ease; }
+
+        @media (max-width: 900px) {
+            .app-layout { flex-direction: column; }
+            .sidebar { width: 100%; height: auto; position: relative; padding: 15px 0; border-inline-end: none; border-bottom: 1px solid var(--border); }
+            .content-scroll { padding: 20px 15px 50px; }
+        }
     </style>
 </head>
 <body>
@@ -146,215 +207,216 @@
         </div>
     </div>
     
-    <div class="sidebar">
-        <div>
-            <div class="logo">Clinic<span>Flow</span><br><span style="font-size: 0.85rem; color: var(--muted); font-weight: 500;" id="clinicNameDisplay">--</span></div>
-            <div style="margin-top: 20px; display: flex; flex-direction: column; width: 100%;">
-                <div class="nav-item active" onclick="switchTab('call-tab', this)" data-i18n="menuCall">📢 شاشة النداء</div>
-                <div class="nav-item" onclick="switchTab('patients-tab', this)" data-i18n="menuPatients">📂 أرشيف المرضى</div>
-                <div class="nav-item" onclick="switchTab('stats-tab', this)" data-i18n="menuStats">📊 الإحصائيات</div>
-                <div class="nav-item" onclick="switchTab('settings-tab', this)" data-i18n="menuSettings">⚙️ الإعدادات والحماية</div>
+    <div class="app-layout">
+        <div class="sidebar">
+            <div>
+                <div class="logo">Clinic<span>Flow</span><br><span style="font-size: 0.85rem; color: var(--muted); font-weight: 500;" id="clinicNameDisplay">--</span></div>
+                <div style="margin-top: 20px; display: flex; flex-direction: column; width: 100%;">
+                    <div class="nav-item active" onclick="switchTab('call-tab', this)" data-i18n="menuCall">📢 شاشة النداء</div>
+                    <div class="nav-item" onclick="switchTab('patients-tab', this)" data-i18n="menuPatients">📂 أرشيف المرضى</div>
+                    <div class="nav-item" onclick="switchTab('stats-tab', this)" data-i18n="menuStats">📊 الإحصائيات</div>
+                    <div class="nav-item" onclick="switchTab('settings-tab', this)" data-i18n="menuSettings">⚙️ الإعدادات والحماية</div>
+                </div>
             </div>
-        </div>
-        
-        <div>
-            <button id="installAppBtn" onclick="installApp()" data-i18n="btnInstallApp">💻 تثبيت التطبيق</button>
-            <div style="padding: 10px 20px 20px; text-align: center; color: var(--muted); font-size: 0.8rem;">ClinicFlow SaaS v3.8</div>
-        </div>
-    </div>
-
-    <div class="main-content">
-        <header>
-            <div style="font-weight: 800; font-size: 1.3rem; display: flex; align-items: center; gap: 10px;">
-                👨‍⚕️ <span data-i18n="docTitle">لوحة الطبيب</span>
-            </div>
-            <div class="controls">
-                <select id="langSelect" onchange="changeLang(this.value)">
-                    <option value="ar">العربية</option>
-                    <option value="fr">Français</option>
-                    <option value="en">English</option>
-                </select>
-                <button class="theme-btn" onclick="toggleTheme()" data-i18n="btnTheme">🌓 الوضع الليلي</button>
-            </div>
-        </header>
-
-        <div class="content-scroll">
             
-            <div id="call-tab" class="tab-content active">
-                <div class="call-wrapper">
-                    <div class="control-card">
-                        <h2 style="margin:0; color: var(--muted); font-size: 1.2rem;" data-i18n="insideNow">رقم المريض بالداخل</h2>
-                        <div class="number-display" id="currentNumber">--</div>
-                        <p id="currentPatientName" style="font-size: 1.2rem; font-weight: bold; color: var(--accent); margin-bottom: 20px;">--</p>
-                        
-                        <div class="cancelled-banner" id="cancelledBanner"></div>
-
-                        <div class="status-btns">
-                            <button class="btn btn-done" onclick="setStatus('completed')" data-i18n="btnDone">✔️ تم الكشف</button>
-                            <button class="btn btn-absent" onclick="setStatus('absent')" data-i18n="btnAbsent">❌ غائب</button>
-                        </div>
-                        <button class="btn btn-call" onclick="callNextPatient()" data-i18n="callNext">📢 مناداة المريض التالي</button>
-                        <button class="btn btn-warning" id="toggleQueueBtn" onclick="toggleQueueStatus()" style="margin-bottom: 0; font-size: 1rem;">⏸️ إيقاف استقبال التذاكر مؤقتاً</button>
-                    </div>
-
-                    <div class="medical-card" id="medicalCard">
-                        <h3 data-i18n="medicalFileTitle">📋 الملف الطبي <span style="font-size:0.8rem; background:var(--bg); padding:4px 10px; border-radius:10px; color:var(--muted);" data-i18n="optional">اختياري</span></h3>
-                        
-                        <div class="input-group" style="margin-bottom: 15px;">
-                            <label data-i18n="lblPatientName">اسم المريض:</label>
-                            <input type="text" id="mPatientNameInput" placeholder="اسم المريض الثلاثي...">
-                        </div>
-
-                        <div class="form-grid">
-                            <div class="input-group"><label data-i18n="lblAge">العمر:</label><input type="text" id="mAge"></div>
-                            <div class="input-group"><label data-i18n="lblBlood">فصيلة الدم:</label><input type="text" id="mBlood"></div>
-                        </div>
-                        <div class="form-grid">
-                            <div class="input-group"><label data-i18n="lblAllergy">حساسية للأدوية:</label><input type="text" id="mAllergy"></div>
-                            <div class="input-group"><label data-i18n="lblChronic">أمراض مزمنة:</label><input type="text" id="mChronic"></div>
-                        </div>
-                        <div class="input-group">
-                            <label data-i18n="lblNotes">التشخيص والملاحظات:</label>
-                            <textarea id="mNotes"></textarea>
-                        </div>
-                        
-                        <button class="btn btn-outline" style="margin-top:10px;" onclick="saveMedicalRecord()" data-i18n="btnSaveFile">💾 حفظ الملف الطبي للمريض</button>
-
-                        <div class="prescription-area">
-                            <h4 style="margin-top:0; color:var(--text);" data-i18n="prescTitle">💊 الوصفة الطبية</h4>
-                            <div class="input-group"><textarea id="mPrescription" placeholder="اكتب الأدوية والجرعات هنا..."></textarea></div>
-                            <button class="btn" style="background:var(--accent) !important; color:#ffffff !important;" onclick="printPrescription()" data-i18n="btnPrintPresc">🖨️ طباعة الوصفة الطبية الرسمية</button>
-                        </div>
-                    </div>
-                </div>
+            <div>
+                <button id="installAppBtn" onclick="installApp()" data-i18n="btnInstallApp">💻 تثبيت التطبيق</button>
+                <div style="padding: 10px 20px 20px; text-align: center; color: var(--muted); font-size: 0.8rem;">ClinicFlow SaaS v4.0</div>
             </div>
+        </div>
 
-            <div id="patients-tab" class="tab-content" style="display: none; padding: 0 20px;">
-                <div id="archiveListView">
-                    <div class="archive-header">
-                        <h2 style="margin: 0; color: var(--text);" data-i18n="archiveTitle">📂 أرشيف ومراجعات المرضى</h2>
-                        <button class="btn" style="width: auto; margin: 0; padding: 12px 20px;" onclick="openNewPatientFile()" data-i18n="btnNewPatient">+ إضافة ملف مريض جديد</button>
-                    </div>
-                    
-                    <input type="text" id="searchInput" class="search-bar" placeholder="🔍 ابحث عن مريض بالاسم..." onkeyup="filterPatients()" style="margin-bottom: 25px; width: 100%; box-sizing: border-box;">
-                    
-                    <div class="patients-list" id="patientsListContainer">
-                        <p style="color: var(--muted); text-align: center; width: 100%;" data-i18n="loading">جاري تحميل البيانات...</p>
-                    </div>
+        <div class="main-content">
+            <header>
+                <div style="font-weight: 800; font-size: 1.3rem; display: flex; align-items: center; gap: 10px;">
+                    👨‍⚕️ <span data-i18n="docTitle">لوحة الطبيب</span>
                 </div>
-
-                <div id="patientDetailView">
-                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border); padding-bottom: 15px; margin-bottom: 20px;">
-                        <h2 style="margin:0; color: var(--accent);" data-i18n="editTitle">📄 تفاصيل وتعديل ملف المريض</h2>
-                        <button class="btn btn-outline" style="width: auto; margin:0; padding: 8px 15px;" onclick="closePatientDetail()" data-i18n="backBtn">⬅️ العودة للأرشيف</button>
-                    </div>
-                    
-                    <div class="input-group" style="margin-bottom: 15px;"><label data-i18n="lblPatientName">اسم المريض:</label><input type="text" id="editName"></div>
-                    <div class="form-grid">
-                        <div class="input-group"><label data-i18n="lblAge">العمر:</label><input type="text" id="editAge"></div>
-                        <div class="input-group"><label data-i18n="lblBlood">فصيلة الدم:</label><input type="text" id="editBlood"></div>
-                    </div>
-                    <div class="form-grid">
-                        <div class="input-group"><label data-i18n="lblAllergy">حساسية للأدوية:</label><input type="text" id="editAllergy"></div>
-                        <div class="input-group"><label data-i18n="lblChronic">أمراض مزمنة:</label><input type="text" id="editChronic"></div>
-                    </div>
-                    <div class="input-group"><label data-i18n="lblNotes">التشخيص والملاحظات:</label><textarea id="editNotes"></textarea></div>
-
-                    <div style="margin-top: 30px; display: flex; gap: 15px;">
-                        <button class="btn" style="flex: 1;" onclick="saveEditedPatient()" data-i18n="saveEditBtn">💾 حفظ التعديلات</button>
-                        <button class="btn btn-danger" style="flex: 1;" onclick="deleteCurrentDetailPatient()" data-i18n="deleteBtn">🗑️ حذف المريض</button>
-                    </div>
+                <div class="controls">
+                    <select id="langSelect" onchange="changeLang(this.value)">
+                        <option value="ar">العربية</option>
+                        <option value="fr">Français</option>
+                        <option value="en">English</option>
+                    </select>
+                    <button class="theme-btn" onclick="toggleTheme()" data-i18n="btnTheme">🌓 الوضع الليلي</button>
                 </div>
-            </div>
+            </header>
 
-            <!-- تبويب الإحصائيات التفاعلية بالرسوم البيانية -->
-            <div id="stats-tab" class="tab-content" style="display: none;">
-                <h2 style="margin-top: 0; margin-bottom: 22px; color: var(--text);" data-i18n="statsHeader">لوحة الإحصائيات والتحليل البياني</h2>
-                <p class="stats-hint" data-i18n="statsClickHint">👆 اضغط على أي بطاقة إحصائية لإظهار بياناتها ورسمها البياني التفصيلي:</p>
+            <div class="content-scroll">
                 
-                <div class="stats-grid">
-                    <div class="stat-card" id="cardStatWaiting" onclick="selectStatMetric('waiting')">
-                        <div class="stat-icon">⏳</div>
-                        <div class="stat-info">
-                            <span data-i18n="statWaiting">في الانتظار حالياً</span>
-                            <div class="stat-prompt" data-i18n="clickToShow">📊 اضغط لعرض البيان</div>
-                            <strong class="stat-value-revealed" id="statWaiting">0</strong>
-                        </div>
-                    </div>
+                <div id="call-tab" class="tab-content active">
+                    <div class="call-wrapper">
+                        <div class="control-card">
+                            <h2 style="margin:0; color: var(--muted); font-size: 1.2rem;" data-i18n="insideNow">رقم المريض بالداخل</h2>
+                            <div class="number-display" id="currentNumber">--</div>
+                            <p id="currentPatientName" style="font-size: 1.2rem; font-weight: bold; color: var(--accent); margin-bottom: 20px;">--</p>
+                            
+                            <div class="cancelled-banner" id="cancelledBanner"></div>
 
-                    <div class="stat-card" id="cardStatToday" onclick="selectStatMetric('today')">
-                        <div class="stat-icon">📈</div>
-                        <div class="stat-info">
-                            <span data-i18n="statToday">إجمالي اليوم</span>
-                            <div class="stat-prompt" data-i18n="clickToShow">📊 اضغط لعرض البيان</div>
-                            <strong class="stat-value-revealed" id="statToday">0</strong>
+                            <div class="status-btns">
+                                <button class="btn btn-done" onclick="setStatus('completed')" data-i18n="btnDone">✔️ تم الكشف</button>
+                                <button class="btn btn-absent" onclick="setStatus('absent')" data-i18n="btnAbsent">❌ غائب</button>
+                            </div>
+                            <button class="btn btn-call" onclick="callNextPatient()" data-i18n="callNext">📢 مناداة المريض التالي</button>
+                            <button class="btn btn-warning" id="toggleQueueBtn" onclick="toggleQueueStatus()" style="margin-bottom: 0; font-size: 1rem;">⏸️ إيقاف استقبال التذاكر مؤقتاً</button>
                         </div>
-                    </div>
 
-                    <div class="stat-card" id="cardStatWeekly" onclick="selectStatMetric('weekly')">
-                        <div class="stat-icon">📅</div>
-                        <div class="stat-info">
-                            <span data-i18n="statWeekly">هذا الأسبوع</span>
-                            <div class="stat-prompt" data-i18n="clickToShow">📊 اضغط لعرض البيان</div>
-                            <strong class="stat-value-revealed" id="statWeekly">0</strong>
-                        </div>
-                    </div>
+                        <div class="medical-card" id="medicalCard">
+                            <h3 data-i18n="medicalFileTitle">📋 الملف الطبي <span style="font-size:0.8rem; background:var(--bg); padding:4px 10px; border-radius:10px; color:var(--muted);" data-i18n="optional">اختياري</span></h3>
+                            
+                            <div class="input-group" style="margin-bottom: 15px;">
+                                <label data-i18n="lblPatientName">اسم المريض:</label>
+                                <input type="text" id="mPatientNameInput" placeholder="اسم المريض الثلاثي...">
+                            </div>
 
-                    <div class="stat-card" id="cardStatMonthly" onclick="selectStatMetric('monthly')">
-                        <div class="stat-icon">📊</div>
-                        <div class="stat-info">
-                            <span data-i18n="statMonthly">هذا الشهر</span>
-                            <div class="stat-prompt" data-i18n="clickToShow">📊 اضغط لعرض البيان</div>
-                            <strong class="stat-value-revealed" id="statMonthly">0</strong>
-                        </div>
-                    </div>
+                            <div class="form-grid">
+                                <div class="input-group"><label data-i18n="lblAge">العمر:</label><input type="text" id="mAge"></div>
+                                <div class="input-group"><label data-i18n="lblBlood">فصيلة الدم:</label><input type="text" id="mBlood"></div>
+                            </div>
+                            <div class="form-grid">
+                                <div class="input-group"><label data-i18n="lblAllergy">حساسية للأدوية:</label><input type="text" id="mAllergy"></div>
+                                <div class="input-group"><label data-i18n="lblChronic">أمراض مزمنة:</label><input type="text" id="mChronic"></div>
+                            </div>
+                            <div class="input-group">
+                                <label data-i18n="lblNotes">التشخيص والملاحظات:</label>
+                                <textarea id="mNotes"></textarea>
+                            </div>
+                            
+                            <button class="btn btn-outline" style="margin-top:10px;" onclick="saveMedicalRecord()" data-i18n="btnSaveFile">💾 حفظ الملف الطبي للمريض</button>
 
-                    <div class="stat-card" id="cardStatBusiest" onclick="selectStatMetric('busiest')">
-                        <div class="stat-icon">🔥</div>
-                        <div class="stat-info">
-                            <span data-i18n="busiestDay">أكثر الأيام استقبالاً</span>
-                            <div class="stat-prompt" data-i18n="clickToShow">📊 اضغط لعرض البيان</div>
-                            <strong class="stat-value-revealed" id="statBusiestDay" style="font-size: 1.5rem;">--</strong>
+                            <div class="prescription-area">
+                                <h4 style="margin-top:0; color:var(--text);" data-i18n="prescTitle">💊 الوصفة الطبية</h4>
+                                <div class="input-group"><textarea id="mPrescription" placeholder="اكتب الأدوية والجرعات هنا..."></textarea></div>
+                                <button class="btn" style="background:var(--accent) !important; color:#ffffff !important;" onclick="printPrescription()" data-i18n="btnPrintPresc">🖨️ طباعة الوصفة الطبية الرسمية</button>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- حاوية الرسم البياني التي تظهر عند الضغط على أي إحصائية -->
-                <div class="chart-panel" id="chartPanel">
-                    <div class="chart-header">
-                        <div class="chart-title-box">
-                            <h3 id="chartTitle">--</h3>
-                            <p id="chartSubtitle">--</p>
+                <div id="patients-tab" class="tab-content" style="display: none;">
+                    <div id="archiveListView">
+                        <div class="archive-header">
+                            <h2 style="margin: 0; color: var(--text);" data-i18n="archiveTitle">📂 أرشيف ومراجعات المرضى</h2>
+                            <button class="btn" style="width: auto; margin: 0; padding: 12px 20px;" onclick="openNewPatientFile()" data-i18n="btnNewPatient">+ إضافة ملف مريض جديد</button>
                         </div>
-                        <div class="chart-type-switch">
-                            <button class="chart-type-btn active" id="btnTypeBar" onclick="changeChartType('bar')">📊 أعمدة بيانية</button>
-                            <button class="chart-type-btn" id="btnTypeLine" onclick="changeChartType('line')">📈 منحنى بياني</button>
+                        
+                        <input type="text" id="searchInput" class="search-bar" placeholder="🔍 ابحث عن مريض بالاسم..." onkeyup="filterPatients()" style="margin-bottom: 25px; width: 100%; box-sizing: border-box;">
+                        
+                        <div class="patients-list" id="patientsListContainer">
+                            <p style="color: var(--muted); text-align: center; width: 100%;" data-i18n="loading">جاري تحميل البيانات...</p>
                         </div>
                     </div>
-                    <div class="canvas-holder">
-                        <canvas id="doctorStatsChart"></canvas>
+
+                    <div id="patientDetailView">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border); padding-bottom: 15px; margin-bottom: 20px;">
+                            <h2 style="margin:0; color: var(--accent);" data-i18n="editTitle">📄 تفاصيل وتعديل ملف المريض</h2>
+                            <button class="btn btn-outline" style="width: auto; margin:0; padding: 8px 15px;" onclick="closePatientDetail()" data-i18n="backBtn">⬅️ العودة للأرشيف</button>
+                        </div>
+                        
+                        <div class="input-group" style="margin-bottom: 15px;"><label data-i18n="lblPatientName">اسم المريض:</label><input type="text" id="editName"></div>
+                        <div class="form-grid">
+                            <div class="input-group"><label data-i18n="lblAge">العمر:</label><input type="text" id="editAge"></div>
+                            <div class="input-group"><label data-i18n="lblBlood">فصيلة الدم:</label><input type="text" id="editBlood"></div>
+                        </div>
+                        <div class="form-grid">
+                            <div class="input-group"><label data-i18n="lblAllergy">حساسية للأدوية:</label><input type="text" id="editAllergy"></div>
+                            <div class="input-group"><label data-i18n="lblChronic">أمراض مزمنة:</label><input type="text" id="editChronic"></div>
+                        </div>
+                        <div class="input-group"><label data-i18n="lblNotes">التشخيص والملاحظات:</label><textarea id="editNotes"></textarea></div>
+
+                        <div style="margin-top: 30px; display: flex; gap: 15px;">
+                            <button class="btn" style="flex: 1;" onclick="saveEditedPatient()" data-i18n="saveEditBtn">💾 حفظ التعديلات</button>
+                            <button class="btn btn-danger" style="flex: 1;" onclick="deleteCurrentDetailPatient()" data-i18n="deleteBtn">🗑️ حذف المريض</button>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- تبويب الإعدادات والحماية فقط (بدون خيار الاختصاص الطبي) -->
-            <div id="settings-tab" class="tab-content" style="display: none;">
-                <div class="control-card" style="max-width: 600px; margin: 0 auto; text-align: start;">
-                    <h2 style="color: var(--text); margin-top: 0;" data-i18n="secTitle">🛡️ إعدادات الحماية والخصوصية</h2>
-                    <p style="color: var(--muted); margin-bottom: 25px; font-weight: bold;" data-i18n="secDesc">لحماية عيادتك وملفات مرضاك من التطفل، قم بتعيين كلمة سر تمنع أي شخص من الدخول إلى هذه اللوحة بدونها.</p>
+                <!-- تبويب الإحصائيات التفاعلية بالرسوم البيانية -->
+                <div id="stats-tab" class="tab-content" style="display: none;">
+                    <h2 style="margin-top: 0; margin-bottom: 22px; color: var(--text);" data-i18n="statsHeader">لوحة الإحصائيات والتحليل البياني</h2>
+                    <p class="stats-hint" data-i18n="statsClickHint">👆 اضغط على أي بطاقة إحصائية لإظهار بياناتها ورسمها البياني التفصيلي:</p>
                     
-                    <div class="input-group">
-                        <label data-i18n="lblNewPass">كلمة السر الجديدة:</label>
-                        <input type="text" id="newSettingsPassword" placeholder="اكتب كلمة السر الجديدة هنا...">
+                    <div class="stats-grid">
+                        <div class="stat-card" id="cardStatWaiting" onclick="selectStatMetric('waiting')">
+                            <div class="stat-icon">⏳</div>
+                            <div class="stat-info">
+                                <span data-i18n="statWaiting">في الانتظار حالياً</span>
+                                <div class="stat-prompt" data-i18n="clickToShow">📊 اضغط لعرض البيان</div>
+                                <strong class="stat-value-revealed" id="statWaiting">0</strong>
+                            </div>
+                        </div>
+
+                        <div class="stat-card" id="cardStatToday" onclick="selectStatMetric('today')">
+                            <div class="stat-icon">📈</div>
+                            <div class="stat-info">
+                                <span data-i18n="statToday">إجمالي اليوم</span>
+                                <div class="stat-prompt" data-i18n="clickToShow">📊 اضغط لعرض البيان</div>
+                                <strong class="stat-value-revealed" id="statToday">0</strong>
+                            </div>
+                        </div>
+
+                        <div class="stat-card" id="cardStatWeekly" onclick="selectStatMetric('weekly')">
+                            <div class="stat-icon">📅</div>
+                            <div class="stat-info">
+                                <span data-i18n="statWeekly">هذا الأسبوع</span>
+                                <div class="stat-prompt" data-i18n="clickToShow">📊 اضغط لعرض البيان</div>
+                                <strong class="stat-value-revealed" id="statWeekly">0</strong>
+                            </div>
+                        </div>
+
+                        <div class="stat-card" id="cardStatMonthly" onclick="selectStatMetric('monthly')">
+                            <div class="stat-icon">📊</div>
+                            <div class="stat-info">
+                                <span data-i18n="statMonthly">هذا الشهر</span>
+                                <div class="stat-prompt" data-i18n="clickToShow">📊 اضغط لعرض البيان</div>
+                                <strong class="stat-value-revealed" id="statMonthly">0</strong>
+                            </div>
+                        </div>
+
+                        <div class="stat-card" id="cardStatBusiest" onclick="selectStatMetric('busiest')">
+                            <div class="stat-icon">🔥</div>
+                            <div class="stat-info">
+                                <span data-i18n="busiestDay">أكثر الأيام استقبالاً</span>
+                                <div class="stat-prompt" data-i18n="clickToShow">📊 اضغط لعرض البيان</div>
+                                <strong class="stat-value-revealed" id="statBusiestDay" style="font-size: 1.5rem;">--</strong>
+                            </div>
+                        </div>
                     </div>
-                    
-                    <div style="display: flex; gap: 15px; margin-top: 20px;">
-                        <button class="btn" style="flex: 2; margin-bottom: 0;" onclick="saveSettingsPassword()" data-i18n="btnSavePass">💾 حفظ كلمة السر</button>
-                        <button class="btn btn-danger" style="flex: 1; margin-bottom: 0;" onclick="deleteSettingsPassword()" data-i18n="btnDeletePass">🗑️ إزالة الحماية</button>
+
+                    <div class="chart-panel" id="chartPanel">
+                        <div class="chart-header">
+                            <div class="chart-title-box">
+                                <h3 id="chartTitle">--</h3>
+                                <p id="chartSubtitle">--</p>
+                            </div>
+                            <div class="chart-type-switch">
+                                <button class="chart-type-btn active" id="btnTypeBar" onclick="changeChartType('bar')">📊 أعمدة بيانية</button>
+                                <button class="chart-type-btn" id="btnTypeLine" onclick="changeChartType('line')">📈 منحنى بياني</button>
+                            </div>
+                        </div>
+                        <div class="canvas-holder">
+                            <canvas id="doctorStatsChart"></canvas>
+                        </div>
                     </div>
                 </div>
-            </div>
 
+                <!-- تبويب الإعدادات والحماية -->
+                <div id="settings-tab" class="tab-content" style="display: none;">
+                    <div class="control-card" style="max-width: 600px; margin: 0 auto; text-align: start;">
+                        <h2 style="color: var(--text); margin-top: 0;" data-i18n="secTitle">🛡️ إعدادات الحماية والخصوصية</h2>
+                        <p style="color: var(--muted); margin-bottom: 25px; font-weight: bold;" data-i18n="secDesc">لحماية عيادتك وملفات مرضاك من التطفل، قم بتعيين كلمة سر تمنع أي شخص من الدخول إلى هذه اللوحة بدونها.</p>
+                        
+                        <div class="input-group">
+                            <label data-i18n="lblNewPass">كلمة السر الجديدة:</label>
+                            <input type="text" id="newSettingsPassword" placeholder="اكتب كلمة السر الجديدة هنا...">
+                        </div>
+                        
+                        <div style="display: flex; gap: 15px; margin-top: 20px;">
+                            <button class="btn" style="flex: 2; margin-bottom: 0;" onclick="saveSettingsPassword()" data-i18n="btnSavePass">💾 حفظ كلمة السر</button>
+                            <button class="btn btn-danger" style="flex: 1; margin-bottom: 0;" onclick="deleteSettingsPassword()" data-i18n="btnDeletePass">🗑️ إزالة الحماية</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
         </div>
     </div>
 
@@ -362,6 +424,10 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
+        const API_BASE = window.location.origin.startsWith('http')
+            ? window.location.origin
+            : 'https://clinic-server-i00s.onrender.com';
+
         const urlSlug = new URLSearchParams(window.location.search).get('clinic');
         if (urlSlug) localStorage.setItem('saved_doc_clinic_slug', urlSlug);
         const CLINIC_SLUG = urlSlug || localStorage.getItem('saved_doc_clinic_slug') || 'default-clinic';
@@ -472,7 +538,7 @@
 
         async function toggleQueueStatus() {
             try {
-                const res = await fetch('https://clinic-server-i00s.onrender.com/api/queue/toggle-status', {
+                const res = await fetch(`${API_BASE}/api/queue/toggle-status`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ clinic_slug: CLINIC_SLUG })
                 });
@@ -496,13 +562,13 @@
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById(tabId).style.display = 'block';
             el.classList.add('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
             
             if (tabId === 'patients-tab') {
                 document.getElementById('patientDetailView').style.display = 'none';
                 document.getElementById('archiveListView').style.display = 'block';
                 fetchAllPatients();
             } else if (tabId === 'stats-tab') {
-                // إخفاء جميع الإحصائيات والرسوم البيانية عند فتح التبويب حتى يضغط الطبيب بنفسه
                 activeStatKey = null;
                 document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('active-stat'));
                 document.getElementById('chartPanel').style.display = 'none';
@@ -521,7 +587,7 @@
 
         async function checkInitialLock() {
             try {
-                const res = await fetch(`https://clinic-server-i00s.onrender.com/api/doctor/auth-status/${CLINIC_SLUG}`);
+                const res = await fetch(`${API_BASE}/api/doctor/auth-status/${CLINIC_SLUG}`);
                 if (res.status === 404) return blockDeletedDoctor();
                 const data = await res.json();
                 if (data.specialty) doctorSpecialty = data.specialty;
@@ -536,7 +602,7 @@
             const pass = document.getElementById('loginPassword').value;
             if(!pass) return showToast('يرجى إدخال كلمة السر', 'warning');
             try {
-                const res = await fetch('https://clinic-server-i00s.onrender.com/api/doctor/verify-password', {
+                const res = await fetch(`${API_BASE}/api/doctor/verify-password`, {
                     method: 'POST', headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ clinic_slug: CLINIC_SLUG, password: pass })
                 });
@@ -554,7 +620,7 @@
             const newPass = document.getElementById('newSettingsPassword').value.trim();
             if(!newPass) return showToast('يرجى كتابة كلمة السر الجديدة', 'warning');
             try {
-                await fetch('https://clinic-server-i00s.onrender.com/api/doctor/set-password', {
+                await fetch(`${API_BASE}/api/doctor/set-password`, {
                     method: 'POST', headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ clinic_slug: CLINIC_SLUG, new_password: newPass })
                 });
@@ -566,7 +632,7 @@
         async function deleteSettingsPassword() {
             if(!confirm('هل أنت متأكد من رغبتك في إزالة كلمة السر وإلغاء الحماية عن العيادة؟')) return;
             try {
-                await fetch('https://clinic-server-i00s.onrender.com/api/doctor/set-password', {
+                await fetch(`${API_BASE}/api/doctor/set-password`, {
                     method: 'POST', headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ clinic_slug: CLINIC_SLUG, new_password: "" })
                 });
@@ -650,7 +716,7 @@
 
         async function fetchStatus() {
             try {
-                const res = await fetch(`https://clinic-server-i00s.onrender.com/api/queue-status/${CLINIC_SLUG}`);
+                const res = await fetch(`${API_BASE}/api/queue-status/${CLINIC_SLUG}`);
                 if (res.status === 404) return blockDeletedDoctor();
                 const data = await res.json();
                 currentNum = data.current_number || 0;
@@ -667,7 +733,7 @@
 
         async function fetchStats() {
             try {
-                const res = await fetch(`https://clinic-server-i00s.onrender.com/api/doctor-stats/${CLINIC_SLUG}`);
+                const res = await fetch(`${API_BASE}/api/doctor-stats/${CLINIC_SLUG}`);
                 if (res.status === 404) return blockDeletedDoctor();
                 const data = await res.json();
                 statsRaw = {
@@ -687,7 +753,6 @@
             } catch (e) {}
         }
 
-        // --- نظام الإحصائيات التفاعلي بالمنحنيات والأعمدة البيانية ---
         function selectStatMetric(metricKey) {
             const cardMap = {
                 waiting: 'cardStatWaiting',
@@ -698,7 +763,6 @@
             };
 
             const clickedCard = document.getElementById(cardMap[metricKey]);
-            // إذا ضغط على نفس البطاقة النشطة مرة ثانية يخفيها، وإلا يظهر البطاقة المختارة ورسمها البياني
             if (activeStatKey === metricKey) {
                 clickedCard.classList.remove('active-stat');
                 document.getElementById('chartPanel').style.display = 'none';
@@ -711,7 +775,6 @@
             clickedCard.classList.add('active-stat');
             document.getElementById('chartPanel').style.display = 'block';
 
-            // اختيار النوع الأنسب تلقائياً مع إمكانية التبديل اليدوي
             if (metricKey === 'weekly' || metricKey === 'monthly') {
                 currentChartType = 'line';
             } else {
@@ -861,7 +924,7 @@
 
         async function callNextPatient() {
             try {
-                const res = await fetch('https://clinic-server-i00s.onrender.com/api/call-next', {
+                const res = await fetch(`${API_BASE}/api/call-next`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ clinic_slug: CLINIC_SLUG })
                 });
@@ -885,7 +948,7 @@
 
         async function loadMedicalRecord(pName) {
             try {
-                const res = await fetch('https://clinic-server-i00s.onrender.com/api/patient/get', {
+                const res = await fetch(`${API_BASE}/api/patient/get`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ clinic_slug: CLINIC_SLUG, patient_name: pName })
                 });
@@ -908,13 +971,12 @@
 
             try {
                 const payload = { clinic_slug: CLINIC_SLUG, patient_name: pName, age: document.getElementById('mAge').value, blood_type: document.getElementById('mBlood').value, allergies: document.getElementById('mAllergy').value, chronic: document.getElementById('mChronic').value, notes: document.getElementById('mNotes').value };
-                const res = await fetch('https://clinic-server-i00s.onrender.com/api/patient/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                const res = await fetch(`${API_BASE}/api/patient/save`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                 if (res.ok) showToast(dict[currentLang].successStatus, 'success');
                 else showToast(dict[currentLang].errSave, 'error');
             } catch (e) { showToast(dict[currentLang].errSave, 'error'); }
         }
 
-        // --- طباعة الوصفة الطبية الاحترافية بشعار الصيدليات الرسمي ---
         function printPrescription() {
             const pName = document.getElementById('mPatientNameInput').value.trim() || activePatientName || 'المريض';
             const prescriptionText = document.getElementById('mPrescription').value.trim();
@@ -923,7 +985,6 @@
             const bloodText = document.getElementById('mBlood').value.trim() || '--';
             const dateStr = new Date().toLocaleDateString('ar-DZ');
 
-            // رسم الصيدليات الرسمي (الصليب الأخضر الطبي مع كأس هيجيا والأفعى) بصيغة SVG عالية الدقة
             const pharmacyEmblemSVG = `
                 <svg viewBox="0 0 120 120" width="85" height="85" xmlns="http://www.w3.org/2000/svg">
                     <circle cx="60" cy="60" r="56" fill="#ecfdf5" stroke="#10b981" stroke-width="3.5"/>
@@ -965,7 +1026,6 @@
                             position: relative;
                             overflow: hidden;
                         }
-                        /* علامة مائية لشعار الصيدلية وسط الوصفة */
                         .watermark {
                             position: absolute;
                             top: 54%;
@@ -1113,7 +1173,7 @@
         async function setStatus(statusType) {
             if (currentNum === 0) return showToast(dict[currentLang].errEmpty, 'warning');
             try {
-                await fetch('https://clinic-server-i00s.onrender.com/api/tickets/status', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ clinic_slug: CLINIC_SLUG, ticket_number: currentNum, status: statusType }) });
+                await fetch(`${API_BASE}/api/tickets/status`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ clinic_slug: CLINIC_SLUG, ticket_number: currentNum, status: statusType }) });
                 showToast(dict[currentLang].successStatus, 'success');
                 document.getElementById('medicalCard').style.display = 'none';
                 document.getElementById('cancelledBanner').style.display = 'none';
@@ -1123,7 +1183,7 @@
 
         async function fetchAllPatients() {
             try {
-                const res = await fetch(`https://clinic-server-i00s.onrender.com/api/patients/all/${CLINIC_SLUG}`);
+                const res = await fetch(`${API_BASE}/api/patients/all/${CLINIC_SLUG}`);
                 allPatientsData = await res.json();
                 renderPatientsList(allPatientsData);
             } catch (e) { document.getElementById('patientsListContainer').innerHTML = `<p style="color:red; text-align:center;">خطأ في الأرشيف</p>`; }
@@ -1166,7 +1226,7 @@
             if (!pName) return showToast('الاسم مطلوب', 'warning');
             try {
                 const payload = { clinic_slug: CLINIC_SLUG, patient_name: pName, age: document.getElementById('editAge').value, blood_type: document.getElementById('editBlood').value, allergies: document.getElementById('editAllergy').value, chronic: document.getElementById('editChronic').value, notes: document.getElementById('editNotes').value };
-                const res = await fetch('https://clinic-server-i00s.onrender.com/api/patient/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                const res = await fetch(`${API_BASE}/api/patient/save`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                 if (res.ok) { showToast(dict[currentLang].successStatus, 'success'); closePatientDetail(); fetchAllPatients(); }
             } catch (e) { showToast(dict[currentLang].errSave, 'error'); }
         }
@@ -1174,7 +1234,7 @@
         async function deletePatientRecord(id) {
             if (!confirm('تأكيد الحذف؟')) return;
             try {
-                const res = await fetch(`https://clinic-server-i00s.onrender.com/api/patients/delete/${id}`, { method: 'DELETE' });
+                const res = await fetch(`${API_BASE}/api/patients/delete/${id}`, { method: 'DELETE' });
                 if (res.ok) { showToast('✔️ تم الحذف', 'success'); fetchAllPatients(); if (currentSelectedPatientId === id) closePatientDetail(); }
             } catch (e) { showToast('خطأ', 'error'); }
         }
@@ -1193,7 +1253,7 @@
             document.getElementById('editName').focus();
         }
 
-        const socket = io('https://clinic-server-i00s.onrender.com');
+        const socket = io(API_BASE);
         socket.on('new_ticket', (data) => { if (data.clinic_slug === CLINIC_SLUG) fetchStats(); });
         socket.on('ticket_cancelled', (data) => { if (data.clinic_slug === CLINIC_SLUG) { showToast(`⚠️ ألغى المريض (${data.patient_name}) تذكرته`, 'warning'); fetchStats(); } });
         socket.on('doctor_deleted', (data) => { if (data.clinic_slug === CLINIC_SLUG) blockDeletedDoctor(); });
