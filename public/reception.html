@@ -3,200 +3,781 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>الاستقبال - ClinicFlow</title>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet">
+    <title>تطبيق مكتب الاستقبال - Reception App</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/3063/3063063.png">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #f4f7f6; --card: #ffffff; --text: #2d3748; --accent: #10b981; --border: #e2e8f0; --warning: #f59e0b; --danger: #ef4444; }
-        [data-theme="dark"] { --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --accent: #10b981; --border: #334155; }
-        body { font-family: 'Tajawal', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; transition: 0.3s; display: flex; flex-direction: column; align-items: center; }
-        
-        .top-bar { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 800px; margin-bottom: 30px; background: var(--card); padding: 15px 30px; border-radius: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); box-sizing: border-box; }
-        .controls { display: flex; gap: 10px; }
-        select, .theme-btn { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 8px 15px; border-radius: 12px; cursor: pointer; font-weight: bold; outline: none; font-family: inherit; }
-        
-        .main-card { background: var(--card); padding: 40px; border-radius: 24px; width: 100%; max-width: 500px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); text-align: center; border: 1px solid var(--border); box-sizing: border-box; }
-        h1 { margin-top: 0; color: var(--accent); }
-        
-        select.doc-select, input { width: 100%; padding: 15px; margin-bottom: 20px; border-radius: 12px; border: 2px solid var(--border); background: var(--bg); color: var(--text); font-family: inherit; font-size: 1.1rem; box-sizing: border-box; outline: none; }
-        select.doc-select:focus, input:focus { border-color: var(--accent); }
-        
-        .preview-box { background: rgba(245, 158, 11, 0.05); border: 1px dashed var(--warning); padding: 15px; border-radius: 16px; margin-bottom: 20px; display: none; text-align: start; }
-        .preview-box p { margin: 8px 0; font-size: 0.95rem; color: var(--text); font-weight: bold; display: flex; justify-content: space-between; }
-        .preview-box strong { color: var(--warning); font-size: 1.2rem; }
+        :root {
+            --bg: #f4f7f6;
+            --card: #ffffff;
+            --text: #1e293b;
+            --accent: #10b981;
+            --border: #e2e8f0;
+            --muted: #64748b;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --blue: #3b82f6;
+        }
+        [data-theme="dark"] {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --text: #f8fafc;
+            --accent: #10b981;
+            --border: #334155;
+            --muted: #94a3b8;
+        }
+        * { box-sizing: border-box; }
+        html, body {
+            font-family: 'Tajawal', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+            transition: 0.3s;
+        }
+        .app-layout {
+            display: flex;
+            min-height: 100vh;
+            align-items: flex-start;
+        }
 
-        .btn { background: var(--accent); color: #ffffff !important; padding: 18px; border: none; border-radius: 12px; font-size: 1.2rem; font-weight: bold; cursor: pointer; width: 100%; transition: 0.2s; font-family: inherit; }
-        .btn:hover { filter: brightness(1.1); transform: translateY(-2px); }
-        
-        .ticket-result { margin-top: 25px; padding: 20px; background: rgba(16, 185, 129, 0.1); border-radius: 16px; border: 2px dashed var(--accent); display: none; }
-        .ticket-result h2 { margin: 0; color: var(--accent); font-size: 4rem; }
+        /* القائمة الجانبية لتطبيق الاستقبال (مماثلة لتطبيق الطبيب) */
+        .sidebar {
+            width: 265px;
+            background: var(--card);
+            border-inline-end: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 25px 0;
+            z-index: 50;
+            justify-content: space-between;
+            flex-shrink: 0;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+        }
+        .logo {
+            font-size: 1.45rem;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--accent);
+            padding: 0 15px;
+        }
+        .logo small {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--muted);
+            font-weight: 600;
+            margin-top: 4px;
+        }
+        .nav-item {
+            padding: 16px 25px;
+            color: var(--muted);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            border-inline-end: 4px solid transparent;
+            font-size: 1.02rem;
+            transition: 0.25s;
+        }
+        .nav-item:hover, .nav-item.active {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--accent);
+            border-color: var(--accent);
+        }
+
+        #installAppBtn {
+            display: block;
+            width: calc(100% - 30px);
+            padding: 15px;
+            margin: 15px auto;
+            background: var(--accent);
+            color: #ffffff !important;
+            border: none;
+            border-radius: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            text-align: center;
+            font-family: inherit;
+            font-size: 1rem;
+            transition: 0.2s;
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+        }
+        #installAppBtn:hover { transform: translateY(-3px); filter: brightness(1.08); }
+
+        .main-content {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            border-bottom: 1px solid var(--border);
+            background: var(--card);
+            position: sticky;
+            top: 0;
+            z-index: 40;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .controls { display: flex; gap: 10px; align-items: center; }
+        select, .theme-btn {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 9px 15px;
+            border-radius: 12px;
+            cursor: pointer;
+            outline: none;
+            font-weight: bold;
+            font-family: inherit;
+        }
+
+        .content-scroll {
+            padding: 30px;
+            flex: 1;
+            width: 100%;
+        }
+
+        /* شبكة اختيار الطبيب داخل العيادة في مكتب الاستقبال */
+        .section-title {
+            margin: 0 0 15px;
+            font-size: 1.25rem;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .doctors-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+        .doc-select-card {
+            background: var(--card);
+            border: 2px solid var(--border);
+            border-radius: 20px;
+            padding: 18px;
+            cursor: pointer;
+            transition: 0.25s;
+            text-align: center;
+        }
+        .doc-select-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--accent);
+        }
+        .doc-select-card.selected {
+            border-color: var(--accent);
+            background: rgba(16, 185, 129, 0.08);
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.15);
+        }
+        .doc-top-pills {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .mini-pill {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 8px 6px;
+        }
+        .mini-pill span {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--muted);
+            font-weight: 700;
+        }
+        .mini-pill strong {
+            font-size: 1.4rem;
+            color: var(--accent);
+        }
+        .mini-pill.curr strong { color: var(--blue); }
+
+        /* واجهة قطع التذكرة والطباعة */
+        .reception-workspace {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 25px;
+            align-items: start;
+        }
+        .panel-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+        }
+        .panel-card h3 {
+            margin-top: 0;
+            color: var(--accent);
+            font-size: 1.35rem;
+            border-bottom: 2px dashed var(--border);
+            padding-bottom: 14px;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 16px;
+            border-radius: 14px;
+            border: 2px solid var(--border);
+            background: var(--bg);
+            color: var(--text);
+            font-size: 1.1rem;
+            font-family: inherit;
+            margin-bottom: 16px;
+            outline: none;
+            transition: 0.25s;
+        }
+        input[type="text"]:focus { border-color: var(--accent); }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 14px;
+            font-size: 1.1rem;
+            font-weight: 800;
+            cursor: pointer;
+            color: #ffffff !important;
+            background: var(--accent);
+            font-family: inherit;
+            transition: 0.2s;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn:hover { filter: brightness(1.08); transform: translateY(-2px); }
+        .btn-blue { background: var(--blue) !important; }
+        .btn-warning { background: var(--warning) !important; }
+
+        .live-counters {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .counter-box {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 20px 15px;
+            text-align: center;
+        }
+        .counter-box.highlight {
+            border: 2px solid var(--accent);
+            background: rgba(16, 185, 129, 0.06);
+        }
+        .counter-box span {
+            display: block;
+            color: var(--muted);
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .counter-box strong {
+            font-size: 3rem;
+            line-height: 1;
+            color: var(--text);
+        }
+        .counter-box.highlight strong { color: var(--accent); }
+
+        .last-ticket-receipt {
+            display: none;
+            background: rgba(16, 185, 129, 0.08);
+            border: 2px dashed var(--accent);
+            border-radius: 18px;
+            padding: 20px;
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        /* نافذة مساعدة تثبيت التطبيق */
+        #installHelpModal {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.85);
+            z-index: 999999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .modal-card {
+            background: var(--card);
+            padding: 35px;
+            border-radius: 24px;
+            text-align: center;
+            border: 1px solid var(--border);
+            width: 100%;
+            max-width: 440px;
+        }
+
+        .toast-container {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 9999;
+        }
+        .toast {
+            background: var(--card);
+            color: var(--text);
+            padding: 15px 25px;
+            border-radius: 12px;
+            border-inline-start: 5px solid var(--accent);
+            font-weight: bold;
+            box-shadow: 0 10px 35px rgba(0,0,0,0.2);
+        }
+
+        @media (max-width: 920px) {
+            .app-layout { flex-direction: column; }
+            .sidebar { width: 100%; height: auto; position: relative; padding: 15px 0; border-inline-end: none; border-bottom: 1px solid var(--border); }
+            .reception-workspace { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
 
-    <div class="top-bar">
-        <div style="font-size: 1.5rem; font-weight: 800; color: var(--accent);">ClinicFlow <span style="font-size: 1rem; color: var(--text);" id="clinicTitle"></span></div>
-        <div class="controls">
-            <select id="langSelect" onchange="changeLang(this.value)">
-                <option value="ar">العربية</option>
-                <option value="fr">Français</option>
-                <option value="en">English</option>
-            </select>
-            <button class="theme-btn" onclick="toggleTheme()" data-i18n="btnTheme">🌓 الوضع الليلي</button>
+    <div id="installHelpModal">
+        <div class="modal-card">
+            <img src="https://cdn-icons-png.flaticon.com/512/3063/3063063.png" style="width: 70px; height: 70px; margin-bottom: 10px;" alt="Reception App">
+            <h2 style="color: var(--accent); margin-top: 0;">تثبيت تطبيق مكتب الاستقبال</h2>
+            <p style="color: var(--text); font-weight: bold; line-height: 1.7; font-size: 0.95rem; margin-bottom: 20px;">
+                لتثبيت لوحة الاستقبال كبرنامج سطح مكتب مستقل يعمل بضغطة واحدة، افتحه عبر متصفح <strong>Microsoft Edge</strong> أو <strong>Google Chrome</strong>:
+            </p>
+            <button class="btn btn-blue" onclick="openInEdgeForInstall()">🚀 فتح وتثبيت عبر Microsoft Edge تلقائياً</button>
+            <button class="btn" style="background: transparent !important; color: var(--muted) !important; border: 1px solid var(--border);" onclick="document.getElementById('installHelpModal').style.display='none'">إغلاق</button>
         </div>
     </div>
 
-    <div class="main-card">
-        <h1 data-i18n="title">مكتب الاستقبال والتسجيل</h1>
-        
-        <label style="display: block; text-align: start; margin-bottom: 10px; font-weight: bold;" data-i18n="selectDoc">اختر الطبيب المعالج:</label>
-        <select id="doctorSelect" class="doc-select" onchange="previewNurseStats()">
-            <option value="" data-i18n="loadingDocs">جاري تحميل الأطباء...</option>
-        </select>
+    <div class="app-layout">
+        <div class="sidebar">
+            <div>
+                <div class="logo">
+                    <span id="sidebarClinicTitle">🏥 العيادة الطبية</span>
+                    <small data-i18n="recAppSub">تطبيق مكتب الاستقبال والتذاكر</small>
+                </div>
+                <div style="margin-top: 20px; display: flex; flex-direction: column; width: 100%;">
+                    <div class="nav-item active" onclick="window.scrollTo({top:0, behavior:'smooth'})" data-i18n="navTickets">🎟️ قطع وطباعة التذاكر</div>
+                    <a class="nav-item" id="openTvLink" href="#" target="_blank" data-i18n="navOpenTv">📺 فتح شاشة التلفاز</a>
+                </div>
+            </div>
 
-        <div class="preview-box" id="previewNurseBox">
-            <p><span data-i18n="prevInside">الرقم الحالي بالداخل:</span> <strong id="prevNurseInside">--</strong></p>
-            <p><span data-i18n="prevExpected">التذكرة القادمة رقم:</span> <strong id="prevNurseExpected">--</strong></p>
-            <p><span data-i18n="prevAhead">عدد المنتظرين الفعلي حالياً:</span> <strong id="prevNurseAhead">--</strong></p>
+            <div>
+                <button id="installAppBtn" onclick="installReceptionApp()" data-i18n="btnInstallRec">💻 تثبيت تطبيق الاستقبال</button>
+                <div style="padding: 10px 20px 20px; text-align: center; color: var(--muted); font-size: 0.8rem;">Reception Desk App v4.0</div>
+            </div>
         </div>
 
-        <label style="display: block; text-align: start; margin-bottom: 10px; font-weight: bold;" data-i18n="enterName">اسم المريض:</label>
-        <input type="text" id="patientName" placeholder="أدخل اسم المريض هنا...">
+        <div class="main-content">
+            <header>
+                <div style="font-weight: 800; font-size: 1.3rem; display: flex; align-items: center; gap: 10px;">
+                    🖥️ <span data-i18n="recHeaderTitle">مكتب الاستقبال وتسجيل المرضى</span>
+                </div>
+                <div class="controls">
+                    <select id="langSelect" onchange="changeLang(this.value)">
+                        <option value="ar">العربية</option>
+                        <option value="fr">Français</option>
+                        <option value="en">English</option>
+                    </select>
+                    <button class="theme-btn" onclick="toggleTheme()" data-i18n="btnTheme">🌓 الوضع الليلي</button>
+                </div>
+            </header>
 
-        <button class="btn" onclick="bookTicket()" data-i18n="btnBook">سحب تذكرة جديدة</button>
+            <div class="content-scroll">
 
-        <div class="ticket-result" id="ticketResult">
-            <span style="font-size: 1.2rem; font-weight: bold;" data-i18n="ticketMsg">رقم التذكرة:</span>
-            <h2 id="ticketNumberDisplay">0</h2>
-            <button class="btn" style="margin-top: 15px; background: var(--text) !important; color: var(--bg) !important; padding: 12px;" onclick="printThermalTicket()" data-i18n="btnPrint">🖨️ طباعة التذكرة</button>
+                <!-- اختيار الطبيب المراد قطع التذكرة له داخل العيادة -->
+                <h3 class="section-title" data-i18n="selectDocHeader">👨‍⚕️ 1. اختر الطبيب لقطع التذكرة أو متابعة طابوره:</h3>
+                <div class="doctors-grid" id="receptionDoctorsGrid"></div>
+
+                <!-- منطقة قطع التذكرة ومراقبة الطابور الحي -->
+                <div class="reception-workspace">
+                    <div class="panel-card">
+                        <h3 id="issueCardHeader">🎟️ إصدار تذكرة جديدة للمريض</h3>
+                        <label style="display:block; font-weight:800; color:var(--muted); margin-bottom:8px;" data-i18n="lblPatientName">اسم المريض الكامل:</label>
+                        <input type="text" id="recPatientName" placeholder="✍️ اكتب اسم المريض هنا (أو اتركه فارغاً لتذكرة سريعة)..." onkeypress="if(event.key === 'Enter') issueTicket(true)">
+
+                        <button class="btn" onclick="issueTicket(true)" data-i18n="btnIssueAndPrint">🖨️ قطع التذكرة وطباعتها فوراً</button>
+                        <button class="btn btn-blue" onclick="issueTicket(false)" data-i18n="btnIssueOnly">➕ قطع تذكرة بدون طباعة</button>
+
+                        <div class="last-ticket-receipt" id="lastTicketBox">
+                            <div style="font-weight: 800; color: var(--accent); margin-bottom: 5px;" data-i18n="lastIssuedTitle">✔️ تم إصدار التذكرة بنجاح</div>
+                            <div style="font-size: 3rem; font-weight: 800; line-height: 1;" id="lastTicketNum">--</div>
+                            <div style="font-weight: 700; color: var(--muted); margin: 6px 0 12px;" id="lastTicketPatient">--</div>
+                            <button class="btn btn-warning" style="margin-bottom:0; padding:10px;" onclick="printLastTicket()" data-i18n="btnReprint">🖨️ إعادة طباعة التذكرة</button>
+                        </div>
+                    </div>
+
+                    <div class="panel-card">
+                        <h3 id="queueMonitorHeader">📊 حالة الطابور المباشرة</h3>
+                        <div class="live-counters">
+                            <div class="counter-box">
+                                <span data-i18n="lblCurrentNum">الرقم الحالي بالداخل</span>
+                                <strong id="recCurrentNum">--</strong>
+                            </div>
+                            <div class="counter-box highlight">
+                                <span data-i18n="lblWaitingCount">عدد المنتظرين الآن</span>
+                                <strong id="recWaitingCount">0</strong>
+                            </div>
+                        </div>
+
+                        <div class="counter-box" style="margin-bottom: 18px;">
+                            <span data-i18n="lblNextTicket">الرقم القادم الذي سيُمنح للمريض التالي</span>
+                            <strong id="recProspectiveNum" style="color: var(--blue); font-size: 2.3rem;">#1</strong>
+                        </div>
+
+                        <button class="btn btn-blue" onclick="callNextFromReception()" data-i18n="btnCallNext">📢 مناداة المريض التالي</button>
+                        <button class="btn btn-warning" id="recTogglePauseBtn" onclick="togglePauseFromReception()" style="margin-bottom: 0;">⏸️ إيقاف استقبال التذاكر مؤقتاً</button>
+                    </div>
+                </div>
+
+            </div>
         </div>
     </div>
+
+    <div id="toastContainer" class="toast-container"></div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        const CLINIC_SLUG = new URLSearchParams(window.location.search).get('clinic');
-        if (CLINIC_SLUG) document.getElementById('clinicTitle').innerText = `- ${CLINIC_SLUG}`;
+        const API_BASE = window.location.origin.startsWith('http')
+            ? window.location.origin
+            : 'https://clinic-server-i00s.onrender.com';
 
-        let lastPrintedPatient = '';
-        let lastPrintedDoctor = '';
-        let lastPrintedAhead = 0;
+        const urlSlug = new URLSearchParams(window.location.search).get('clinic');
+        if (urlSlug) localStorage.setItem('saved_rec_clinic_slug', urlSlug);
+        const MAIN_CLINIC_SLUG = urlSlug || localStorage.getItem('saved_rec_clinic_slug') || 'default-clinic';
+
+        let activeDocSlug = MAIN_CLINIC_SLUG;
+        let activeDocName = 'العيادة الطبية';
+        let activeDocSpecialty = 'طب عام';
+        let mainClinicTitle = 'العيادة الطبية';
+        let clinicDoctors = [];
+        let lastPrintedTicket = null;
+        let currentQueueStatus = 'active';
+        let currentLang = localStorage.getItem('rec_lang') || 'ar';
+
+        document.getElementById('openTvLink').href = `/tv.html?clinic=${encodeURIComponent(MAIN_CLINIC_SLUG)}`;
 
         const dict = {
-            ar: { btnTheme: "🌓 الوضع الليلي", title: "مكتب الاستقبال والتسجيل", selectDoc: "اختر الطبيب المعالج:", loadingDocs: "اختر الطبيب...", enterName: "اسم المريض:", btnBook: "سحب تذكرة", ticketMsg: "رقم التذكرة:", btnPrint: "🖨️ طباعة التذكرة", errSelect: "يرجى اختيار طبيب", errNet: "خطأ في الاتصال", prevInside: "الرقم الحالي بالداخل:", prevExpected: "التذكرة القادمة رقم:", prevAhead: "عدد المنتظرين الفعلي حالياً:" },
-            fr: { btnTheme: "🌓 Mode Sombre", title: "Réception", selectDoc: "Choisir le médecin:", loadingDocs: "Choisir...", enterName: "Nom du patient :", btnBook: "Prendre un ticket", ticketMsg: "Numéro de ticket:", btnPrint: "🖨️ Imprimer", errSelect: "Veuillez choisir un médecin", errNet: "Erreur de connexion", prevInside: "Patient actuel:", prevExpected: "Prochain ticket:", prevAhead: "En attente (réel):" },
-            en: { btnTheme: "🌓 Dark Mode", title: "Reception Desk", selectDoc: "Select Doctor:", loadingDocs: "Select...", enterName: "Patient Name:", btnBook: "Get Ticket", ticketMsg: "Ticket Number:", btnPrint: "🖨️ Print Ticket", errSelect: "Please select a doctor", errNet: "Connection error", prevInside: "Current Inside:", prevExpected: "Expected Ticket:", prevAhead: "Waiting Now (Actual):" }
-        };
-
-        let currentLang = localStorage.getItem('rec_lang') || 'ar';
-        function changeLang(lang) {
-            currentLang = lang; localStorage.setItem('rec_lang', lang);
-            document.documentElement.lang = lang; document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
-            document.getElementById('langSelect').value = lang;
-            document.querySelectorAll('[data-i18n]').forEach(el => {
-                const key = el.getAttribute('data-i18n');
-                if (dict[lang][key]) el.innerText = dict[lang][key];
-            });
-            document.getElementById('patientName').placeholder = dict[lang].enterName;
-        }
-
-        const toggleTheme = () => {
-            const isDark = document.body.getAttribute('data-theme') !== 'dark';
-            document.body.setAttribute('data-theme', isDark ? 'dark' : 'light');
-            localStorage.setItem('rec_theme', isDark ? 'dark' : 'light');
-        };
-
-        window.onload = async () => {
-            changeLang(currentLang);
-            if (localStorage.getItem('rec_theme') === 'dark') document.body.setAttribute('data-theme', 'dark');
-            
-            if (CLINIC_SLUG) {
-                try {
-                    const res = await fetch(`https://clinic-server-i00s.onrender.com/api/clinic-doctors/${CLINIC_SLUG}`);
-                    const doctors = await res.json();
-                    const select = document.getElementById('doctorSelect');
-                    select.innerHTML = `<option value="">-- ${dict[currentLang].loadingDocs} --</option>`;
-                    doctors.forEach(doc => { select.innerHTML += `<option value="${doc.slug}">${doc.name}</option>`; });
-                    if (doctors.length === 1) {
-                        select.value = doctors[0].slug;
-                        previewNurseStats();
-                    }
-                } catch (e) {}
+            ar: {
+                recAppSub: "تطبيق مكتب الاستقبال والتذاكر",
+                navTickets: "🎟️ قطع وطباعة التذاكر",
+                navOpenTv: "📺 فتح شاشة التلفاز",
+                btnInstallRec: "💻 تثبيت تطبيق الاستقبال",
+                recHeaderTitle: "مكتب الاستقبال وتسجيل المرضى",
+                btnTheme: "🌓 الوضع الليلي",
+                selectDocHeader: "👨‍⚕️ 1. اختر الطبيب لقطع التذكرة أو متابعة طابوره:",
+                lblPatientName: "اسم المريض الكامل:",
+                btnIssueAndPrint: "🖨️ قطع التذكرة وطباعتها فوراً",
+                btnIssueOnly: "➕ قطع تذكرة بدون طباعة",
+                lastIssuedTitle: "✔️ تم إصدار التذكرة بنجاح",
+                btnReprint: "🖨️ إعادة طباعة التذكرة",
+                lblCurrentNum: "الرقم الحالي بالداخل",
+                lblWaitingCount: "عدد المنتظرين الآن",
+                lblNextTicket: "الرقم القادم الذي سيُمنح للمريض التالي",
+                btnCallNext: "📢 مناداة المريض التالي",
+                pauseQueue: "⏸️ إيقاف استقبال التذاكر مؤقتاً",
+                resumeQueue: "▶️ تفعيل استقبال التذاكر"
+            },
+            fr: {
+                recAppSub: "Application Réception & Tickets",
+                navTickets: "🎟️ Émission de Tickets",
+                navOpenTv: "📺 Ouvrir l'écran TV",
+                btnInstallRec: "💻 Installer l'App Réception",
+                recHeaderTitle: "Bureau de Réception",
+                btnTheme: "🌓 Mode Sombre",
+                selectDocHeader: "👨‍⚕️ 1. Sélectionnez le médecin :",
+                lblPatientName: "Nom complet du patient :",
+                btnIssueAndPrint: "🖨️ Créer et Imprimer le Ticket",
+                btnIssueOnly: "➕ Créer sans imprimer",
+                lastIssuedTitle: "✔️ Ticket créé avec succès",
+                btnReprint: "🖨️ Réimprimer le Ticket",
+                lblCurrentNum: "Numéro Actuel",
+                lblWaitingCount: "En attente",
+                lblNextTicket: "Prochain Numéro à attribuer",
+                btnCallNext: "📢 Appeler le patient suivant",
+                pauseQueue: "⏸️ Suspendre la file",
+                resumeQueue: "▶️ Réactiver la file"
+            },
+            en: {
+                recAppSub: "Reception & Ticketing App",
+                navTickets: "🎟️ Issue & Print Tickets",
+                navOpenTv: "📺 Open TV Display",
+                btnInstallRec: "💻 Install Reception App",
+                recHeaderTitle: "Reception Desk & Patient Check-in",
+                btnTheme: "🌓 Dark Mode",
+                selectDocHeader: "👨‍⚕️ 1. Select Doctor for Ticketing:",
+                lblPatientName: "Patient Full Name:",
+                btnIssueAndPrint: "🖨️ Issue & Print Ticket Now",
+                btnIssueOnly: "➕ Issue Ticket Without Printing",
+                lastIssuedTitle: "✔️ Ticket Issued Successfully",
+                btnReprint: "🖨️ Reprint Ticket",
+                lblCurrentNum: "Current Active Number",
+                lblWaitingCount: "Waiting Now",
+                lblNextTicket: "Next Prospective Ticket Number",
+                btnCallNext: "📢 Call Next Patient",
+                pauseQueue: "⏸️ Pause Queue",
+                resumeQueue: "▶️ Resume Queue"
             }
         };
 
-        async function previewNurseStats() {
-            const docSlug = document.getElementById('doctorSelect').value;
-            const previewBox = document.getElementById('previewNurseBox');
-            if (!docSlug) { previewBox.style.display = 'none'; return; }
+        function showToast(msg) {
+            const container = document.getElementById('toastContainer');
+            const t = document.createElement('div');
+            t.className = 'toast';
+            t.innerText = msg;
+            container.appendChild(t);
+            setTimeout(() => t.remove(), 3500);
+        }
+
+        function changeLang(lang) {
+            currentLang = lang;
+            localStorage.setItem('rec_lang', lang);
+            document.documentElement.lang = lang;
+            document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+            document.getElementById('langSelect').value = lang;
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const k = el.getAttribute('data-i18n');
+                if (dict[lang][k]) el.innerText = dict[lang][k];
+            });
+            updatePauseBtnText();
+        }
+
+        function toggleTheme() {
+            const isDark = document.body.getAttribute('data-theme') !== 'dark';
+            document.body.setAttribute('data-theme', isDark ? 'dark' : 'light');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        }
+
+        function updatePauseBtnText() {
+            const btn = document.getElementById('recTogglePauseBtn');
+            if (!btn) return;
+            if (currentQueueStatus === 'paused') {
+                btn.innerText = dict[currentLang].resumeQueue;
+                btn.style.background = 'var(--accent)';
+            } else {
+                btn.innerText = dict[currentLang].pauseQueue;
+                btn.style.background = 'var(--warning)';
+            }
+        }
+
+        // تثبيت تطبيق الاستقبال كبرنامج سطح مكتب مستقل
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('installAppBtn').style.display = 'block';
+        });
+
+        window.addEventListener('appinstalled', () => {
+            document.getElementById('installAppBtn').style.display = 'none';
+            showToast('✔️ تم تثبيت تطبيق الاستقبال على سطح المكتب بنجاح!');
+        });
+
+        function installReceptionApp() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choice) => {
+                    if (choice.outcome === 'accepted') {
+                        document.getElementById('installAppBtn').style.display = 'none';
+                    }
+                    deferredPrompt = null;
+                });
+            } else {
+                document.getElementById('installHelpModal').style.display = 'flex';
+            }
+        }
+
+        function openInEdgeForInstall() {
+            const fullUrl = window.location.origin + '/reception.html?clinic=' + encodeURIComponent(MAIN_CLINIC_SLUG);
+            window.location.href = 'microsoft-edge:' + fullUrl;
+            document.getElementById('installHelpModal').style.display = 'none';
+        }
+
+        async function loadReceptionData() {
             try {
-                const res = await fetch(`https://clinic-server-i00s.onrender.com/api/queue-status/${docSlug}`);
-                const data = await res.json();
-                const currentNum = data.current_number || 0;
-                const lastIssued = data.last_issued_number || 0;
-                const waitingCount = data.waiting_count !== undefined ? data.waiting_count : Math.max(0, lastIssued - currentNum);
-                
-                document.getElementById('prevNurseInside').innerText = currentNum === 0 ? '--' : currentNum;
-                document.getElementById('prevNurseExpected').innerText = lastIssued + 1;
-                document.getElementById('prevNurseAhead').innerText = waitingCount;
-                previewBox.style.display = 'block';
+                const res = await fetch(`${API_BASE}/api/clinic-doctors/${MAIN_CLINIC_SLUG}`);
+                clinicDoctors = await res.json();
+
+                if (clinicDoctors.length > 0) {
+                    mainClinicTitle = clinicDoctors[0].clinic_name || mainClinicTitle;
+                    document.getElementById('sidebarClinicTitle').innerText = `🏥 ${mainClinicTitle}`;
+                    document.title = `${mainClinicTitle} — تطبيق الاستقبال`;
+
+                    if (!clinicDoctors.some(d => d.slug === activeDocSlug)) {
+                        activeDocSlug = clinicDoctors[0].slug;
+                    }
+                }
+                renderDoctorsGrid();
+                await refreshSelectedDoctorQueue();
             } catch (e) {}
         }
 
-        async function bookTicket() {
-            const selectEl = document.getElementById('doctorSelect');
-            const docSlug = selectEl.value;
-            const pName = document.getElementById('patientName').value.trim() || 'مريض';
-            
-            if (!docSlug) return alert(dict[currentLang].errSelect);
+        function renderDoctorsGrid() {
+            const grid = document.getElementById('receptionDoctorsGrid');
+            if (!clinicDoctors.length) {
+                grid.innerHTML = `<div class="panel-card" style="grid-column:1/-1; padding:18px; text-align:center; color:var(--muted); font-weight:bold;">لم تتم إضافة أطباء داخل هذه العيادة بعد من لوحة الأدمن.</div>`;
+                return;
+            }
 
-            lastPrintedAhead = document.getElementById('prevNurseAhead').innerText || '0';
-            lastPrintedDoctor = selectEl.options[selectEl.selectedIndex].text;
-            lastPrintedPatient = pName;
-
-            try {
-                const res = await fetch('https://clinic-server-i00s.onrender.com/api/tickets', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ clinic_slug: docSlug, patient_name: pName })
-                });
-                const data = await res.json();
-                if (res.ok) {
-                    const num = data.ticket_number || data.message.match(/\d+/)[0];
-                    document.getElementById('ticketNumberDisplay').innerText = num;
-                    document.getElementById('ticketResult').style.display = 'block';
-                    document.getElementById('patientName').value = '';
-                    previewNurseStats();
-                } else { alert(data.error); }
-            } catch (e) { alert(dict[currentLang].errNet); }
+            grid.innerHTML = clinicDoctors.map(d => {
+                const isSelected = d.slug === activeDocSlug;
+                return `
+                    <div class="doc-select-card ${isSelected ? 'selected' : ''}" onclick="selectDoctorForReception('${d.slug}')">
+                        <div class="doc-top-pills">
+                            <div class="mini-pill">
+                                <span>⏳ المنتظرون</span>
+                                <strong>${d.waiting}</strong>
+                            </div>
+                            <div class="mini-pill curr">
+                                <span>📢 الرقم الحالي</span>
+                                <strong>${d.current === 0 ? '--' : d.current}</strong>
+                            </div>
+                        </div>
+                        <div style="font-size:1.2rem; font-weight:800; color:var(--text); margin-bottom:4px;">👨‍⚕️ ${d.name}</div>
+                        <div style="font-size:0.85rem; font-weight:800; color:var(--accent);">🩺 ${d.specialty || 'طب عام'}</div>
+                    </div>
+                `;
+            }).join('');
         }
 
-        // دالة طباعة التذكرة الحرارية النظيفة
-        function printThermalTicket() {
-            const ticketNum = document.getElementById('ticketNumberDisplay').innerText;
-            const dateStr = new Date().toLocaleString('ar-DZ');
-            const w = window.open('', '', 'width=400,height=550');
+        function selectDoctorForReception(slug) {
+            activeDocSlug = slug;
+            renderDoctorsGrid();
+            refreshSelectedDoctorQueue();
+        }
+
+        async function refreshSelectedDoctorQueue() {
+            try {
+                const res = await fetch(`${API_BASE}/api/queue-status/${activeDocSlug}`);
+                if (!res.ok) return;
+                const data = await res.json();
+
+                mainClinicTitle = data.clinic_name || mainClinicTitle;
+                activeDocName = data.doctor_name || activeDocName;
+                activeDocSpecialty = data.specialty || 'طب عام';
+                currentQueueStatus = data.status || 'active';
+
+                document.getElementById('sidebarClinicTitle').innerText = `🏥 ${mainClinicTitle}`;
+                document.getElementById('issueCardHeader').innerText = `🎟️ قطع تذكرة عند: ${activeDocName} (${activeDocSpecialty})`;
+                document.getElementById('queueMonitorHeader').innerText = `📊 طابور: ${activeDocName}`;
+
+                document.getElementById('recCurrentNum').innerText = data.current_number === 0 ? '--' : data.current_number;
+                document.getElementById('recWaitingCount').innerText = data.waiting_count || 0;
+                document.getElementById('recProspectiveNum').innerText = `#${(data.last_issued_number || 0) + 1}`;
+                updatePauseBtnText();
+            } catch (e) {}
+        }
+
+        async function issueTicket(shouldPrint) {
+            const inputEl = document.getElementById('recPatientName');
+            const pName = inputEl.value.trim() || 'مريض زائر';
+
+            try {
+                const res = await fetch(`${API_BASE}/api/tickets`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ clinic_slug: activeDocSlug, patient_name: pName })
+                });
+                const data = await res.json();
+                if (!res.ok) return showToast(`⚠️ ${data.error || 'تعذر قطع التذكرة'}`);
+
+                inputEl.value = '';
+                lastPrintedTicket = {
+                    number: data.ticket_number,
+                    patient_name: pName,
+                    doctor_name: activeDocName,
+                    specialty: activeDocSpecialty,
+                    clinic_name: mainClinicTitle,
+                    time: new Date().toLocaleString('ar-DZ')
+                };
+
+                document.getElementById('lastTicketNum').innerText = `#${lastPrintedTicket.number}`;
+                document.getElementById('lastTicketPatient').innerText = `👤 ${lastPrintedTicket.patient_name} — 👨‍⚕️ ${lastPrintedTicket.doctor_name}`;
+                document.getElementById('lastTicketBox').style.display = 'block';
+
+                showToast(`✔️ تم قطع التذكرة رقم #${data.ticket_number}`);
+                await loadReceptionData();
+
+                if (shouldPrint) {
+                    printLastTicket();
+                }
+            } catch (e) {
+                showToast('❌ خطأ اتصال بالخادم');
+            }
+        }
+
+        function printLastTicket() {
+            if (!lastPrintedTicket) return;
+            const w = window.open('', '', 'width=420,height=550');
             w.document.write(`
+                <!DOCTYPE html>
                 <html dir="rtl" lang="ar">
                 <head>
-                    <title>تذكرة رقم ${ticketNum}</title>
+                    <meta charset="UTF-8">
+                    <title>تذكرة رقم #${lastPrintedTicket.number}</title>
                     <style>
-                        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; margin: 0; color: #000; }
-                        .box { border: 2px dashed #000; padding: 20px; border-radius: 12px; max-width: 280px; margin: 0 auto; }
-                        h2 { margin: 0 0 5px 0; font-size: 1.4rem; }
-                        .doc { font-size: 1.1rem; font-weight: bold; margin-bottom: 15px; border-bottom: 1px solid #000; padding-bottom: 10px; }
-                        .num { font-size: 4.5rem; font-weight: 900; margin: 15px 0; line-height: 1; }
-                        .meta { font-size: 1rem; font-weight: bold; margin: 6px 0; }
-                        .date { font-size: 0.85rem; margin-top: 15px; border-top: 1px solid #000; padding-top: 10px; }
-                        @media print { @page { margin: 0; } body { padding: 10px; } }
+                        @page { margin: 4mm; }
+                        body {
+                            font-family: 'Tajawal', Arial, sans-serif;
+                            text-align: center;
+                            margin: 0;
+                            padding: 15px 10px;
+                            color: #000;
+                        }
+                        .ticket-box {
+                            border: 2px dashed #000;
+                            border-radius: 12px;
+                            padding: 15px 10px;
+                        }
+                        h2 { margin: 0 0 5px; font-size: 1.35rem; }
+                        .sub { font-size: 0.95rem; font-weight: bold; margin-bottom: 10px; }
+                        .big-num {
+                            font-size: 4.2rem;
+                            font-weight: 900;
+                            margin: 10px 0;
+                            line-height: 1;
+                            border-top: 1px solid #000;
+                            border-bottom: 1px solid #000;
+                            padding: 12px 0;
+                        }
+                        .meta { font-size: 0.95rem; font-weight: bold; line-height: 1.7; }
                     </style>
                 </head>
                 <body>
-                    <div class="box">
-                        <h2>ClinicFlow</h2>
-                        <div class="doc">${lastPrintedDoctor}</div>
-                        <div>رقم التذكرة</div>
-                        <div class="num">${ticketNum}</div>
-                        <div class="meta">الاسم: ${lastPrintedPatient}</div>
-                        <div class="meta">المنتظرون قبلك: ${lastPrintedAhead}</div>
-                        <div class="date">${dateStr}</div>
+                    <div class="ticket-box">
+                        <h2>🏥 ${lastPrintedTicket.clinic_name}</h2>
+                        <div class="sub">👨‍⚕️ ${lastPrintedTicket.doctor_name} (${lastPrintedTicket.specialty})</div>
+                        <div>رقم الدور (Ticket Number)</div>
+                        <div class="big-num">#${lastPrintedTicket.number}</div>
+                        <div class="meta">
+                            👤 المريض: ${lastPrintedTicket.patient_name}<br>
+                            🕒 ${lastPrintedTicket.time}
+                        </div>
                     </div>
                 </body>
                 </html>
@@ -206,10 +787,56 @@
             setTimeout(() => { w.print(); w.close(); }, 400);
         }
 
-        const socket = io('https://clinic-server-i00s.onrender.com');
-        socket.on('call_patient', () => { if (document.getElementById('doctorSelect').value) previewNurseStats(); });
-        socket.on('new_ticket', () => { if (document.getElementById('doctorSelect').value) previewNurseStats(); });
-        socket.on('ticket_cancelled', () => { if (document.getElementById('doctorSelect').value) previewNurseStats(); });
+        async function callNextFromReception() {
+            try {
+                const res = await fetch(`${API_BASE}/api/call-next`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ clinic_slug: activeDocSlug })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast(`📢 تم النداء على: ${data.message}`);
+                    loadReceptionData();
+                } else {
+                    showToast(`⚠️ ${data.error || 'لا يوجد مرضى في الانتظار'}`);
+                }
+            } catch (e) {}
+        }
+
+        async function togglePauseFromReception() {
+            try {
+                const res = await fetch(`${API_BASE}/api/queue/toggle-status`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ clinic_slug: activeDocSlug })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    currentQueueStatus = data.status;
+                    updatePauseBtnText();
+                    loadReceptionData();
+                }
+            } catch (e) {}
+        }
+
+        window.onload = () => {
+            if (localStorage.getItem('theme') === 'dark') document.body.setAttribute('data-theme', 'dark');
+            if (window.matchMedia('(display-mode: standalone)').matches) {
+                document.getElementById('installAppBtn').style.display = 'none';
+            }
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/sw.js').catch(() => {});
+            }
+            changeLang(currentLang);
+            loadReceptionData();
+        };
+
+        const socket = io(API_BASE);
+        socket.on('new_ticket', () => loadReceptionData());
+        socket.on('call_patient', () => loadReceptionData());
+        socket.on('queue_status_changed', () => loadReceptionData());
+        socket.on('ticket_cancelled', () => loadReceptionData());
     </script>
 </body>
 </html>
