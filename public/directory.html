@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ClinicFlow - الدليل الطبي الشامل وحجز المواعيد</title>
+    <title>ClinicFlow - الدليل الطبي الشامل والحجز الأسبوعي</title>
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/3063/3063063.png">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
     <style>
@@ -48,16 +48,17 @@
         .btn-select:hover { filter: brightness(1.08); }
 
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.8); z-index: 9999; display: none; justify-content: center; align-items: center; padding: 15px; overflow-y: auto; }
-        .modal-card { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 30px; width: 100%; max-width: 500px; text-align: center; position: relative; max-height: 92vh; overflow-y: auto; }
+        .modal-card { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 28px; width: 100%; max-width: 560px; text-align: center; position: relative; max-height: 92vh; overflow-y: auto; }
         .close-btn { position: absolute; top: 18px; left: 18px; background: var(--bg); border: 1px solid var(--border); color: var(--text); width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-weight: bold; font-size: 1.1rem; }
 
-        .qr-frame { background: #ffffff; padding: 16px; border-radius: 18px; display: inline-block; border: 3px solid var(--accent); margin: 12px 0; }
-        .qr-frame img { width: 170px; height: 170px; display: block; }
+        .qr-frame { background: #ffffff; padding: 14px; border-radius: 18px; display: inline-block; border: 3px solid var(--accent); margin: 10px 0; }
+        .qr-frame img { width: 150px; height: 150px; display: block; }
 
-        .date-selector { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 18px 0; }
-        .date-btn { padding: 12px 8px; border-radius: 12px; border: 2px solid var(--border); background: var(--bg); color: var(--text); cursor: pointer; font-family: inherit; font-weight: 700; transition: 0.2s; }
-        .date-btn.active { border-color: var(--accent); background: rgba(16, 185, 129, 0.12); color: var(--accent); }
-        .date-btn small { display: block; font-size: 0.75rem; color: var(--muted); margin-top: 3px; }
+        /* شبكة اختيار أيام الأسبوع الـ 7 داخل نافذة الحجز */
+        .date-selector { display: grid; grid-template-columns: repeat(auto-fit, minmax(115px, 1fr)); gap: 8px; margin: 14px 0 18px; }
+        .date-btn { padding: 10px 6px; border-radius: 12px; border: 2px solid var(--border); background: var(--bg); color: var(--text); cursor: pointer; font-family: inherit; font-weight: 800; font-size: 0.88rem; transition: 0.2s; }
+        .date-btn.active { border-color: var(--accent); background: rgba(16, 185, 129, 0.14); color: var(--accent); }
+        .date-btn small { display: block; font-size: 0.74rem; color: var(--muted); margin-top: 3px; font-weight: 700; }
 
         .preview-numbers { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
         .num-box { background: var(--bg); border: 1px solid var(--border); padding: 14px; border-radius: 16px; }
@@ -91,8 +92,8 @@
 
     <div class="container">
         <div class="hero">
-            <h1>الدليل الطبي الشامل وحجز المواعيد</h1>
-            <p>اختر التخصص الطبي أو ابحث باسم الطبيب واحجز دورك في أجل أقصاه 48 ساعة</p>
+            <h1>الدليل الطبي الشامل وحجز المواعيد الأسبوعي</h1>
+            <p>اختر التخصص الطبي أو ابحث باسم الطبيب واحجز دورك في أي يوم طوال الأسبوع الكامل (7 أيام)</p>
         </div>
 
         <div class="search-box">
@@ -106,7 +107,7 @@
         <div class="doctors-grid" id="doctorsGrid"></div>
     </div>
 
-    <!-- نافذة الطبيب المختار: كود QR الخاص بالطبيب + الحجز في أجل أقصاه 48 ساعة -->
+    <!-- نافذة الطبيب المختار: كود QR الخاص بالطبيب + الحجز طوال 7 أيام -->
     <div class="modal-overlay" id="doctorBookingModal">
         <div class="modal-card">
             <button class="close-btn" onclick="closeDoctorModal()">✕</button>
@@ -116,9 +117,9 @@
             <div class="qr-frame">
                 <img id="modalDocQr" src="" alt="Doctor QR">
             </div>
-            <p style="margin: 0 0 12px; font-size: 0.82rem; color: var(--muted); font-weight: bold;">كود QR الخاص بالطبيب (للمسح أو الحجز الفوري بالأسفل)</p>
+            <p style="margin: 0 0 12px; font-size: 0.82rem; color: var(--muted); font-weight: bold;">كود QR الخاص بالطبيب (للمسح أو الحجز المباشر بالأسفل)</p>
 
-            <div style="text-align: start; font-weight: 800; font-size: 0.9rem; margin-bottom: 6px; color: var(--text);">📅 اختر موعد الحجز (في أجل أقصاه 48 ساعة):</div>
+            <div style="text-align: start; font-weight: 800; font-size: 0.92rem; margin-bottom: 6px; color: var(--text);">📅 اختر يوم الحجز (متاح طوال الأسبوع الكامل - 7 أيام):</div>
             <div class="date-selector" id="dateSelector"></div>
 
             <div class="preview-numbers">
@@ -169,9 +170,10 @@
             "الطب النفسي والعصبي",
             "أمراض الدم والأورام",
             "جراحة الوجه والفكين والتجميل",
-            "التحاليل الطبية والأشعة",
-            "عيادة متعددة التخصصات"
+            "التحاليل الطبية والأشعة"
         ];
+
+        const daysAr = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
 
         let allDoctors = [];
         let selectedSpecialty = 'ALL';
@@ -186,7 +188,10 @@
             const yyyy = d.getFullYear();
             const mm = String(d.getMonth() + 1).padStart(2, '0');
             const dd = String(d.getDate()).padStart(2, '0');
-            return `${yyyy}-${mm}-${dd}`;
+            return {
+                dateStr: `${yyyy}-${mm}-${dd}`,
+                dayName: daysAr[d.getDay()]
+            };
         }
 
         function initSpecialtiesUI() {
@@ -269,7 +274,7 @@
                                 <strong style="color:var(--accent);">#${doc.next_ticket_today}</strong>
                             </div>
                         </div>
-                        <button class="btn-select">📲 عرض QR الطبيب والحجز (48 سا)</button>
+                        <button class="btn-select">📲 عرض QR الطبيب والحجز (7 أيام)</button>
                     </div>
                 </div>
             `).join('');
@@ -290,25 +295,29 @@
             document.getElementById('patientNameInput').value = '';
 
             selectedDateIndex = 0;
-            selectedDateStr = getFormattedDateOffset(0);
+            selectedDateStr = getFormattedDateOffset(0).dateStr;
             renderDateButtons();
             document.getElementById('doctorBookingModal').style.display = 'flex';
             await fetchDatePreview();
         }
 
+        // عرض أيام الأسبوع الـ 7 كاملة للاختيار
         function renderDateButtons() {
-            const labels = ["اليوم", "غداً (24 سا)", "بعد غد (48 سا)"];
             const container = document.getElementById('dateSelector');
-            container.innerHTML = [0, 1, 2].map(offset => {
-                const dStr = getFormattedDateOffset(offset);
+            container.innerHTML = [0, 1, 2, 3, 4, 5, 6].map(offset => {
+                const info = getFormattedDateOffset(offset);
+                let dayTitle = info.dayName;
+                if (offset === 0) dayTitle = `اليوم (${info.dayName})`;
+                else if (offset === 1) dayTitle = `غداً (${info.dayName})`;
+
                 const activeClass = selectedDateIndex === offset ? 'active' : '';
-                return `<button class="date-btn ${activeClass}" onclick="selectBookingDate(${offset})">${labels[offset]}<small>${dStr}</small></button>`;
+                return `<button class="date-btn ${activeClass}" onclick="selectBookingDate(${offset})">${dayTitle}<small>${info.dateStr}</small></button>`;
             }).join('');
         }
 
         async function selectBookingDate(offset) {
             selectedDateIndex = offset;
-            selectedDateStr = getFormattedDateOffset(offset);
+            selectedDateStr = getFormattedDateOffset(offset).dateStr;
             renderDateButtons();
             document.getElementById('ticketSuccessBox').style.display = 'none';
             document.getElementById('bookingFormArea').style.display = 'block';
@@ -325,7 +334,7 @@
                 const btn = document.getElementById('confirmBookBtn');
                 if (data.status === 'paused') {
                     btn.disabled = true;
-                    btn.innerText = '⏸️ استقبال التذاكر متوقف مؤقتاً';
+                    btn.innerText = '⏸️ استقبال التذاكر متوقف مؤقتاً لهذا اليوم';
                     btn.style.background = 'var(--warning)';
                 } else {
                     btn.disabled = false;

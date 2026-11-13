@@ -46,7 +46,6 @@
             align-items: flex-start;
         }
 
-        /* القائمة الجانبية لتطبيق الاستقبال (مماثلة لتطبيق الطبيب) */
         .sidebar {
             width: 265px;
             background: var(--card);
@@ -148,15 +147,14 @@
         }
 
         .content-scroll {
-            padding: 30px;
+            padding: 30px 30px 60px;
             flex: 1;
             width: 100%;
         }
 
-        /* شبكة اختيار الطبيب داخل العيادة في مكتب الاستقبال */
         .section-title {
-            margin: 0 0 15px;
-            font-size: 1.25rem;
+            margin: 0 0 14px;
+            font-size: 1.2rem;
             color: var(--text);
             display: flex;
             align-items: center;
@@ -164,15 +162,15 @@
         }
         .doctors-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            gap: 16px;
-            margin-bottom: 28px;
+            grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+            gap: 15px;
+            margin-bottom: 26px;
         }
         .doc-select-card {
             background: var(--card);
             border: 2px solid var(--border);
             border-radius: 20px;
-            padding: 18px;
+            padding: 16px;
             cursor: pointer;
             transition: 0.25s;
             text-align: center;
@@ -205,44 +203,90 @@
             font-weight: 700;
         }
         .mini-pill strong {
-            font-size: 1.4rem;
+            font-size: 1.35rem;
             color: var(--accent);
         }
         .mini-pill.curr strong { color: var(--blue); }
 
-        /* واجهة قطع التذكرة والطباعة */
+        /* شريط اختيار أيام الأسبوع الـ 7 */
+        .week-selector-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(125px, 1fr));
+            gap: 10px;
+            margin-bottom: 26px;
+        }
+        .day-card-btn {
+            background: var(--card);
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            padding: 12px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: inherit;
+            color: var(--text);
+        }
+        .day-card-btn:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+        .day-card-btn.active {
+            border-color: var(--accent);
+            background: rgba(16, 185, 129, 0.12);
+            color: var(--accent);
+            box-shadow: 0 6px 18px rgba(16, 185, 129, 0.15);
+        }
+        .day-card-btn strong {
+            display: block;
+            font-size: 0.98rem;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+        .day-card-btn small {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--muted);
+            font-weight: 700;
+        }
+
         .reception-workspace {
             display: grid;
-            grid-template-columns: 1.2fr 1fr;
-            gap: 25px;
+            grid-template-columns: 1.15fr 1fr;
+            gap: 24px;
             align-items: start;
+            margin-bottom: 28px;
         }
         .panel-card {
             background: var(--card);
             border: 1px solid var(--border);
             border-radius: 24px;
-            padding: 30px;
+            padding: 26px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.04);
         }
         .panel-card h3 {
             margin-top: 0;
             color: var(--accent);
-            font-size: 1.35rem;
+            font-size: 1.3rem;
             border-bottom: 2px dashed var(--border);
             padding-bottom: 14px;
-            margin-bottom: 20px;
+            margin-bottom: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         input[type="text"] {
             width: 100%;
-            padding: 16px;
+            padding: 15px;
             border-radius: 14px;
             border: 2px solid var(--border);
             background: var(--bg);
             color: var(--text);
-            font-size: 1.1rem;
+            font-size: 1.05rem;
             font-family: inherit;
-            margin-bottom: 16px;
+            margin-bottom: 15px;
             outline: none;
             transition: 0.25s;
         }
@@ -250,10 +294,10 @@
 
         .btn {
             width: 100%;
-            padding: 16px;
+            padding: 15px;
             border: none;
             border-radius: 14px;
-            font-size: 1.1rem;
+            font-size: 1.05rem;
             font-weight: 800;
             cursor: pointer;
             color: #ffffff !important;
@@ -261,7 +305,7 @@
             font-family: inherit;
             transition: 0.2s;
             margin-bottom: 12px;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
@@ -269,18 +313,26 @@
         .btn:hover { filter: brightness(1.08); transform: translateY(-2px); }
         .btn-blue { background: var(--blue) !important; }
         .btn-warning { background: var(--warning) !important; }
+        .btn-danger { background: var(--danger) !important; }
+        .btn-sm {
+            width: auto;
+            padding: 7px 13px;
+            font-size: 0.85rem;
+            border-radius: 10px;
+            margin-bottom: 0;
+        }
 
         .live-counters {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 20px;
+            gap: 14px;
+            margin-bottom: 18px;
         }
         .counter-box {
             background: var(--bg);
             border: 1px solid var(--border);
             border-radius: 18px;
-            padding: 20px 15px;
+            padding: 18px 12px;
             text-align: center;
         }
         .counter-box.highlight {
@@ -290,12 +342,12 @@
         .counter-box span {
             display: block;
             color: var(--muted);
-            font-size: 0.9rem;
+            font-size: 0.88rem;
             font-weight: 700;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
         .counter-box strong {
-            font-size: 3rem;
+            font-size: 2.8rem;
             line-height: 1;
             color: var(--text);
         }
@@ -306,32 +358,52 @@
             background: rgba(16, 185, 129, 0.08);
             border: 2px dashed var(--accent);
             border-radius: 18px;
-            padding: 20px;
+            padding: 18px;
             text-align: center;
-            margin-top: 15px;
+            margin-top: 14px;
         }
 
-        /* نافذة مساعدة تثبيت التطبيق */
-        #installHelpModal {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(15, 23, 42, 0.85);
-            z-index: 999999;
-            display: none;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-        .modal-card {
-            background: var(--card);
-            padding: 35px;
-            border-radius: 24px;
-            text-align: center;
+        /* تصميم لائحة المرضى المسجلين في الاستقبال */
+        .patients-table-wrapper {
+            overflow-x: auto;
+            border-radius: 16px;
             border: 1px solid var(--border);
-            width: 100%;
-            max-width: 440px;
         }
+        table.patients-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: right;
+        }
+        [dir="ltr"] table.patients-table { text-align: left; }
+        table.patients-table th {
+            background: var(--bg);
+            color: var(--muted);
+            font-weight: 800;
+            padding: 14px 16px;
+            font-size: 0.92rem;
+            border-bottom: 2px solid var(--border);
+        }
+        table.patients-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            font-weight: 700;
+            vertical-align: middle;
+        }
+        table.patients-table tr:last-child td { border-bottom: none; }
+        table.patients-table tr:hover td { background: rgba(16, 185, 129, 0.04); }
+
+        .status-pill {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 999px;
+            font-size: 0.82rem;
+            font-weight: 800;
+        }
+        .st-waiting { background: rgba(59, 130, 246, 0.14); color: var(--blue); }
+        .st-inside { background: rgba(16, 185, 129, 0.2); color: var(--accent); border: 1px solid var(--accent); }
+        .st-completed { background: rgba(16, 185, 129, 0.12); color: var(--accent); }
+        .st-absent { background: rgba(245, 158, 11, 0.16); color: var(--warning); }
+        .st-cancelled { background: rgba(239, 68, 68, 0.14); color: var(--danger); text-decoration: line-through; }
 
         .toast-container {
             position: fixed;
@@ -362,18 +434,6 @@
 </head>
 <body>
 
-    <div id="installHelpModal">
-        <div class="modal-card">
-            <img src="https://cdn-icons-png.flaticon.com/512/3063/3063063.png" style="width: 70px; height: 70px; margin-bottom: 10px;" alt="Reception App">
-            <h2 style="color: var(--accent); margin-top: 0;">تثبيت تطبيق مكتب الاستقبال</h2>
-            <p style="color: var(--text); font-weight: bold; line-height: 1.7; font-size: 0.95rem; margin-bottom: 20px;">
-                لتثبيت لوحة الاستقبال كبرنامج سطح مكتب مستقل يعمل بضغطة واحدة، افتحه عبر متصفح <strong>Microsoft Edge</strong> أو <strong>Google Chrome</strong>:
-            </p>
-            <button class="btn btn-blue" onclick="openInEdgeForInstall()">🚀 فتح وتثبيت عبر Microsoft Edge تلقائياً</button>
-            <button class="btn" style="background: transparent !important; color: var(--muted) !important; border: 1px solid var(--border);" onclick="document.getElementById('installHelpModal').style.display='none'">إغلاق</button>
-        </div>
-    </div>
-
     <div class="app-layout">
         <div class="sidebar">
             <div>
@@ -382,21 +442,22 @@
                     <small data-i18n="recAppSub">تطبيق مكتب الاستقبال والتذاكر</small>
                 </div>
                 <div style="margin-top: 20px; display: flex; flex-direction: column; width: 100%;">
-                    <div class="nav-item active" onclick="window.scrollTo({top:0, behavior:'smooth'})" data-i18n="navTickets">🎟️ قطع وطباعة التذاكر</div>
+                    <div class="nav-item active" onclick="window.scrollTo({top:0, behavior:'smooth'})" data-i18n="navTickets">🎟️ قطع التذاكر والحجز الأسبوعي</div>
+                    <div class="nav-item" onclick="document.getElementById('registeredListCard').scrollIntoView({behavior:'smooth'})" data-i18n="navList">📋 لائحة المرضى المسجلين</div>
                     <a class="nav-item" id="openTvLink" href="#" target="_blank" data-i18n="navOpenTv">📺 فتح شاشة التلفاز</a>
                 </div>
             </div>
 
             <div>
                 <button id="installAppBtn" onclick="installReceptionApp()" data-i18n="btnInstallRec">💻 تثبيت تطبيق الاستقبال</button>
-                <div style="padding: 10px 20px 20px; text-align: center; color: var(--muted); font-size: 0.8rem;">Reception Desk App v4.0</div>
+                <div style="padding: 10px 20px 20px; text-align: center; color: var(--muted); font-size: 0.8rem;">Reception Desk App v4.1</div>
             </div>
         </div>
 
         <div class="main-content">
             <header>
                 <div style="font-weight: 800; font-size: 1.3rem; display: flex; align-items: center; gap: 10px;">
-                    🖥️ <span data-i18n="recHeaderTitle">مكتب الاستقبال وتسجيل المرضى</span>
+                    🖥️ <span data-i18n="recHeaderTitle">مكتب الاستقبال وتسجيل المرضى (7 أيام)</span>
                 </div>
                 <div class="controls">
                     <select id="langSelect" onchange="changeLang(this.value)">
@@ -410,37 +471,45 @@
 
             <div class="content-scroll">
 
-                <!-- اختيار الطبيب المراد قطع التذكرة له داخل العيادة -->
-                <h3 class="section-title" data-i18n="selectDocHeader">👨‍⚕️ 1. اختر الطبيب لقطع التذكرة أو متابعة طابوره:</h3>
+                <!-- 1. اختيار الطبيب داخل العيادة -->
+                <h3 class="section-title" data-i18n="selectDocHeader">👨‍⚕️ 1. اختر الطبيب لتسجيل المرضى أو عرض لائحته:</h3>
                 <div class="doctors-grid" id="receptionDoctorsGrid"></div>
 
-                <!-- منطقة قطع التذكرة ومراقبة الطابور الحي -->
+                <!-- 2. اختيار اليوم من الأسبوع الكامل (7 أيام) -->
+                <h3 class="section-title" data-i18n="selectDayHeader">📅 2. اختر يوم التسجيل أو العرض (متاح طوال 7 أيام):</h3>
+                <div class="week-selector-bar" id="weekSelectorBar"></div>
+
+                <!-- 3. منطقة قطع التذكرة ومراقبة الطابور -->
                 <div class="reception-workspace">
                     <div class="panel-card">
-                        <h3 id="issueCardHeader">🎟️ إصدار تذكرة جديدة للمريض</h3>
-                        <label style="display:block; font-weight:800; color:var(--muted); margin-bottom:8px;" data-i18n="lblPatientName">اسم المريض الكامل:</label>
-                        <input type="text" id="recPatientName" placeholder="✍️ اكتب اسم المريض هنا (أو اتركه فارغاً لتذكرة سريعة)..." onkeypress="if(event.key === 'Enter') issueTicket(true)">
+                        <h3 id="issueCardHeader">🎟️ تسجيل مريض وقطع تذكرة</h3>
+                        <div style="background: rgba(16, 185, 129, 0.1); color: var(--accent); padding: 10px 14px; border-radius: 12px; font-weight: 800; margin-bottom: 14px; font-size: 0.95rem;" id="selectedDateBanner">
+                            📅 تاريخ الحجز المختار: اليوم
+                        </div>
 
-                        <button class="btn" onclick="issueTicket(true)" data-i18n="btnIssueAndPrint">🖨️ قطع التذكرة وطباعتها فوراً</button>
-                        <button class="btn btn-blue" onclick="issueTicket(false)" data-i18n="btnIssueOnly">➕ قطع تذكرة بدون طباعة</button>
+                        <label style="display:block; font-weight:800; color:var(--muted); margin-bottom:8px;" data-i18n="lblPatientName">اسم المريض الكامل:</label>
+                        <input type="text" id="recPatientName" placeholder="✍️ اكتب اسم المريض الكامل هنا..." onkeypress="if(event.key === 'Enter') issueTicket(true)">
+
+                        <button class="btn" onclick="issueTicket(true)" data-i18n="btnIssueAndPrint">🖨️ تسجيل المريض وطباعة التذكرة فوراً</button>
+                        <button class="btn btn-blue" onclick="issueTicket(false)" data-i18n="btnIssueOnly">➕ تسجيل المريض في اللائحة (بدون طباعة)</button>
 
                         <div class="last-ticket-receipt" id="lastTicketBox">
-                            <div style="font-weight: 800; color: var(--accent); margin-bottom: 5px;" data-i18n="lastIssuedTitle">✔️ تم إصدار التذكرة بنجاح</div>
-                            <div style="font-size: 3rem; font-weight: 800; line-height: 1;" id="lastTicketNum">--</div>
+                            <div style="font-weight: 800; color: var(--accent); margin-bottom: 5px;" data-i18n="lastIssuedTitle">✔️ تم تسجيل المريض بنجاح</div>
+                            <div style="font-size: 2.8rem; font-weight: 800; line-height: 1;" id="lastTicketNum">--</div>
                             <div style="font-weight: 700; color: var(--muted); margin: 6px 0 12px;" id="lastTicketPatient">--</div>
                             <button class="btn btn-warning" style="margin-bottom:0; padding:10px;" onclick="printLastTicket()" data-i18n="btnReprint">🖨️ إعادة طباعة التذكرة</button>
                         </div>
                     </div>
 
                     <div class="panel-card">
-                        <h3 id="queueMonitorHeader">📊 حالة الطابور المباشرة</h3>
+                        <h3 id="queueMonitorHeader">📊 إحصائيات اليوم المختار</h3>
                         <div class="live-counters">
                             <div class="counter-box">
                                 <span data-i18n="lblCurrentNum">الرقم الحالي بالداخل</span>
                                 <strong id="recCurrentNum">--</strong>
                             </div>
                             <div class="counter-box highlight">
-                                <span data-i18n="lblWaitingCount">عدد المنتظرين الآن</span>
+                                <span data-i18n="lblWaitingCount">المنتظرون في هذا اليوم</span>
                                 <strong id="recWaitingCount">0</strong>
                             </div>
                         </div>
@@ -450,8 +519,33 @@
                             <strong id="recProspectiveNum" style="color: var(--blue); font-size: 2.3rem;">#1</strong>
                         </div>
 
-                        <button class="btn btn-blue" onclick="callNextFromReception()" data-i18n="btnCallNext">📢 مناداة المريض التالي</button>
+                        <button class="btn btn-blue" id="recCallNextBtn" onclick="callNextFromReception()" data-i18n="btnCallNext">📢 مناداة المريض التالي (لليوم الحالي)</button>
                         <button class="btn btn-warning" id="recTogglePauseBtn" onclick="togglePauseFromReception()" style="margin-bottom: 0;">⏸️ إيقاف استقبال التذاكر مؤقتاً</button>
+                    </div>
+                </div>
+
+                <!-- 4. لائحة المرضى المسجلين عند مكتب الاستقبال لليوم والطبيب المختار -->
+                <div class="panel-card" id="registeredListCard">
+                    <h3>
+                        <span>📋 <span data-i18n="registeredListTitle">لائحة المرضى المسجلين</span> — <span id="listHeaderInfo" style="color: var(--text);"></span></span>
+                        <span style="font-size: 0.95rem; background: var(--bg); padding: 6px 14px; border-radius: 999px; color: var(--accent);" id="totalRegisteredBadge">0 مريض</span>
+                    </h3>
+
+                    <input type="text" id="searchRegisteredInput" placeholder="🔍 ابحث في لائحة المرضى المسجلين بالاسم أو برقم التذكرة..." oninput="renderRegisteredPatientsTable()">
+
+                    <div class="patients-table-wrapper">
+                        <table class="patients-table">
+                            <thead>
+                                <tr>
+                                    <th data-i18n="thTicketNum">رقم التذكرة</th>
+                                    <th data-i18n="thPatientName">اسم المريض</th>
+                                    <th data-i18n="thDate">تاريخ الموعد</th>
+                                    <th data-i18n="thStatus">الحالة</th>
+                                    <th data-i18n="thActions">إجراءات الاستقبال</th>
+                                </tr>
+                            </thead>
+                            <tbody id="registeredPatientsTbody"></tbody>
+                        </table>
                     </div>
                 </div>
 
@@ -476,74 +570,179 @@
         let activeDocSpecialty = 'طب عام';
         let mainClinicTitle = 'العيادة الطبية';
         let clinicDoctors = [];
+        let registeredTicketsList = [];
+        let currentActiveNumberOnDate = 0;
+
+        let selectedDayOffset = 0;
+        let selectedDateStr = '';
         let lastPrintedTicket = null;
         let currentQueueStatus = 'active';
         let currentLang = localStorage.getItem('rec_lang') || 'ar';
 
         document.getElementById('openTvLink').href = `/tv.html?clinic=${encodeURIComponent(MAIN_CLINIC_SLUG)}`;
 
+        const daysNames = {
+            ar: ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'],
+            fr: ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'],
+            en: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+        };
+
         const dict = {
             ar: {
                 recAppSub: "تطبيق مكتب الاستقبال والتذاكر",
-                navTickets: "🎟️ قطع وطباعة التذاكر",
+                navTickets: "🎟️ قطع التذاكر والحجز الأسبوعي",
+                navList: "📋 لائحة المرضى المسجلين",
                 navOpenTv: "📺 فتح شاشة التلفاز",
                 btnInstallRec: "💻 تثبيت تطبيق الاستقبال",
-                recHeaderTitle: "مكتب الاستقبال وتسجيل المرضى",
+                recHeaderTitle: "مكتب الاستقبال وتسجيل المرضى (7 أيام)",
                 btnTheme: "🌓 الوضع الليلي",
-                selectDocHeader: "👨‍⚕️ 1. اختر الطبيب لقطع التذكرة أو متابعة طابوره:",
+                selectDocHeader: "👨‍⚕️ 1. اختر الطبيب لتسجيل المرضى أو عرض لائحته:",
+                selectDayHeader: "📅 2. اختر يوم التسجيل أو العرض (متاح طوال 7 أيام):",
+                dayToday: "اليوم",
+                dayTomorrow: "غداً",
                 lblPatientName: "اسم المريض الكامل:",
-                btnIssueAndPrint: "🖨️ قطع التذكرة وطباعتها فوراً",
-                btnIssueOnly: "➕ قطع تذكرة بدون طباعة",
-                lastIssuedTitle: "✔️ تم إصدار التذكرة بنجاح",
+                btnIssueAndPrint: "🖨️ تسجيل المريض وطباعة التذكرة فوراً",
+                btnIssueOnly: "➕ تسجيل المريض في اللائحة (بدون طباعة)",
+                lastIssuedTitle: "✔️ تم تسجيل المريض بنجاح",
                 btnReprint: "🖨️ إعادة طباعة التذكرة",
                 lblCurrentNum: "الرقم الحالي بالداخل",
-                lblWaitingCount: "عدد المنتظرين الآن",
+                lblWaitingCount: "المنتظرون في هذا اليوم",
                 lblNextTicket: "الرقم القادم الذي سيُمنح للمريض التالي",
-                btnCallNext: "📢 مناداة المريض التالي",
+                btnCallNext: "📢 مناداة المريض التالي (لليوم الحالي)",
                 pauseQueue: "⏸️ إيقاف استقبال التذاكر مؤقتاً",
-                resumeQueue: "▶️ تفعيل استقبال التذاكر"
+                resumeQueue: "▶️ تفعيل استقبال التذاكر",
+                registeredListTitle: "لائحة المرضى المسجلين",
+                thTicketNum: "رقم التذكرة",
+                thPatientName: "اسم المريض",
+                thDate: "تاريخ الموعد",
+                thStatus: "الحالة",
+                thActions: "إجراءات الاستقبال",
+                stWaiting: "⏳ في الانتظار",
+                stInside: "📢 بالداخل الآن",
+                stCompleted: "✔️ تم الكشف",
+                stAbsent: "⚠️ غائب / تم تخطيه",
+                stCancelled: "❌ ملغى",
+                noRegisteredPatients: "لا يوجد مرضى مسجلون في هذا اليوم حتى الآن."
             },
             fr: {
                 recAppSub: "Application Réception & Tickets",
-                navTickets: "🎟️ Émission de Tickets",
+                navTickets: "🎟️ Réservation (7 Jours)",
+                navList: "📋 Liste des Patients Inscrits",
                 navOpenTv: "📺 Ouvrir l'écran TV",
                 btnInstallRec: "💻 Installer l'App Réception",
-                recHeaderTitle: "Bureau de Réception",
+                recHeaderTitle: "Bureau de Réception (7 Jours)",
                 btnTheme: "🌓 Mode Sombre",
                 selectDocHeader: "👨‍⚕️ 1. Sélectionnez le médecin :",
+                selectDayHeader: "📅 2. Choisissez le jour (7 jours disponibles) :",
+                dayToday: "Aujourd'hui",
+                dayTomorrow: "Demain",
                 lblPatientName: "Nom complet du patient :",
-                btnIssueAndPrint: "🖨️ Créer et Imprimer le Ticket",
-                btnIssueOnly: "➕ Créer sans imprimer",
-                lastIssuedTitle: "✔️ Ticket créé avec succès",
+                btnIssueAndPrint: "🖨️ Inscrire et Imprimer le Ticket",
+                btnIssueOnly: "➕ Inscrire sans imprimer",
+                lastIssuedTitle: "✔️ Patient inscrit avec succès",
                 btnReprint: "🖨️ Réimprimer le Ticket",
                 lblCurrentNum: "Numéro Actuel",
-                lblWaitingCount: "En attente",
+                lblWaitingCount: "En attente ce jour",
                 lblNextTicket: "Prochain Numéro à attribuer",
-                btnCallNext: "📢 Appeler le patient suivant",
+                btnCallNext: "📢 Appeler le suivant (Aujourd'hui)",
                 pauseQueue: "⏸️ Suspendre la file",
-                resumeQueue: "▶️ Réactiver la file"
+                resumeQueue: "▶️ Réactiver la file",
+                registeredListTitle: "Liste des Patients Inscrits",
+                thTicketNum: "N° Ticket",
+                thPatientName: "Nom du Patient",
+                thDate: "Date",
+                thStatus: "Statut",
+                thActions: "Actions",
+                stWaiting: "⏳ En attente",
+                stInside: "📢 En consultation",
+                stCompleted: "✔️ Terminé",
+                stAbsent: "⚠️ Absent",
+                stCancelled: "❌ Annulé",
+                noRegisteredPatients: "Aucun patient inscrit pour ce jour."
             },
             en: {
                 recAppSub: "Reception & Ticketing App",
-                navTickets: "🎟️ Issue & Print Tickets",
+                navTickets: "🎟️ 7-Day Ticketing",
+                navList: "📋 Registered Patients List",
                 navOpenTv: "📺 Open TV Display",
                 btnInstallRec: "💻 Install Reception App",
-                recHeaderTitle: "Reception Desk & Patient Check-in",
+                recHeaderTitle: "Reception Desk & 7-Day Booking",
                 btnTheme: "🌓 Dark Mode",
-                selectDocHeader: "👨‍⚕️ 1. Select Doctor for Ticketing:",
+                selectDocHeader: "👨‍⚕️ 1. Select Doctor:",
+                selectDayHeader: "📅 2. Select Booking Day (Full 7-Day Week):",
+                dayToday: "Today",
+                dayTomorrow: "Tomorrow",
                 lblPatientName: "Patient Full Name:",
-                btnIssueAndPrint: "🖨️ Issue & Print Ticket Now",
-                btnIssueOnly: "➕ Issue Ticket Without Printing",
-                lastIssuedTitle: "✔️ Ticket Issued Successfully",
+                btnIssueAndPrint: "🖨️ Register & Print Ticket Now",
+                btnIssueOnly: "➕ Register Patient Without Printing",
+                lastIssuedTitle: "✔️ Patient Registered Successfully",
                 btnReprint: "🖨️ Reprint Ticket",
                 lblCurrentNum: "Current Active Number",
-                lblWaitingCount: "Waiting Now",
+                lblWaitingCount: "Waiting on Selected Day",
                 lblNextTicket: "Next Prospective Ticket Number",
-                btnCallNext: "📢 Call Next Patient",
+                btnCallNext: "📢 Call Next Patient (Today)",
                 pauseQueue: "⏸️ Pause Queue",
-                resumeQueue: "▶️ Resume Queue"
+                resumeQueue: "▶️ Resume Queue",
+                registeredListTitle: "Registered Patients List",
+                thTicketNum: "Ticket #",
+                thPatientName: "Patient Name",
+                thDate: "Appointment Date",
+                thStatus: "Status",
+                thActions: "Actions",
+                stWaiting: "⏳ Waiting",
+                stInside: "📢 Inside Now",
+                stCompleted: "✔️ Completed",
+                stAbsent: "⚠️ Absent / Skipped",
+                stCancelled: "❌ Cancelled",
+                noRegisteredPatients: "No patients registered for this day yet."
             }
         };
+
+        function getFormattedDateOffset(daysOffset) {
+            const d = new Date();
+            d.setDate(d.getDate() + daysOffset);
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            return {
+                dateStr: `${yyyy}-${mm}-${dd}`,
+                dayIndex: d.getDay()
+            };
+        }
+
+        function getDayLabel(offset) {
+            const info = getFormattedDateOffset(offset);
+            const dayName = daysNames[currentLang][info.dayIndex];
+            if (offset === 0) return `${dict[currentLang].dayToday} (${dayName})`;
+            if (offset === 1) return `${dict[currentLang].dayTomorrow} (${dayName})`;
+            return dayName;
+        }
+
+        function renderWeekSelector() {
+            const bar = document.getElementById('weekSelectorBar');
+            bar.innerHTML = [0, 1, 2, 3, 4, 5, 6].map(offset => {
+                const info = getFormattedDateOffset(offset);
+                const label = getDayLabel(offset);
+                const isActive = selectedDayOffset === offset ? 'active' : '';
+                return `
+                    <button class="day-card-btn ${isActive}" onclick="selectWeekDay(${offset})">
+                        <strong>${label}</strong>
+                        <small>📅 ${info.dateStr}</small>
+                    </button>
+                `;
+            }).join('');
+
+            const currentInfo = getFormattedDateOffset(selectedDayOffset);
+            selectedDateStr = currentInfo.dateStr;
+            document.getElementById('selectedDateBanner').innerText = `📅 يوم التسجيل والعرض المختار: ${getDayLabel(selectedDayOffset)} — ${selectedDateStr}`;
+            document.getElementById('recCallNextBtn').style.display = selectedDayOffset === 0 ? 'inline-flex' : 'none';
+        }
+
+        function selectWeekDay(offset) {
+            selectedDayOffset = offset;
+            renderWeekSelector();
+            refreshSelectedDoctorQueue();
+        }
 
         function showToast(msg) {
             const container = document.getElementById('toastContainer');
@@ -564,7 +763,9 @@
                 const k = el.getAttribute('data-i18n');
                 if (dict[lang][k]) el.innerText = dict[lang][k];
             });
+            renderWeekSelector();
             updatePauseBtnText();
+            renderRegisteredPatientsTable();
         }
 
         function toggleTheme() {
@@ -585,7 +786,6 @@
             }
         }
 
-        // تثبيت تطبيق الاستقبال كبرنامج سطح مكتب مستقل
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
@@ -608,14 +808,25 @@
                     deferredPrompt = null;
                 });
             } else {
-                document.getElementById('installHelpModal').style.display = 'flex';
+                downloadDesktopLauncher('Reception_App_' + MAIN_CLINIC_SLUG, window.location.href);
             }
         }
 
-        function openInEdgeForInstall() {
-            const fullUrl = window.location.origin + '/reception.html?clinic=' + encodeURIComponent(MAIN_CLINIC_SLUG);
-            window.location.href = 'microsoft-edge:' + fullUrl;
-            document.getElementById('installHelpModal').style.display = 'none';
+        function downloadDesktopLauncher(appName, targetUrl) {
+            const batContent = [
+                '@echo off',
+                'start msedge --app="' + targetUrl + '" || start chrome --app="' + targetUrl + '" || start "" "' + targetUrl + '"',
+                'exit'
+            ].join('\r\n');
+
+            const blob = new Blob([batContent], { type: 'application/bat;charset=utf-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = appName + '.bat';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            showToast('✔️ تم تحميل مشغل تطبيق الاستقبال لسطح المكتب! افتحه لتشغيله كبرنامج مستقل.');
         }
 
         async function loadReceptionData() {
@@ -650,7 +861,7 @@
                     <div class="doc-select-card ${isSelected ? 'selected' : ''}" onclick="selectDoctorForReception('${d.slug}')">
                         <div class="doc-top-pills">
                             <div class="mini-pill">
-                                <span>⏳ المنتظرون</span>
+                                <span>⏳ المنتظرون اليوم</span>
                                 <strong>${d.waiting}</strong>
                             </div>
                             <div class="mini-pill curr">
@@ -671,9 +882,13 @@
             refreshSelectedDoctorQueue();
         }
 
+        // جلب بيانات الطابور ولائحة المرضى المسجلين للطبيب واليوم المختار
         async function refreshSelectedDoctorQueue() {
             try {
-                const res = await fetch(`${API_BASE}/api/queue-status/${activeDocSlug}`);
+                if (!selectedDateStr) {
+                    selectedDateStr = getFormattedDateOffset(selectedDayOffset).dateStr;
+                }
+                const res = await fetch(`${API_BASE}/api/reception/tickets/${activeDocSlug}?date=${selectedDateStr}`);
                 if (!res.ok) return;
                 const data = await res.json();
 
@@ -681,30 +896,93 @@
                 activeDocName = data.doctor_name || activeDocName;
                 activeDocSpecialty = data.specialty || 'طب عام';
                 currentQueueStatus = data.status || 'active';
+                currentActiveNumberOnDate = data.current_number || 0;
+                registeredTicketsList = data.tickets || [];
 
                 document.getElementById('sidebarClinicTitle').innerText = `🏥 ${mainClinicTitle}`;
-                document.getElementById('issueCardHeader').innerText = `🎟️ قطع تذكرة عند: ${activeDocName} (${activeDocSpecialty})`;
-                document.getElementById('queueMonitorHeader').innerText = `📊 طابور: ${activeDocName}`;
+                document.getElementById('issueCardHeader').innerText = `🎟️ تسجيل مريض عند: ${activeDocName} (${activeDocSpecialty})`;
+                document.getElementById('queueMonitorHeader').innerText = `📊 طابور ${activeDocName} (${selectedDateStr})`;
+                document.getElementById('listHeaderInfo').innerText = `👨‍⚕️ ${activeDocName} | 📅 ${selectedDateStr}`;
 
-                document.getElementById('recCurrentNum').innerText = data.current_number === 0 ? '--' : data.current_number;
+                document.getElementById('recCurrentNum').innerText = currentActiveNumberOnDate === 0 ? '--' : currentActiveNumberOnDate;
                 document.getElementById('recWaitingCount').innerText = data.waiting_count || 0;
                 document.getElementById('recProspectiveNum').innerText = `#${(data.last_issued_number || 0) + 1}`;
+
+                const activeTicketsCount = registeredTicketsList.filter(t => t.status !== 'cancelled').length;
+                document.getElementById('totalRegisteredBadge').innerText = `${activeTicketsCount} مريض مسجل`;
+
                 updatePauseBtnText();
+                renderRegisteredPatientsTable();
             } catch (e) {}
+        }
+
+        function renderRegisteredPatientsTable() {
+            const tbody = document.getElementById('registeredPatientsTbody');
+            const q = document.getElementById('searchRegisteredInput').value.trim().toLowerCase();
+
+            const filtered = registeredTicketsList.filter(t =>
+                !q ||
+                (t.patient_name || '').toLowerCase().includes(q) ||
+                String(t.ticket_number).includes(q)
+            );
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:30px; color:var(--muted);">${dict[currentLang].noRegisteredPatients}</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(t => {
+                let statusBadge = `<span class="status-pill st-waiting">${dict[currentLang].stWaiting}</span>`;
+                if (t.status === 'cancelled') {
+                    statusBadge = `<span class="status-pill st-cancelled">${dict[currentLang].stCancelled}</span>`;
+                } else if (t.status === 'completed') {
+                    statusBadge = `<span class="status-pill st-completed">${dict[currentLang].stCompleted}</span>`;
+                } else if (t.status === 'absent') {
+                    statusBadge = `<span class="status-pill st-absent">${dict[currentLang].stAbsent}</span>`;
+                } else if (selectedDayOffset === 0 && t.ticket_number === currentActiveNumberOnDate) {
+                    statusBadge = `<span class="status-pill st-inside">${dict[currentLang].stInside}</span>`;
+                } else if (selectedDayOffset === 0 && t.ticket_number < currentActiveNumberOnDate) {
+                    statusBadge = `<span class="status-pill st-completed">${dict[currentLang].stCompleted}</span>`;
+                }
+
+                const safeName = (t.patient_name || 'مريض').replace(/'/g, "\\'");
+                const cancelBtnHtml = t.status !== 'cancelled'
+                    ? `<button class="btn btn-sm btn-danger" onclick="cancelTicketFromList(${t.ticket_number}, '${safeName}')">❌ إلغاء</button>`
+                    : '';
+
+                return `
+                    <tr>
+                        <td style="font-size:1.25rem; color:var(--accent);">#${t.ticket_number}</td>
+                        <td style="font-size:1.05rem;">👤 ${t.patient_name}</td>
+                        <td style="color:var(--muted); font-size:0.9rem;">📅 ${selectedDateStr}</td>
+                        <td>${statusBadge}</td>
+                        <td>
+                            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                                <button class="btn btn-sm btn-blue" onclick="printSpecificTicket(${t.ticket_number}, '${safeName}')">🖨️ طباعة</button>
+                                ${cancelBtnHtml}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
         }
 
         async function issueTicket(shouldPrint) {
             const inputEl = document.getElementById('recPatientName');
-            const pName = inputEl.value.trim() || 'مريض زائر';
+            const pName = inputEl.value.trim() || 'مريض مسجل';
 
             try {
                 const res = await fetch(`${API_BASE}/api/tickets`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ clinic_slug: activeDocSlug, patient_name: pName })
+                    body: JSON.stringify({
+                        clinic_slug: activeDocSlug,
+                        patient_name: pName,
+                        booking_date: selectedDateStr
+                    })
                 });
                 const data = await res.json();
-                if (!res.ok) return showToast(`⚠️ ${data.error || 'تعذر قطع التذكرة'}`);
+                if (!res.ok) return showToast(`⚠️ ${data.error || 'تعذر تسجيل المريض'}`);
 
                 inputEl.value = '';
                 lastPrintedTicket = {
@@ -713,14 +991,15 @@
                     doctor_name: activeDocName,
                     specialty: activeDocSpecialty,
                     clinic_name: mainClinicTitle,
-                    time: new Date().toLocaleString('ar-DZ')
+                    booking_date: selectedDateStr,
+                    time: new Date().toLocaleTimeString('ar-DZ')
                 };
 
                 document.getElementById('lastTicketNum').innerText = `#${lastPrintedTicket.number}`;
-                document.getElementById('lastTicketPatient').innerText = `👤 ${lastPrintedTicket.patient_name} — 👨‍⚕️ ${lastPrintedTicket.doctor_name}`;
+                document.getElementById('lastTicketPatient').innerText = `👤 ${lastPrintedTicket.patient_name} — 📅 ${selectedDateStr}`;
                 document.getElementById('lastTicketBox').style.display = 'block';
 
-                showToast(`✔️ تم قطع التذكرة رقم #${data.ticket_number}`);
+                showToast(`✔️ تم تسجيل (${pName}) برقم #${data.ticket_number} ليوم ${selectedDateStr}`);
                 await loadReceptionData();
 
                 if (shouldPrint) {
@@ -731,9 +1010,22 @@
             }
         }
 
+        function printSpecificTicket(ticketNum, patientName) {
+            lastPrintedTicket = {
+                number: ticketNum,
+                patient_name: patientName,
+                doctor_name: activeDocName,
+                specialty: activeDocSpecialty,
+                clinic_name: mainClinicTitle,
+                booking_date: selectedDateStr,
+                time: new Date().toLocaleTimeString('ar-DZ')
+            };
+            printLastTicket();
+        }
+
         function printLastTicket() {
             if (!lastPrintedTicket) return;
-            const w = window.open('', '', 'width=420,height=550');
+            const w = window.open('', '', 'width=420,height=560');
             w.document.write(`
                 <!DOCTYPE html>
                 <html dir="rtl" lang="ar">
@@ -765,7 +1057,7 @@
                             border-bottom: 1px solid #000;
                             padding: 12px 0;
                         }
-                        .meta { font-size: 0.95rem; font-weight: bold; line-height: 1.7; }
+                        .meta { font-size: 0.95rem; font-weight: bold; line-height: 1.8; }
                     </style>
                 </head>
                 <body>
@@ -776,7 +1068,8 @@
                         <div class="big-num">#${lastPrintedTicket.number}</div>
                         <div class="meta">
                             👤 المريض: ${lastPrintedTicket.patient_name}<br>
-                            🕒 ${lastPrintedTicket.time}
+                            📅 تاريخ الموعد: ${lastPrintedTicket.booking_date}<br>
+                            🕒 وقت الإصدار: ${lastPrintedTicket.time}
                         </div>
                     </div>
                 </body>
@@ -785,6 +1078,23 @@
             w.document.close();
             w.focus();
             setTimeout(() => { w.print(); w.close(); }, 400);
+        }
+
+        async function cancelTicketFromList(ticketNum, patientName) {
+            if (!confirm(`هل أنت متأكد من إلغاء تذكرة المريض (${patientName}) رقم #${ticketNum}؟`)) return;
+            try {
+                await fetch(`${API_BASE}/api/tickets/cancel`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        clinic_slug: activeDocSlug,
+                        ticket_number: ticketNum,
+                        booking_date: selectedDateStr
+                    })
+                });
+                showToast(`✔️ تم إلغاء التذكرة رقم #${ticketNum}`);
+                loadReceptionData();
+            } catch (e) {}
         }
 
         async function callNextFromReception() {
@@ -809,7 +1119,10 @@
                 const res = await fetch(`${API_BASE}/api/queue/toggle-status`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ clinic_slug: activeDocSlug })
+                    body: JSON.stringify({
+                        clinic_slug: activeDocSlug,
+                        booking_date: selectedDateStr
+                    })
                 });
                 if (res.ok) {
                     const data = await res.json();
@@ -828,6 +1141,7 @@
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('/sw.js').catch(() => {});
             }
+            renderWeekSelector();
             changeLang(currentLang);
             loadReceptionData();
         };
@@ -837,6 +1151,7 @@
         socket.on('call_patient', () => loadReceptionData());
         socket.on('queue_status_changed', () => loadReceptionData());
         socket.on('ticket_cancelled', () => loadReceptionData());
+        socket.on('ticket_status_updated', () => loadReceptionData());
     </script>
 </body>
 </html>
