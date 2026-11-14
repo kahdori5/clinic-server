@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ClinicFlow - Doctor Dashboard</title>
+    <title>ClinicFlow - لوحة الطبيب</title>
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/3063/3063063.png">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
@@ -13,7 +13,6 @@
         [data-theme="dark"] { --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --accent: #10b981; --border: #334155; --muted: #94a3b8; }
         * { box-sizing: border-box; }
 
-        /* تفعيل التمرير السلس (Scroll) في كامل صفحة الطبيب */
         html, body {
             font-family: 'Tajawal', sans-serif;
             background: var(--bg);
@@ -33,7 +32,7 @@
         }
         
         .sidebar {
-            width: 260px;
+            width: 265px;
             background: var(--card);
             border-inline-end: 1px solid var(--border);
             display: flex;
@@ -48,12 +47,12 @@
             height: 100vh;
             overflow-y: auto;
         }
-        .logo { font-size: 1.5rem; font-weight: 800; text-align: center; margin-bottom: 20px; color: var(--text); }
+        .logo { font-size: 1.45rem; font-weight: 800; text-align: center; margin-bottom: 20px; color: var(--text); padding: 0 15px; }
         .logo span { color: var(--accent); }
-        .nav-item { padding: 16px 25px; color: var(--muted); text-decoration: none; display: flex; align-items: center; gap: 10px; font-weight: 500; cursor: pointer; border-inline-end: 4px solid transparent; font-size: 1.05rem; transition: 0.3s; }
+        .nav-item { padding: 15px 25px; color: var(--muted); text-decoration: none; display: flex; align-items: center; gap: 10px; font-weight: 700; cursor: pointer; border-inline-end: 4px solid transparent; font-size: 1rem; transition: 0.3s; }
         .nav-item:hover, .nav-item.active { background: rgba(16, 185, 129, 0.1); color: var(--accent); border-color: var(--accent); }
         
-        #installAppBtn { display: block; width: calc(100% - 30px); padding: 15px; margin: 15px auto; background: var(--accent); color: #ffffff !important; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; text-align: center; font-family: inherit; font-size: 1rem; transition: 0.2s; box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3); box-sizing: border-box; }
+        #installAppBtn { display: block; width: calc(100% - 30px); padding: 15px; margin: 15px auto; background: var(--accent); color: #ffffff !important; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; text-align: center; font-family: inherit; font-size: 1rem; transition: 0.2s; box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3); }
         #installAppBtn:hover { transform: translateY(-3px); filter: brightness(1.1); }
         
         .main-content {
@@ -84,29 +83,28 @@
             width: 100%;
         }
         
-        #lockScreen, #deletedScreen, #installHelpModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.85); z-index: 999999; display: flex; justify-content: center; align-items: center; flex-direction: column; padding: 20px; box-sizing: border-box; }
-        #lockScreen, #deletedScreen { background: var(--bg); }
+        #lockScreen, #deletedScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 999999; display: flex; justify-content: center; align-items: center; flex-direction: column; padding: 20px; }
         .lock-card { background: var(--card); padding: 40px; border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.2); text-align: center; border: 1px solid var(--border); width: 100%; max-width: 440px; }
-        .lock-card input { width: 100%; padding: 15px; border-radius: 12px; border: 2px solid var(--border); background: var(--bg); color: var(--text); margin-bottom: 20px; font-size: 1.2rem; text-align: center; outline: none; box-sizing: border-box; }
+        .lock-card input { width: 100%; padding: 15px; border-radius: 12px; border: 2px solid var(--border); background: var(--bg); color: var(--text); margin-bottom: 20px; font-size: 1.2rem; text-align: center; outline: none; }
         .lock-card input:focus { border-color: var(--accent); }
         .lock-card button { width: 100%; padding: 15px; border-radius: 12px; border: none; background: var(--accent); color: white; font-size: 1.1rem; font-weight: bold; cursor: pointer; font-family: inherit; margin-bottom: 10px; }
 
         .call-wrapper { display: flex; gap: 25px; flex-wrap: wrap; align-items: flex-start; justify-content: center; }
-        .control-card { background: var(--card); padding: 40px; border-radius: 24px; text-align: center; border: 1px solid var(--border); flex: 1; min-width: 320px; max-width: 450px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-        .number-display { font-size: 7rem; font-weight: 800; margin: 15px 0; line-height: 1; color: var(--text); }
+        .control-card { background: var(--card); padding: 35px; border-radius: 24px; text-align: center; border: 1px solid var(--border); flex: 1; min-width: 320px; max-width: 450px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        .number-display { font-size: 6.5rem; font-weight: 800; margin: 15px 0; line-height: 1; color: var(--text); }
         
-        .cancelled-banner { background: rgba(239, 68, 68, 0.12); border: 2px dashed var(--danger); color: var(--danger); padding: 12px 15px; border-radius: 12px; font-weight: 800; font-size: 1.1rem; margin-bottom: 20px; display: none; }
+        .cancelled-banner { background: rgba(239, 68, 68, 0.12); border: 2px dashed var(--danger); color: var(--danger); padding: 12px 15px; border-radius: 12px; font-weight: 800; font-size: 1.05rem; margin-bottom: 20px; display: none; }
 
-        .medical-card { background: var(--card); padding: 35px; border-radius: 24px; border: 1px solid var(--border); flex: 2; min-width: 350px; max-width: 600px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); display: none; animation: fadeIn 0.4s ease; }
-        .medical-card h3 { margin-top: 0; color: var(--accent); font-size: 1.4rem; border-bottom: 2px dashed var(--border); padding-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .medical-card { background: var(--card); padding: 35px; border-radius: 24px; border: 1px solid var(--border); flex: 2; min-width: 340px; max-width: 620px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); display: none; animation: fadeIn 0.4s ease; }
+        .medical-card h3 { margin-top: 0; color: var(--accent); font-size: 1.35rem; border-bottom: 2px dashed var(--border); padding-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
         .input-group label { display: block; color: var(--muted); font-size: 0.85rem; font-weight: bold; margin-bottom: 5px; }
-        .input-group input, .input-group textarea { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); outline: none; font-family: inherit; box-sizing: border-box; transition: 0.3s; }
+        .input-group input, .input-group textarea { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); outline: none; font-family: inherit; transition: 0.3s; }
         .input-group input:focus, .input-group textarea:focus { border-color: var(--accent); }
         .input-group textarea { resize: vertical; min-height: 80px; }
         .prescription-area { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); }
         
-        .btn { padding: 16px; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: bold; cursor: pointer; color: #ffffff !important; background: var(--accent); width: 100%; margin-bottom: 15px; font-family: inherit; transition: 0.2s; }
+        .btn { padding: 15px; border: none; border-radius: 12px; font-size: 1.05rem; font-weight: bold; cursor: pointer; color: #ffffff !important; background: var(--accent); width: 100%; margin-bottom: 14px; font-family: inherit; transition: 0.2s; }
         .btn:hover { filter: brightness(1.1); transform: translateY(-2px); }
         .btn-done { background: #3b82f6 !important; flex: 1; }
         .btn-absent { background: #ef4444 !important; flex: 1; }
@@ -114,24 +112,43 @@
         .btn-warning { background: var(--warning) !important; color: #ffffff !important; }
         .btn-outline { background: transparent !important; border: 2px solid var(--accent) !important; color: var(--accent) !important; }
         .btn-outline:hover { background: var(--accent) !important; color: #ffffff !important; }
-        .status-btns { display: flex; gap: 10px; margin-bottom: 20px; }
-        
-        /* تصميم البطاقات الإحصائية التفاعلية (مخفية حتى الضغط عليها) */
-        .stats-hint { color: var(--muted); font-size: 0.95rem; font-weight: bold; margin-top: -18px; margin-bottom: 22px; }
+        .status-btns { display: flex; gap: 10px; margin-bottom: 15px; }
+
+        /* شريط اختيار أيام الأسبوع الـ 7 داخل لوحة الطبيب */
+        .week-selector-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 22px; }
+        .day-card-btn { background: var(--card); border: 2px solid var(--border); border-radius: 14px; padding: 12px 8px; text-align: center; cursor: pointer; transition: 0.2s; font-family: inherit; color: var(--text); }
+        .day-card-btn:hover { border-color: var(--accent); }
+        .day-card-btn.active { border-color: var(--accent); background: rgba(16, 185, 129, 0.12); color: var(--accent); }
+        .day-card-btn strong { display: block; font-size: 0.95rem; font-weight: 800; margin-bottom: 3px; }
+        .day-card-btn small { display: block; font-size: 0.78rem; color: var(--muted); font-weight: 700; }
+
+        .patients-table-wrapper { overflow-x: auto; border-radius: 16px; border: 1px solid var(--border); background: var(--card); }
+        table.patients-table { width: 100%; border-collapse: collapse; text-align: right; }
+        [dir="ltr"] table.patients-table { text-align: left; }
+        table.patients-table th { background: var(--bg); color: var(--muted); font-weight: 800; padding: 14px 16px; font-size: 0.9rem; border-bottom: 2px solid var(--border); }
+        table.patients-table td { padding: 14px 16px; border-bottom: 1px solid var(--border); font-weight: 700; }
+        .status-pill { display: inline-block; padding: 5px 12px; border-radius: 999px; font-size: 0.8rem; font-weight: 800; }
+        .st-waiting { background: rgba(59, 130, 246, 0.14); color: var(--blue); }
+        .st-inside { background: rgba(16, 185, 129, 0.2); color: var(--accent); border: 1px solid var(--accent); }
+        .st-completed { background: rgba(16, 185, 129, 0.12); color: var(--accent); }
+        .st-absent { background: rgba(245, 158, 11, 0.16); color: var(--warning); }
+        .st-cancelled { background: rgba(239, 68, 68, 0.14); color: var(--danger); text-decoration: line-through; }
+
+        /* البطاقات الإحصائية التفاعلية (مخفية حتى الضغط عليها) */
+        .stats-hint { color: var(--muted); font-size: 0.95rem; font-weight: bold; margin-top: -15px; margin-bottom: 22px; }
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 18px; margin-bottom: 25px; }
-        .stat-card { background: var(--card); padding: 22px; border-radius: 20px; border: 2px solid var(--border); display: flex; align-items: center; gap: 16px; box-shadow: 0 5px 15px rgba(0,0,0,0.02); transition: 0.3s; cursor: pointer; user-select: none; position: relative; overflow: hidden; }
+        .stat-card { background: var(--card); padding: 22px; border-radius: 20px; border: 2px solid var(--border); display: flex; align-items: center; gap: 16px; box-shadow: 0 5px 15px rgba(0,0,0,0.02); transition: 0.3s; cursor: pointer; user-select: none; }
         .stat-card:hover { transform: translateY(-4px); border-color: var(--accent); box-shadow: 0 12px 25px rgba(16, 185, 129, 0.12); }
         .stat-card.active-stat { border-color: var(--accent); background: rgba(16, 185, 129, 0.08); }
         .stat-icon { font-size: 2.2rem; background: var(--bg); width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; border-radius: 16px; flex-shrink: 0; transition: 0.3s; }
         .stat-card.active-stat .stat-icon { background: var(--accent); color: white; }
         .stat-info { display: flex; flex-direction: column; flex: 1; }
         .stat-info span { color: var(--text); font-size: 1rem; font-weight: 800; margin-bottom: 6px; }
-        .stat-prompt { font-size: 0.82rem; color: var(--accent); font-weight: 700; display: flex; align-items: center; gap: 5px; }
+        .stat-prompt { font-size: 0.82rem; color: var(--accent); font-weight: 700; }
         .stat-value-revealed { display: none; font-size: 1.9rem; font-weight: 800; color: var(--accent); line-height: 1.1; animation: fadeIn 0.3s ease; }
         .stat-card.active-stat .stat-prompt { display: none; }
         .stat-card.active-stat .stat-value-revealed { display: block; }
 
-        /* لوحة الرسم البياني الاحترافية */
         .chart-panel { display: none; background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.06); animation: fadeIn 0.4s ease; margin-top: 10px; }
         .chart-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
         .chart-title-box h3 { margin: 0 0 5px; color: var(--accent); font-size: 1.35rem; }
@@ -142,16 +159,16 @@
         .canvas-holder { position: relative; height: 320px; width: 100%; }
 
         .archive-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 25px; }
-        .search-bar { flex: 1; min-width: 260px; max-width: 500px; padding: 14px 20px; border-radius: 12px; border: 2px solid var(--border); background: var(--card); color: var(--text); font-size: 1.05rem; outline: none; transition: 0.3s; font-family: inherit; }
+        .search-bar { width: 100%; padding: 14px 20px; border-radius: 12px; border: 2px solid var(--border); background: var(--card); color: var(--text); font-size: 1.02rem; outline: none; transition: 0.3s; font-family: inherit; margin-bottom: 22px; }
         .search-bar:focus { border-color: var(--accent); }
         .patients-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
         .patient-card { background: var(--card); padding: 25px; border-radius: 16px; border: 1px solid var(--border); transition: 0.3s; display: flex; flex-direction: column; justify-content: space-between; }
         .patient-card:hover { transform: translateY(-3px); border-color: var(--accent); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
-        .patient-name { font-size: 1.2rem; font-weight: bold; color: var(--text); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        .patient-name { font-size: 1.2rem; font-weight: bold; color: var(--text); margin-bottom: 10px; }
         .patient-details { font-size: 0.9rem; color: var(--muted); line-height: 1.6; margin-bottom: 15px; }
         
         .archive-actions { display: flex; gap: 10px; }
-        .btn-small { padding: 10px; font-size: 0.9rem; flex: 1; background: rgba(16, 185, 129, 0.1); color: var(--accent); border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; text-align: center; }
+        .btn-small { padding: 10px; font-size: 0.9rem; flex: 1; background: rgba(16, 185, 129, 0.1); color: var(--accent); border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
         .btn-small:hover { background: var(--accent); color: white; }
         .btn-delete { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
         .btn-delete:hover { background: var(--danger); color: white; }
@@ -159,15 +176,15 @@
         #patientDetailView { display: none; background: var(--card); padding: 35px; border-radius: 24px; border: 1px solid var(--border); max-width: 700px; margin: 0 auto; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
 
         .toast-container { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 10px; z-index: 9999; }
-        .toast { background: var(--card); color: var(--text); padding: 16px 25px; border-radius: 12px; border-inline-start: 5px solid var(--accent); font-weight: bold; display: flex; align-items: center; gap: 12px; animation: slideUp 0.4s ease; box-shadow: 0 10px 40px rgba(0,0,0,0.15); }
+        .toast { background: var(--card); color: var(--text); padding: 16px 25px; border-radius: 12px; border-inline-start: 5px solid var(--accent); font-weight: bold; box-shadow: 0 10px 40px rgba(0,0,0,0.15); animation: slideUp 0.3s ease; }
         .toast.warning { border-color: var(--warning); }
         .toast.error { border-color: var(--danger); }
         
-        @keyframes slideUp { from { opacity: 0; transform: translateY(50px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
         .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeIn 0.4s ease; }
+        .tab-content.active { display: block; animation: fadeIn 0.35s ease; }
 
         @media (max-width: 900px) {
             .app-layout { flex-direction: column; }
@@ -186,42 +203,34 @@
         </div>
     </div>
 
-    <div id="installHelpModal" style="display: none;">
-        <div class="lock-card">
-            <img src="https://cdn-icons-png.flaticon.com/512/3063/3063063.png" style="width: 70px; height: 70px; margin-bottom: 10px;" alt="ClinicFlow">
-            <h2 style="color: var(--accent); margin-top: 0;">تثبيت برنامج ClinicFlow</h2>
-            <p style="color: var(--text); font-weight: bold; line-height: 1.7; font-size: 0.95rem; margin-bottom: 20px;">
-                لتثبيت البرنامج كتطبيق سطح مكتب مستقل يظهر فوق الشاشة الرئيسية، افتحه عبر متصفح <strong>Microsoft Edge</strong> أو <strong>Google Chrome</strong>:
-            </p>
-            <button onclick="openInEdgeForInstall()" style="background: #3b82f6 !important; color: #fff !important;">🚀 فتح وتثبيت عبر Microsoft Edge تلقائياً</button>
-            <button onclick="document.getElementById('installHelpModal').style.display='none'" style="background: transparent !important; color: var(--muted) !important; border: 1px solid var(--border);">إغلاق</button>
-        </div>
-    </div>
-
     <div id="lockScreen" style="display: none;">
         <div class="lock-card">
             <h1 style="color: var(--accent); margin-top: 0;">🔒 ClinicFlow</h1>
             <p style="color: var(--muted); font-weight: bold; margin-bottom: 30px;" data-i18n="lockDesc">هذه العيادة محمية بكلمة سر</p>
             <input type="password" id="loginPassword" placeholder="أدخل كلمة السر هنا..." onkeypress="if(event.key === 'Enter') checkPassword()">
-            <button onclick="checkPassword()" data-i18n="btnUnlock" style="color: #ffffff !important; background: var(--accent);">🔓 فتح العيادة</button>
+            <button onclick="checkPassword()" data-i18n="btnUnlock">🔓 فتح العيادة</button>
         </div>
     </div>
     
     <div class="app-layout">
         <div class="sidebar">
             <div>
-                <div class="logo">Clinic<span>Flow</span><br><span style="font-size: 0.85rem; color: var(--muted); font-weight: 500;" id="clinicNameDisplay">--</span></div>
+                <div class="logo">
+                    <span id="sidebarClinicBrand">ClinicFlow</span>
+                    <br><span style="font-size: 0.85rem; color: var(--muted); font-weight: 600;" id="clinicNameDisplay">--</span>
+                </div>
                 <div style="margin-top: 20px; display: flex; flex-direction: column; width: 100%;">
-                    <div class="nav-item active" onclick="switchTab('call-tab', this)" data-i18n="menuCall">📢 شاشة النداء</div>
+                    <div class="nav-item active" onclick="switchTab('call-tab', this)" data-i18n="menuCall">📢 شاشة النداء والفحص</div>
+                    <div class="nav-item" onclick="switchTab('schedule-tab', this)" data-i18n="menuSchedule">📅 لائحة المسجلين (7 أيام)</div>
                     <div class="nav-item" onclick="switchTab('patients-tab', this)" data-i18n="menuPatients">📂 أرشيف المرضى</div>
-                    <div class="nav-item" onclick="switchTab('stats-tab', this)" data-i18n="menuStats">📊 الإحصائيات</div>
+                    <div class="nav-item" onclick="switchTab('stats-tab', this)" data-i18n="menuStats">📊 الإحصائيات البيانية</div>
                     <div class="nav-item" onclick="switchTab('settings-tab', this)" data-i18n="menuSettings">⚙️ الإعدادات والحماية</div>
                 </div>
             </div>
             
             <div>
-                <button id="installAppBtn" onclick="installApp()" data-i18n="btnInstallApp">💻 تثبيت التطبيق</button>
-                <div style="padding: 10px 20px 20px; text-align: center; color: var(--muted); font-size: 0.8rem;">ClinicFlow SaaS v4.0</div>
+                <button id="installAppBtn" onclick="installApp()" data-i18n="btnInstallApp">💻 تثبيت تطبيق الطبيب</button>
+                <div style="padding: 10px 20px 20px; text-align: center; color: var(--muted); font-size: 0.8rem;">Doctor App v4.1</div>
             </div>
         </div>
 
@@ -242,6 +251,7 @@
 
             <div class="content-scroll">
                 
+                <!-- التبويب 1: شاشة النداء والملف الطبي والوصفة الرسمية -->
                 <div id="call-tab" class="tab-content active">
                     <div class="call-wrapper">
                         <div class="control-card">
@@ -291,6 +301,33 @@
                     </div>
                 </div>
 
+                <!-- التبويب 2: لائحة المرضى المسجلين طوال الأسبوع (7 أيام) -->
+                <div id="schedule-tab" class="tab-content" style="display: none;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:18px;">
+                        <h2 style="margin:0; color:var(--text);" data-i18n="scheduleHeader">📅 لائحة المرضى المسجلين (جدول الـ 7 أيام)</h2>
+                        <span id="docScheduleCountBadge" style="background:var(--card); border:1px solid var(--border); padding:8px 16px; border-radius:999px; font-weight:800; color:var(--accent);">0 مريض</span>
+                    </div>
+
+                    <div class="week-selector-bar" id="docWeekSelectorBar"></div>
+
+                    <input type="text" id="docScheduleSearch" class="search-bar" placeholder="🔍 ابحث في لائحة المسجلين لهذا اليوم بالاسم أو رقم التذكرة..." oninput="renderDocScheduleTable()">
+
+                    <div class="patients-table-wrapper">
+                        <table class="patients-table">
+                            <thead>
+                                <tr>
+                                    <th>رقم التذكرة</th>
+                                    <th>اسم المريض</th>
+                                    <th>تاريخ الموعد</th>
+                                    <th>الحالة</th>
+                                </tr>
+                            </thead>
+                            <tbody id="docScheduleTbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- التبويب 3: أرشيف المرضى -->
                 <div id="patients-tab" class="tab-content" style="display: none;">
                     <div id="archiveListView">
                         <div class="archive-header">
@@ -298,7 +335,7 @@
                             <button class="btn" style="width: auto; margin: 0; padding: 12px 20px;" onclick="openNewPatientFile()" data-i18n="btnNewPatient">+ إضافة ملف مريض جديد</button>
                         </div>
                         
-                        <input type="text" id="searchInput" class="search-bar" placeholder="🔍 ابحث عن مريض بالاسم..." onkeyup="filterPatients()" style="margin-bottom: 25px; width: 100%; box-sizing: border-box;">
+                        <input type="text" id="searchInput" class="search-bar" placeholder="🔍 ابحث عن مريض بالاسم..." onkeyup="filterPatients()">
                         
                         <div class="patients-list" id="patientsListContainer">
                             <p style="color: var(--muted); text-align: center; width: 100%;" data-i18n="loading">جاري تحميل البيانات...</p>
@@ -329,7 +366,7 @@
                     </div>
                 </div>
 
-                <!-- تبويب الإحصائيات التفاعلية بالرسوم البيانية -->
+                <!-- التبويب 4: الإحصائيات التفاعلية بالمنحنيات والأعمدة البيانية -->
                 <div id="stats-tab" class="tab-content" style="display: none;">
                     <h2 style="margin-top: 0; margin-bottom: 22px; color: var(--text);" data-i18n="statsHeader">لوحة الإحصائيات والتحليل البياني</h2>
                     <p class="stats-hint" data-i18n="statsClickHint">👆 اضغط على أي بطاقة إحصائية لإظهار بياناتها ورسمها البياني التفصيلي:</p>
@@ -398,7 +435,7 @@
                     </div>
                 </div>
 
-                <!-- تبويب الإعدادات والحماية -->
+                <!-- التبويب 5: الإعدادات والحماية -->
                 <div id="settings-tab" class="tab-content" style="display: none;">
                     <div class="control-card" style="max-width: 600px; margin: 0 auto; text-align: start;">
                         <h2 style="color: var(--text); margin-top: 0;" data-i18n="secTitle">🛡️ إعدادات الحماية والخصوصية</h2>
@@ -441,6 +478,11 @@
         let currentChartType = 'bar';
         let statsChartInstance = null;
 
+        let docSelectedDayOffset = 0;
+        let docSelectedDateStr = '';
+        let docScheduleTickets = [];
+        let docScheduleCurrentNum = 0;
+
         const daysDict = {
             ar: ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'],
             fr: ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'],
@@ -449,10 +491,11 @@
 
         const dict = {
             ar: { 
-                menuCall: "📢 شاشة النداء", menuPatients: "📂 أرشيف المرضى", menuStats: "📊 الإحصائيات", menuSettings: "⚙️ الإعدادات", docTitle: "لوحة الطبيب", btnTheme: "🌓 الوضع الليلي", btnInstallApp: "💻 تثبيت التطبيق",
+                menuCall: "📢 شاشة النداء والفحص", menuSchedule: "📅 لائحة المسجلين (7 أيام)", menuPatients: "📂 أرشيف المرضى", menuStats: "📊 الإحصائيات البيانية", menuSettings: "⚙️ الإعدادات والحماية", docTitle: "لوحة الطبيب", btnTheme: "🌓 الوضع الليلي", btnInstallApp: "💻 تثبيت تطبيق الطبيب",
                 insideNow: "رقم المريض بالداخل", callNext: "📢 مناداة المريض التالي", btnDone: "✔️ تم الكشف", btnAbsent: "❌ غائب",
                 pauseQueue: "⏸️ إيقاف استقبال التذاكر مؤقتاً", resumeQueue: "▶️ تفعيل استقبال التذاكر",
-                medicalFileTitle: "📋 الملف الطبي", optional: "اختياري", lblPatientName: "اسم المريض:", lblAge: "العمر:", lblBlood: "الدم:", lblAllergy: "حساسية:", lblChronic: "أمراض مزمنة:", lblNotes: "التشخيص:", btnSaveFile: "💾 حفظ", prescTitle: "💊 الوصفة الطبية", btnPrintPresc: "🖨️ طباعة الوصفة الطبية الرسمية",
+                medicalFileTitle: "📋 الملف الطبي", optional: "اختياري", lblPatientName: "اسم المريض:", lblAge: "العمر:", lblBlood: "الدم:", lblAllergy: "حساسية:", lblChronic: "أمراض مزمنة:", lblNotes: "التشخيص:", btnSaveFile: "💾 حفظ الملف الطبي للمريض", prescTitle: "💊 الوصفة الطبية", btnPrintPresc: "🖨️ طباعة الوصفة الطبية الرسمية",
+                scheduleHeader: "📅 لائحة المرضى المسجلين (جدول الـ 7 أيام)",
                 archiveTitle: "📂 أرشيف المرضى", btnNewPatient: "+ مريض جديد", searchPlaceholder: "🔍 ابحث...", loading: "تحميل...", noPatients: "لا يوجد مرضى.", 
                 viewBtn: "👁️ التفاصيل والتعديل", deleteBtn: "🗑️ حذف", editTitle: "📄 تفاصيل ملف المريض", backBtn: "⬅️ عودة", saveEditBtn: "💾 حفظ",
                 statsHeader: "لوحة الإحصائيات والتحليل البياني", statsClickHint: "👆 اضغط على أي بطاقة إحصائية لإظهار بياناتها ورسمها البياني التفصيلي:", clickToShow: "📊 اضغط لعرض البيان",
@@ -460,13 +503,14 @@
                 secTitle: "🛡️ إعدادات الحماية", secDesc: "لحماية عيادتك وملفات مرضاك من التطفل، قم بتعيين كلمة سر تمنع أي شخص من الدخول إلى هذه اللوحة بدونها.", lblNewPass: "كلمة السر الجديدة:", btnSavePass: "💾 حفظ كلمة السر", btnDeletePass: "🗑️ إزالة الحماية",
                 lockDesc: "هذه العيادة محمية بكلمة سر", btnUnlock: "🔓 فتح العيادة",
                 deletedTitle: "هذا الرابط متوقف عن العمل", deletedDesc: "تم حذف حساب الطبيب أو إلغاء تفعيل هذا الرابط من إدارة العيادة.",
-                errNoPatient: "⚠️ لا يوجد مريض", errEmpty: "لا يوجد مريض", successStatus: "✔️ تم الحفظ", successCall: "📢 تم مناداة:", errSave: "خطأ"
+                errNoPatient: "⚠️ لا يوجد مريض في الانتظار", errEmpty: "لا يوجد مريض حالياً", successStatus: "✔️ تم الحفظ بنجاح", successCall: "📢 تم مناداة الرقم:", errSave: "خطأ في الحفظ"
             },
             fr: { 
-                menuCall: "📢 Appel", menuPatients: "📂 Archives", menuStats: "📊 Stats", menuSettings: "⚙️ Paramètres", docTitle: "Tableau de bord", btnTheme: "🌓 Sombre", btnInstallApp: "💻 Installer l'App",
+                menuCall: "📢 Appel & Consultation", menuSchedule: "📅 Inscrits (7 Jours)", menuPatients: "📂 Archives", menuStats: "📊 Statistiques", menuSettings: "⚙️ Paramètres", docTitle: "Tableau de bord", btnTheme: "🌓 Sombre", btnInstallApp: "💻 Installer l'App",
                 insideNow: "Patient Actuel", callNext: "📢 Suivant", btnDone: "✔️ Terminé", btnAbsent: "❌ Absent",
                 pauseQueue: "⏸️ Suspendre la file", resumeQueue: "▶️ Réactiver la file",
                 medicalFileTitle: "📋 Dossier", optional: "Optionnel", lblPatientName: "Nom:", lblAge: "Âge:", lblBlood: "Sang:", lblAllergy: "Allergies:", lblChronic: "Chroniques:", lblNotes: "Notes:", btnSaveFile: "💾 Enregistrer", prescTitle: "💊 Ordonnance", btnPrintPresc: "🖨️ Imprimer l'Ordonnance",
+                scheduleHeader: "📅 Liste des Patients Inscrits (7 Jours)",
                 archiveTitle: "📂 Archives", btnNewPatient: "+ Nouveau", searchPlaceholder: "🔍 Chercher...", loading: "Chargement...", noPatients: "Aucun patient.", 
                 viewBtn: "👁️ Détails & Modifier", deleteBtn: "🗑️ Supprimer", editTitle: "📄 Modifier Dossier", backBtn: "⬅️ Retour", saveEditBtn: "💾 Enregistrer",
                 statsHeader: "Statistiques & Graphiques", statsClickHint: "👆 Cliquez sur une carte pour afficher son graphique :", clickToShow: "📊 Voir le graphique",
@@ -477,10 +521,11 @@
                 errNoPatient: "⚠️ Aucun patient", errEmpty: "Aucun patient", successStatus: "✔️ Enregistré", successCall: "📢 Appel:", errSave: "Erreur"
             },
             en: { 
-                menuCall: "📢 Call Screen", menuPatients: "📂 Archive", menuStats: "📊 Stats", menuSettings: "⚙️ Settings", docTitle: "Dashboard", btnTheme: "🌓 Dark", btnInstallApp: "💻 Install App",
+                menuCall: "📢 Call & Consult", menuSchedule: "📅 7-Day Schedule", menuPatients: "📂 Archive", menuStats: "📊 Analytics", menuSettings: "⚙️ Settings", docTitle: "Doctor Dashboard", btnTheme: "🌓 Dark", btnInstallApp: "💻 Install App",
                 insideNow: "Current Patient", callNext: "📢 Call Next", btnDone: "✔️ Done", btnAbsent: "❌ Absent",
                 pauseQueue: "⏸️ Pause Queue", resumeQueue: "▶️ Resume Queue",
-                medicalFileTitle: "📋 Record", optional: "Optional", lblPatientName: "Name:", lblAge: "Age:", lblBlood: "Blood:", lblAllergy: "Allergies:", lblChronic: "Chronic:", lblNotes: "Notes:", btnSaveFile: "💾 Save", prescTitle: "💊 Prescription", btnPrintPresc: "🖨️ Print Official Prescription",
+                medicalFileTitle: "📋 Record", optional: "Optional", lblPatientName: "Name:", lblAge: "Age:", lblBlood: "Blood:", lblAllergy: "Allergies:", lblChronic: "Chronic:", lblNotes: "Notes:", btnSaveFile: "💾 Save Record", prescTitle: "💊 Prescription", btnPrintPresc: "🖨️ Print Official Prescription",
+                scheduleHeader: "📅 Registered Patients Schedule (7 Days)",
                 archiveTitle: "📂 Archive", btnNewPatient: "+ New", searchPlaceholder: "🔍 Search...", loading: "Loading...", noPatients: "No patients.", 
                 viewBtn: "👁️ Details & Edit", deleteBtn: "🗑️ Delete", editTitle: "📄 Edit Record", backBtn: "⬅️ Back", saveEditBtn: "💾 Save",
                 statsHeader: "Analytics & Charts Dashboard", statsClickHint: "👆 Click any statistic card to reveal its chart:", clickToShow: "📊 Click to view chart",
@@ -504,7 +549,89 @@
             if (document.getElementById('searchInput')) document.getElementById('searchInput').placeholder = dict[lang].searchPlaceholder;
             updateQueueBtnText();
             updateBusiestDayText();
+            renderDocWeekSelector();
             if (activeStatKey) renderMetricChart(activeStatKey);
+        }
+
+        function getFormattedDateOffset(daysOffset) {
+            const d = new Date();
+            d.setDate(d.getDate() + daysOffset);
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            return {
+                dateStr: `${yyyy}-${mm}-${dd}`,
+                dayIndex: d.getDay()
+            };
+        }
+
+        function renderDocWeekSelector() {
+            const bar = document.getElementById('docWeekSelectorBar');
+            if (!bar) return;
+            bar.innerHTML = [0, 1, 2, 3, 4, 5, 6].map(offset => {
+                const info = getFormattedDateOffset(offset);
+                let label = daysDict[currentLang][info.dayIndex];
+                if (offset === 0) label = `اليوم (${label})`;
+                else if (offset === 1) label = `غداً (${label})`;
+                const active = docSelectedDayOffset === offset ? 'active' : '';
+                return `
+                    <button class="day-card-btn ${active}" onclick="selectDocScheduleDay(${offset})">
+                        <strong>${label}</strong>
+                        <small>📅 ${info.dateStr}</small>
+                    </button>
+                `;
+            }).join('');
+            docSelectedDateStr = getFormattedDateOffset(docSelectedDayOffset).dateStr;
+        }
+
+        function selectDocScheduleDay(offset) {
+            docSelectedDayOffset = offset;
+            renderDocWeekSelector();
+            fetchDocScheduleTickets();
+        }
+
+        async function fetchDocScheduleTickets() {
+            try {
+                if (!docSelectedDateStr) docSelectedDateStr = getFormattedDateOffset(0).dateStr;
+                const res = await fetch(`${API_BASE}/api/reception/tickets/${CLINIC_SLUG}?date=${docSelectedDateStr}`);
+                if (!res.ok) return;
+                const data = await res.json();
+                docScheduleTickets = data.tickets || [];
+                docScheduleCurrentNum = data.current_number || 0;
+                const validCount = docScheduleTickets.filter(t => t.status !== 'cancelled').length;
+                document.getElementById('docScheduleCountBadge').innerText = `${validCount} مريض مسجل`;
+                renderDocScheduleTable();
+            } catch (e) {}
+        }
+
+        function renderDocScheduleTable() {
+            const tbody = document.getElementById('docScheduleTbody');
+            if (!tbody) return;
+            const q = (document.getElementById('docScheduleSearch')?.value || '').trim().toLowerCase();
+            const filtered = docScheduleTickets.filter(t => !q || (t.patient_name || '').toLowerCase().includes(q) || String(t.ticket_number).includes(q));
+
+            if (!filtered.length) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:30px; color:var(--muted);">لا يوجد مرضى مسجلون في هذا اليوم حتى الآن.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(t => {
+                let badge = `<span class="status-pill st-waiting">⏳ في الانتظار</span>`;
+                if (t.status === 'cancelled') badge = `<span class="status-pill st-cancelled">❌ ملغى</span>`;
+                else if (t.status === 'completed') badge = `<span class="status-pill st-completed">✔️ تم الكشف</span>`;
+                else if (t.status === 'absent') badge = `<span class="status-pill st-absent">⚠️ غائب</span>`;
+                else if (docSelectedDayOffset === 0 && t.ticket_number === docScheduleCurrentNum) badge = `<span class="status-pill st-inside">📢 بالداخل الآن</span>`;
+                else if (docSelectedDayOffset === 0 && t.ticket_number < docScheduleCurrentNum) badge = `<span class="status-pill st-completed">✔️ تم الكشف</span>`;
+
+                return `
+                    <tr>
+                        <td style="font-size:1.2rem; color:var(--accent);">#${t.ticket_number}</td>
+                        <td>👤 ${t.patient_name}</td>
+                        <td style="color:var(--muted);">📅 ${docSelectedDateStr}</td>
+                        <td>${badge}</td>
+                    </tr>
+                `;
+            }).join('');
         }
 
         function blockDeletedDoctor() {
@@ -568,6 +695,9 @@
                 document.getElementById('patientDetailView').style.display = 'none';
                 document.getElementById('archiveListView').style.display = 'block';
                 fetchAllPatients();
+            } else if (tabId === 'schedule-tab') {
+                renderDocWeekSelector();
+                fetchDocScheduleTickets();
             } else if (tabId === 'stats-tab') {
                 activeStatKey = null;
                 document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('active-stat'));
@@ -641,6 +771,7 @@
             } catch(e) { showToast('خطأ في العملية', 'error'); }
         }
 
+        // تثبيت تطبيق الطبيب مباشرة كبرنامج سطح مكتب مستقل دون التوقف عند نافذة Edge
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
@@ -650,7 +781,7 @@
 
         window.addEventListener('appinstalled', () => {
             document.getElementById('installAppBtn').style.display = 'none';
-            showToast('✔️ تم تثبيت تطبيق العيادة على سطح المكتب بنجاح!', 'success');
+            showToast('✔️ تم تثبيت تطبيق الطبيب على سطح المكتب بنجاح!', 'success');
         });
 
         function installApp() {
@@ -663,14 +794,25 @@
                     deferredPrompt = null;
                 });
             } else {
-                document.getElementById('installHelpModal').style.display = 'flex';
+                downloadDesktopLauncher('Doctor_App_' + CLINIC_SLUG, window.location.href);
             }
         }
 
-        function openInEdgeForInstall() {
-            const fullUrl = window.location.origin + '/doctor.html?clinic=' + encodeURIComponent(CLINIC_SLUG);
-            window.location.href = 'microsoft-edge:' + fullUrl;
-            document.getElementById('installHelpModal').style.display = 'none';
+        function downloadDesktopLauncher(appName, targetUrl) {
+            const batContent = [
+                '@echo off',
+                'start msedge --app="' + targetUrl + '" || start chrome --app="' + targetUrl + '" || start "" "' + targetUrl + '"',
+                'exit'
+            ].join('\r\n');
+
+            const blob = new Blob([batContent], { type: 'application/bat;charset=utf-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = appName + '.bat';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            showToast('✔️ تم تحميل مشغل تطبيق الطبيب لسطح المكتب! افتح الملف لتشغيل اللوحة كبرنامج مستقل.', 'success');
         }
 
         let currentNum = 0;
@@ -680,17 +822,19 @@
         let currentSelectedPatientId = null;
 
         window.onload = async () => {
+            renderDocWeekSelector();
             changeLang(localStorage.getItem('doc_lang') || 'ar');
             if (localStorage.getItem('theme') === 'dark') document.body.setAttribute('data-theme', 'dark');
             if (window.matchMedia('(display-mode: standalone)').matches) {
                 document.getElementById('installAppBtn').style.display = 'none';
             }
             if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW failed', err));
+                navigator.serviceWorker.register('/sw.js').catch(() => {});
             }
             await checkInitialLock();
             await fetchStatus();
             await fetchStats();
+            await fetchDocScheduleTickets();
         };
 
         function displayPatientState(pName, ticketStatus) {
@@ -723,6 +867,9 @@
                 currentQueueStatus = data.status || 'active';
                 updateQueueBtnText();
                 if (data.doctor_name) activeDoctorName = data.doctor_name;
+                if (data.clinic_name) document.getElementById('sidebarClinicBrand').innerText = `🏥 ${data.clinic_name}`;
+                if (data.specialty) doctorSpecialty = data.specialty;
+                document.getElementById('clinicNameDisplay').innerText = `👨‍⚕️ ${activeDoctorName}`;
                 document.getElementById('currentNumber').innerText = currentNum === 0 ? '--' : currentNum;
                 if (currentNum > 0 && data.current_patient_name) {
                     activePatientName = data.current_patient_name;
@@ -775,11 +922,7 @@
             clickedCard.classList.add('active-stat');
             document.getElementById('chartPanel').style.display = 'block';
 
-            if (metricKey === 'weekly' || metricKey === 'monthly') {
-                currentChartType = 'line';
-            } else {
-                currentChartType = 'bar';
-            }
+            currentChartType = (metricKey === 'weekly' || metricKey === 'monthly') ? 'line' : 'bar';
             updateChartTypeButtons();
             renderMetricChart(metricKey);
         }
@@ -904,19 +1047,10 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
+                    plugins: { legend: { display: false } },
                     scales: {
-                        x: {
-                            ticks: { color: textColor, font: { family: 'Tajawal', weight: 'bold', size: 13 } },
-                            grid: { color: gridColor }
-                        },
-                        y: {
-                            beginAtZero: true,
-                            ticks: { color: textColor, precision: 0, font: { family: 'Tajawal', weight: 'bold', size: 12 } },
-                            grid: { color: gridColor }
-                        }
+                        x: { ticks: { color: textColor, font: { family: 'Tajawal', weight: 'bold', size: 13 } }, grid: { color: gridColor } },
+                        y: { beginAtZero: true, ticks: { color: textColor, precision: 0, font: { family: 'Tajawal', weight: 'bold', size: 12 } }, grid: { color: gridColor } }
                     }
                 }
             });
@@ -941,7 +1075,8 @@
                     if (data.ticket_status === 'cancelled') {
                         showToast(`⚠️ المريض (${activePatientName}) صاحب الرقم ${currentNum} ألغى حجزه!`, 'error');
                     } else { showToast(`${dict[currentLang].successCall} ${currentNum}`, 'success'); }
-                    fetchStats(); 
+                    fetchStats();
+                    fetchDocScheduleTickets();
                 } else { showToast(dict[currentLang].errNoPatient, 'warning'); }
             } catch (e) { showToast('خطأ اتصال بالسيرفر', 'error'); }
         }
@@ -1007,121 +1142,25 @@
                     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@500;700;800&display=swap" rel="stylesheet">
                     <style>
                         @page { size: A4; margin: 12mm; }
-                        body {
-                            font-family: 'Tajawal', Arial, sans-serif;
-                            margin: 0;
-                            padding: 0;
-                            color: #1e293b;
-                            background: #fff;
-                        }
-                        .sheet {
-                            border: 2.5px solid #10b981;
-                            border-radius: 18px;
-                            padding: 28px 32px;
-                            min-height: 92vh;
-                            box-sizing: border-box;
-                            display: flex;
-                            flex-direction: column;
-                            justify-content: space-between;
-                            position: relative;
-                            overflow: hidden;
-                        }
-                        .watermark {
-                            position: absolute;
-                            top: 54%;
-                            left: 50%;
-                            transform: translate(-50%, -50%);
-                            opacity: 0.05;
-                            pointer-events: none;
-                            z-index: 0;
-                        }
+                        body { font-family: 'Tajawal', Arial, sans-serif; margin: 0; padding: 0; color: #1e293b; background: #fff; }
+                        .sheet { border: 2.5px solid #10b981; border-radius: 18px; padding: 28px 32px; min-height: 92vh; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden; }
+                        .watermark { position: absolute; top: 54%; left: 50%; transform: translate(-50%, -50%); opacity: 0.05; pointer-events: none; z-index: 0; }
                         .watermark svg { width: 340px; height: 340px; }
-                        .top-header {
-                            display: flex;
-                            justify-content: space-between;
-                            align-items: center;
-                            border-bottom: 3px double #10b981;
-                            padding-bottom: 18px;
-                            z-index: 1;
-                        }
+                        .top-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px double #10b981; padding-bottom: 18px; z-index: 1; }
                         .doc-ar h2 { margin: 0 0 5px; color: #047857; font-size: 1.45rem; }
                         .doc-ar p { margin: 2px 0; color: #475569; font-weight: 700; font-size: 0.95rem; }
                         .doc-fr { text-align: left; direction: ltr; }
                         .doc-fr h3 { margin: 0 0 4px; color: #047857; font-size: 1.15rem; }
                         .doc-fr p { margin: 2px 0; color: #475569; font-weight: 700; font-size: 0.9rem; }
-                        .patient-ribbon {
-                            display: grid;
-                            grid-template-columns: 2fr 1fr 1fr 1.2fr;
-                            gap: 10px;
-                            background: #f0fdf4;
-                            border: 1.5px solid #a7f3d0;
-                            border-radius: 12px;
-                            padding: 14px 18px;
-                            margin: 20px 0;
-                            font-size: 1rem;
-                            font-weight: 700;
-                            z-index: 1;
-                        }
+                        .patient-ribbon { display: grid; grid-template-columns: 2fr 1fr 1fr 1.2fr; gap: 10px; background: #f0fdf4; border: 1.5px solid #a7f3d0; border-radius: 12px; padding: 14px 18px; margin: 20px 0; font-size: 1rem; font-weight: 700; z-index: 1; }
                         .patient-ribbon div span { color: #059669; font-weight: 800; }
-                        .rx-title {
-                            display: flex;
-                            align-items: center;
-                            justify-content: space-between;
-                            margin-bottom: 10px;
-                            z-index: 1;
-                        }
-                        .rx-symbol {
-                            font-size: 2.6rem;
-                            font-weight: 900;
-                            color: #10b981;
-                            font-family: Georgia, serif;
-                            line-height: 1;
-                        }
-                        .rx-label {
-                            font-size: 1.2rem;
-                            font-weight: 800;
-                            color: #047857;
-                            border-bottom: 2px solid #10b981;
-                            padding-bottom: 3px;
-                        }
-                        .medications-box {
-                            flex: 1;
-                            font-size: 1.25rem;
-                            font-weight: 700;
-                            line-height: 2.2;
-                            white-space: pre-wrap;
-                            padding: 15px 10px;
-                            z-index: 1;
-                            min-height: 360px;
-                        }
-                        .footer-area {
-                            display: flex;
-                            justify-content: space-between;
-                            align-items: flex-end;
-                            border-top: 2px dashed #cbd5e1;
-                            padding-top: 20px;
-                            margin-top: 20px;
-                            z-index: 1;
-                        }
-                        .stamp-box {
-                            width: 220px;
-                            height: 105px;
-                            border: 2px dashed #94a3b8;
-                            border-radius: 12px;
-                            display: flex;
-                            flex-direction: column;
-                            align-items: center;
-                            justify-content: flex-start;
-                            padding-top: 10px;
-                            color: #64748b;
-                            font-weight: 800;
-                            font-size: 0.95rem;
-                        }
-                        .wish-note {
-                            color: #059669;
-                            font-weight: 800;
-                            font-size: 1rem;
-                        }
+                        .rx-title { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; z-index: 1; }
+                        .rx-symbol { font-size: 2.6rem; font-weight: 900; color: #10b981; font-family: Georgia, serif; line-height: 1; }
+                        .rx-label { font-size: 1.2rem; font-weight: 800; color: #047857; border-bottom: 2px solid #10b981; padding-bottom: 3px; }
+                        .medications-box { flex: 1; font-size: 1.25rem; font-weight: 700; line-height: 2.2; white-space: pre-wrap; padding: 15px 10px; z-index: 1; min-height: 360px; }
+                        .footer-area { display: flex; justify-content: space-between; align-items: flex-end; border-top: 2px dashed #cbd5e1; padding-top: 20px; margin-top: 20px; z-index: 1; }
+                        .stamp-box { width: 220px; height: 105px; border: 2px dashed #94a3b8; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 10px; color: #64748b; font-weight: 800; font-size: 0.95rem; }
+                        .wish-note { color: #059669; font-weight: 800; font-size: 1rem; }
                     </style>
                 </head>
                 <body>
@@ -1141,22 +1180,18 @@
                                     <p>Réf: #${currentNum > 0 ? currentNum : 'RX'}</p>
                                 </div>
                             </div>
-
                             <div class="patient-ribbon">
                                 <div><span>👤 المريض:</span> ${pName}</div>
                                 <div><span>🎂 العمر:</span> ${ageText}</div>
                                 <div><span>🩸 الزمرة:</span> ${bloodText}</div>
                                 <div><span>📅 التاريخ:</span> ${dateStr}</div>
                             </div>
-
                             <div class="rx-title">
                                 <span class="rx-label">💊 الأدوية والجرعات الموصوفة:</span>
                                 <span class="rx-symbol">℞</span>
                             </div>
-
                             <div class="medications-box">${prescriptionText}</div>
                         </div>
-
                         <div class="footer-area">
                             <div class="wish-note">🌿 نتمنى لكم الشفاء العاجل ودوام الصحة والعافية</div>
                             <div class="stamp-box">ختم وتوقيع الطبيب (Cachet & Signature)</div>
@@ -1178,6 +1213,7 @@
                 document.getElementById('medicalCard').style.display = 'none';
                 document.getElementById('cancelledBanner').style.display = 'none';
                 document.getElementById('currentPatientName').innerText = '--';
+                fetchDocScheduleTickets();
             } catch (e) { showToast('Error', 'error'); }
         }
 
@@ -1240,9 +1276,7 @@
         }
 
         function deleteCurrentDetailPatient() {
-            if (currentSelectedPatientId) {
-                deletePatientRecord(currentSelectedPatientId);
-            }
+            if (currentSelectedPatientId) deletePatientRecord(currentSelectedPatientId);
         }
 
         function openNewPatientFile() {
@@ -1254,8 +1288,8 @@
         }
 
         const socket = io(API_BASE);
-        socket.on('new_ticket', (data) => { if (data.clinic_slug === CLINIC_SLUG) fetchStats(); });
-        socket.on('ticket_cancelled', (data) => { if (data.clinic_slug === CLINIC_SLUG) { showToast(`⚠️ ألغى المريض (${data.patient_name}) تذكرته`, 'warning'); fetchStats(); } });
+        socket.on('new_ticket', (data) => { if (data.clinic_slug === CLINIC_SLUG) { fetchStats(); fetchDocScheduleTickets(); } });
+        socket.on('ticket_cancelled', (data) => { if (data.clinic_slug === CLINIC_SLUG) { showToast(`⚠️ ألغى المريض (${data.patient_name}) تذكرته`, 'warning'); fetchStats(); fetchDocScheduleTickets(); } });
         socket.on('doctor_deleted', (data) => { if (data.clinic_slug === CLINIC_SLUG) blockDeletedDoctor(); });
     </script>
 </body>

@@ -6,6 +6,8 @@
     <title>ClinicFlow - لوحة تحكم الأدمن</title>
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/3063/3063063.png">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <!-- مكتبة توليد QR محلياً في المتصفح لضمان ظهور الكود الجماعي فوراً حتى عند ضعف الإنترنت -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
     <style>
         :root {
             --bg: #f4f7f6;
@@ -281,7 +283,7 @@
 
         .clinics-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(390px, 1fr));
             gap: 22px;
         }
         .clinic-card {
@@ -314,6 +316,16 @@
             color: var(--accent);
             padding: 4px 11px;
             border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 800;
+            margin-top: 4px;
+        }
+        .docs-count-tag {
+            display: inline-block;
+            background: rgba(59, 130, 246, 0.12);
+            color: var(--blue);
+            padding: 4px 11px;
+            border-radius: 999px;
             font-size: 0.82rem;
             font-weight: 800;
             margin-top: 4px;
@@ -337,6 +349,12 @@
             flex-direction: column;
             gap: 9px;
         }
+        .links-box-title {
+            font-size: 0.84rem;
+            font-weight: 800;
+            color: var(--muted);
+            margin-bottom: 2px;
+        }
         .link-row {
             display: flex;
             justify-content: space-between;
@@ -353,14 +371,14 @@
 
         .subdocs-box {
             background: var(--bg);
-            padding: 13px;
+            padding: 14px;
             border-radius: 16px;
-            border: 1px dashed var(--accent);
-            margin-top: 4px;
+            border: 2px dashed var(--accent);
+            margin-top: 12px;
         }
         .subdoc-item {
             background: var(--card);
-            padding: 10px 12px;
+            padding: 12px;
             border-radius: 12px;
             border: 1px solid var(--border);
             margin-bottom: 8px;
@@ -371,20 +389,36 @@
             gap: 8px;
         }
         .subdoc-item:last-child { margin-bottom: 0; }
+        .empty-docs-note {
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.88rem;
+            font-weight: 700;
+            padding: 12px 8px;
+            background: var(--card);
+            border-radius: 10px;
+            border: 1px dashed var(--border);
+        }
 
         .qr-frame-box {
             background: #ffffff;
-            padding: 15px;
+            padding: 18px;
             border-radius: 20px;
             border: 4px solid var(--accent);
             text-align: center;
             box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+            display: inline-block;
+        }
+        .qr-frame-box img {
+            display: block;
+            margin: 0 auto;
         }
         .qr-frame-box span {
             color: #0f172a;
             font-weight: 800;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             display: block;
+            margin-top: 8px;
         }
         .global-url-bar {
             background: var(--bg);
@@ -465,13 +499,13 @@
         <div>
             <div class="logo">🛡️ Clinic<span>Flow</span><br><span style="font-size: 0.85rem; color: var(--muted); font-weight: 500;">Super Admin Panel</span></div>
             <div style="margin-top: 20px; display: flex; flex-direction: column; width: 100%;">
-                <div class="nav-item active" id="navManageBtn" onclick="switchTab('manage-clinic-tab', this)" data-i18n="navManage">🏥 إدارة وإضافة العيادات</div>
-                <div class="nav-item" id="navListBtn" onclick="switchTab('clinics-list-tab', this)" data-i18n="navClinicsList">📋 قائمة العيادات والبحث</div>
+                <div class="nav-item active" id="navManageBtn" onclick="switchTab('manage-clinic-tab', this)" data-i18n="navManage">🏥 إنشاء عيادة جديدة</div>
+                <div class="nav-item" id="navListBtn" onclick="switchTab('clinics-list-tab', this)" data-i18n="navClinicsList">📋 قائمة العيادات وإضافة الأطباء</div>
                 <div class="nav-item" id="navQrBtn" onclick="switchTab('global-qr-tab', this)" data-i18n="navGlobalQr">📱 الكود الجماعي (QR)</div>
-                <a class="nav-item" href="/directory.html" target="_blank" style="color: var(--accent);">🌐 صفحة دليل العيادات للمرضى</a>
+                <a class="nav-item" href="/directory.html" target="_blank" style="color: var(--accent);">🌐 صفحة دليل الأطباء للمرضى</a>
             </div>
         </div>
-        <div style="padding: 20px; text-align: center; color: var(--muted); font-size: 0.82rem;">ClinicFlow SaaS v3.9</div>
+        <div style="padding: 20px; text-align: center; color: var(--muted); font-size: 0.82rem;">ClinicFlow SaaS v4.2</div>
     </div>
 
     <div class="main-content">
@@ -480,6 +514,7 @@
                 ⚙️ <span data-i18n="adminHeader">لوحة تحكم المدير العام</span>
             </div>
             <div class="header-controls">
+                <button class="btn btn-sm btn-purple" onclick="switchTab('global-qr-tab', document.getElementById('navQrBtn'))">📱 عرض وطباعة الكود الجماعي</button>
                 <button class="btn btn-sm btn-blue" onclick="exportCSVReport()" data-i18n="btnExportCsv">📥 تحميل تقرير العيادات (CSV)</button>
                 <select id="langSelect" onchange="changeLang(this.value)">
                     <option value="ar">العربية</option>
@@ -517,60 +552,56 @@
                 <div class="stat-card" onclick="openListWithFilter('all')">
                     <div class="stat-icon">👨‍⚕️</div>
                     <div class="stat-info">
-                        <span data-i18n="statTotalDoctors">إجمالي الأطباء</span>
+                        <span data-i18n="statTotalDoctors">إجمالي الأطباء المضافين</span>
                         <strong id="statTotalDoctors" style="color: var(--blue);">0</strong>
                     </div>
                 </div>
             </div>
 
-            <!-- الصفحة 1: إدارة وإضافة العيادات -->
+            <!-- الصفحة 1: إنشاء العيادة فقط -->
             <div id="manage-clinic-tab" class="tab-content active">
                 <div class="panel-card">
                     <h3>
-                        <span data-i18n="addClinicTitle">➕ تسجيل عيادة جديدة وتفعيل الاشتراك</span>
-                        <button class="btn btn-sm btn-outline" onclick="switchTab('clinics-list-tab', document.getElementById('navListBtn'))">📋 الانتقال لقائمة العيادات والبحث ⬅️</button>
+                        <span data-i18n="addClinicTitle">🏥 الخطوة 1: تسجيل عيادة طبية جديدة (تُضاف الأطباء بداخلها لاحقاً)</span>
+                        <button class="btn btn-sm btn-outline" onclick="switchTab('clinics-list-tab', document.getElementById('navListBtn'))">📋 الانتقال لقائمة العيادات وإضافة الأطباء ⬅️</button>
                     </h3>
                     <div class="form-grid">
                         <div class="input-group">
-                            <label data-i18n="lblClinicName">اسم العيادة أو الطبيب:</label>
-                            <input type="text" id="cName" placeholder="مثال: عيادة الشفاء / د. محمد">
+                            <label data-i18n="lblClinicName">اسم العيادة أو المركز الطبي:</label>
+                            <input type="text" id="cName" placeholder="مثال: عيادة الشفاء الطبية">
                         </div>
                         <div class="input-group">
-                            <label data-i18n="lblClinicSlug">الرابط المختصر (Slug بالإنجليزية):</label>
+                            <label data-i18n="lblClinicSlug">الرابط المختصر للعيادة (Slug بالإنجليزية):</label>
                             <input type="text" id="cSlug" placeholder="مثال: chifa-clinic">
                         </div>
                         <div class="input-group">
-                            <label data-i18n="lblSpecialty">الاختصاص الطبي (اختر من القائمة):</label>
-                            <select id="cSpecialty"></select>
-                        </div>
-                        <div class="input-group">
-                            <label data-i18n="lblPhone">رقم الهاتف / واتساب:</label>
+                            <label data-i18n="lblPhone">رقم هاتف العيادة / واتساب:</label>
                             <input type="text" id="cPhone" placeholder="مثال: 213661000000">
                         </div>
                         <div class="input-group">
-                            <label data-i18n="lblEmail">البريد الإلكتروني:</label>
-                            <input type="email" id="cEmail" placeholder="example@clinic.com">
+                            <label data-i18n="lblEmail">البريد الإلكتروني للعيادة:</label>
+                            <input type="email" id="cEmail" placeholder="contact@chifa-clinic.com">
                         </div>
                     </div>
                     <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                        <button class="btn" onclick="createClinic()" data-i18n="btnCreateClinic">✔️ إنشاء العيادة وتوليد الروابط</button>
-                        <button class="btn btn-blue" onclick="switchTab('clinics-list-tab', document.getElementById('navListBtn'))">🔍 عرض قائمة العيادات والبحث والحذف</button>
+                        <button class="btn" onclick="createClinic()" data-i18n="btnCreateClinic">✔️ إنشاء العيادة الآن (ثم إضافة الأطباء)</button>
+                        <button class="btn btn-blue" onclick="switchTab('clinics-list-tab', document.getElementById('navListBtn'))">👨‍⚕️ إدارة العيادات وإضافة الأطباء</button>
                     </div>
                 </div>
             </div>
 
-            <!-- الصفحة 2: قائمة العيادات والبحث والحذف -->
+            <!-- الصفحة 2: قائمة العيادات وإضافة الأطباء والبحث والحذف -->
             <div id="clinics-list-tab" class="tab-content">
                 <div class="panel-card">
                     <h3>
-                        <span data-i18n="clinicsListTitle">📋 قائمة العيادات والأطباء (البحث والحذف وإدارة الروابط)</span>
+                        <span data-i18n="clinicsListTitle">📋 قائمة العيادات المشتركة وإدارة أطباء كل عيادة</span>
                         <span style="font-size: 0.95rem; color: var(--muted);" id="showingCountLabel"></span>
                     </h3>
 
                     <div class="filter-bar">
-                        <input type="text" id="searchClinicsInput" placeholder="🔍 ابحث باسم العيادة، الطبيب، الرابط المختصر، أو رقم الهاتف..." oninput="applyFilters()">
+                        <input type="text" id="searchClinicsInput" placeholder="🔍 ابحث باسم العيادة، اسم الطبيب، الرابط المختصر، أو رقم الهاتف..." oninput="applyFilters()">
                         <select id="filterSpecialtySelect" onchange="applyFilters()">
-                            <option value="ALL">🩺 جميع التخصصات الطبية</option>
+                            <option value="ALL">🩺 فلترة حسب تخصص الأطباء (الكل)</option>
                         </select>
                         <div class="filter-pills">
                             <div class="filter-pill active" id="pillAll" onclick="setStatusFilter('all', this)" data-i18n="filterAll">الكل</div>
@@ -583,23 +614,23 @@
                 </div>
             </div>
 
-            <!-- الصفحة 3: الكود الجماعي للأطباء -->
+            <!-- الصفحة 3: الكود الجماعي للأطباء (مضمون الظهور 100%) -->
             <div id="global-qr-tab" class="tab-content">
-                <div class="panel-card" style="text-align: center; max-width: 700px; margin: 0 auto; padding: 40px;">
-                    <h2 style="color: var(--accent); margin-top: 0; font-size: 1.9rem;" data-i18n="globalQrCardTitle">📱 الكود الجماعي للأطباء (Global QR Code)</h2>
-                    <p style="color: var(--muted); font-weight: bold; font-size: 1.05rem; line-height: 1.8; margin-bottom: 25px;" data-i18n="globalQrCardDesc">
-                        امسح هذا الكود لفتح الدليل الطبي الشامل الذي يعرض قائمة العيادات والأطباء واختصاصاتهم مع إمكانية البحث والحجز في أجل أقصاه 48 ساعة.
+                <div class="panel-card" style="text-align: center; max-width: 720px; margin: 0 auto; padding: 36px;">
+                    <h2 style="color: var(--accent); margin-top: 0; font-size: 1.85rem;" data-i18n="globalQrCardTitle">📱 الكود الجماعي للأطباء (Global QR Code)</h2>
+                    <p style="color: var(--muted); font-weight: bold; font-size: 1.05rem; line-height: 1.8; margin-bottom: 22px;" data-i18n="globalQrCardDesc">
+                        امسح هذا الكود لفتح الدليل الطبي الشامل الذي يعرض جميع الأطباء المضافين داخل العيادات مع تخصصاتهم وإمكانية البحث والحجز طوال الأسبوع الكامل (ما عدا يوم الجمعة).
                     </p>
-                    <div class="qr-frame-box" style="display: inline-block; padding: 25px; margin-bottom: 25px;">
-                        <img class="global-qr-img" src="" alt="Global QR" style="width: 270px; height: 270px; display: block; margin: 0 auto;">
-                        <span style="font-size: 1.1rem; margin-top: 10px;">ClinicFlow — الدليل الطبي الشامل</span>
+                    <div class="qr-frame-box" style="padding: 24px; margin-bottom: 22px;">
+                        <img id="globalQrMainImg" class="global-qr-img" src="" alt="Global QR Code" style="width: 270px; height: 270px;">
+                        <span style="font-size: 1.1rem; margin-top: 10px;">ClinicFlow — الدليل الطبي الشامل (حجز أسبوعي)</span>
                     </div>
                     <div class="global-url-bar" id="globalUrlDisplayTab">--</div>
                     <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
                         <button class="btn" onclick="printGlobalQR()">🖨️ طباعة لوحة الكود الجماعي (A4)</button>
                         <button class="btn btn-blue" onclick="copyGlobalUrl()">📋 نسخ رابط الدليل الجماعي</button>
                         <button class="btn btn-purple" onclick="downloadGlobalQR()">💾 تحميل صورة الكود</button>
-                        <a class="btn btn-warning" href="/directory.html" target="_blank">🌐 فتح صفحة قائمة العيادات للمرضى</a>
+                        <a class="btn btn-warning" href="/directory.html" target="_blank">🌐 فتح صفحة الدليل الطبي للمرضى</a>
                     </div>
                 </div>
             </div>
@@ -608,21 +639,22 @@
     </div>
 </div>
 
+    <!-- نافذة إضافة طبيب داخل العيادة -->
     <div class="modal-overlay" id="addDoctorModal">
         <div class="modal-card">
-            <h3 style="margin-top: 0; color: var(--accent);">👨‍⚕️ إضافة طبيب جديد داخل العيادة</h3>
+            <h3 style="margin-top: 0; color: var(--accent);">👨‍⚕️ الخطوة 2: إضافة طبيب داخل <span id="modalClinicNameTitle" style="color:var(--text);">العيادة</span></h3>
             <input type="hidden" id="parentClinicId">
             <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
                 <div class="input-group">
-                    <label>اسم الطبيب:</label>
+                    <label>اسم الطبيب الكامل:</label>
                     <input type="text" id="docName" placeholder="مثال: د. كريم بن علي">
                 </div>
                 <div class="input-group">
-                    <label>الرابط المختصر للطبيب بالإنجليزية (Slug):</label>
+                    <label>الرابط المختصر الخاص بالطبيب بالإنجليزية (Slug):</label>
                     <input type="text" id="docSlug" placeholder="مثال: dr-karim">
                 </div>
                 <div class="input-group">
-                    <label>التخصص الطبي (اختر من القائمة):</label>
+                    <label>التخصص الطبي للطبيب (اختر من القائمة):</label>
                     <select id="docSpecialty"></select>
                 </div>
                 <div class="input-group">
@@ -635,18 +667,19 @@
                 </div>
             </div>
             <div style="display: flex; gap: 10px;">
-                <button class="btn" style="flex: 1;" onclick="submitSubDoctor()">💾 حفظ وإضافة الطبيب</button>
+                <button class="btn" style="flex: 1;" onclick="submitSubDoctor()">💾 حفظ وإضافة الطبيب للعيادة</button>
                 <button class="btn btn-danger" style="flex: 1;" onclick="closeAddDoctorModal()">إلغاء</button>
             </div>
         </div>
     </div>
 
+    <!-- نافذة عرض وطباعة كود QR فردي -->
     <div class="modal-overlay" id="singleQrModal">
         <div class="modal-card" style="text-align: center;">
             <h3 id="singleQrTitle" style="margin-top: 0; color: var(--accent);">--</h3>
             <p id="singleQrSpec" style="color: var(--muted); font-weight: bold; margin-top: -5px;">--</p>
-            <div class="qr-frame-box" style="display: inline-block; margin: 15px 0;">
-                <img id="singleQrImg" src="" style="width: 220px; height: 220px; display: block;">
+            <div class="qr-frame-box" style="margin: 15px 0;">
+                <img id="singleQrImg" src="" style="width: 230px; height: 230px;">
                 <span>امسح الكود لحجز موعدك</span>
             </div>
             <div class="global-url-bar" id="singleQrUrl" style="font-size: 0.82rem;"></div>
@@ -686,8 +719,7 @@
             "الطب النفسي والعصبي",
             "أمراض الدم والأورام",
             "جراحة الوجه والفكين والتجميل",
-            "التحاليل الطبية والأشعة",
-            "عيادة متعددة التخصصات"
+            "التحاليل الطبية والأشعة"
         ];
 
         let allClinicsData = [];
@@ -695,13 +727,29 @@
         let currentStatusFilter = 'all';
         let currentSingleQr = { name: '', specialty: '', url: '' };
 
+        // دالة توليد صورة QR مضمونة 100% محلياً أو عبر الـ API الاحتياطي
+        function generateReliableQRDataUrl(textUrl, sizePx = 350) {
+            if (window.QRious) {
+                try {
+                    const qr = new QRious({
+                        value: textUrl,
+                        size: sizePx,
+                        level: 'H',
+                        background: '#ffffff',
+                        foreground: '#0f172a'
+                    });
+                    return qr.toDataURL('image/png');
+                } catch (e) {}
+            }
+            return `https://quickchart.io/qr?size=${sizePx}&margin=1&text=${encodeURIComponent(textUrl)}`;
+        }
+
         function populateSpecialtySelects() {
             const optionsHtml = MEDICAL_SPECIALTIES.map(sp => `<option value="${sp}">🩺 ${sp}</option>`).join('');
-            document.getElementById('cSpecialty').innerHTML = optionsHtml;
             document.getElementById('docSpecialty').innerHTML = optionsHtml;
 
             const filterSelect = document.getElementById('filterSpecialtySelect');
-            filterSelect.innerHTML = `<option value="ALL">🩺 جميع التخصصات الطبية</option>` + optionsHtml;
+            filterSelect.innerHTML = `<option value="ALL">🩺 فلترة حسب تخصص الأطباء (الكل)</option>` + optionsHtml;
         }
 
         function showToast(msg) {
@@ -718,6 +766,7 @@
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             if (el) el.classList.add('active');
+            if (tabId === 'global-qr-tab') initGlobalQR();
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
@@ -742,8 +791,14 @@
 
         function initGlobalQR() {
             const dirUrl = `${API_BASE}/directory.html`;
-            const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(dirUrl)}`;
-            document.querySelectorAll('.global-qr-img').forEach(img => img.src = qrApiUrl);
+            const qrDataSrc = generateReliableQRDataUrl(dirUrl, 360);
+            document.querySelectorAll('.global-qr-img').forEach(img => {
+                img.onerror = function() {
+                    this.onerror = null;
+                    this.src = `https://api.qrserver.com/v1/create-qr-code/?size=350x350&data=${encodeURIComponent(dirUrl)}`;
+                };
+                img.src = qrDataSrc;
+            });
             document.getElementById('globalUrlDisplayTab').innerText = dirUrl;
         }
 
@@ -753,33 +808,27 @@
             showToast('✔️ تم نسخ رابط الدليل الجماعي للأطباء!');
         }
 
-        async function downloadGlobalQR() {
+        function downloadGlobalQR() {
             const dirUrl = `${API_BASE}/directory.html`;
-            const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(dirUrl)}`;
-            try {
-                const res = await fetch(qrApiUrl);
-                const blob = await res.blob();
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = 'ClinicFlow-Global-QR.png';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                showToast('✔️ تم تحميل صورة الكود الجماعي بنجاح!');
-            } catch (e) {
-                window.open(qrApiUrl, '_blank');
-            }
+            const dataUrl = generateReliableQRDataUrl(dirUrl, 500);
+            const a = document.createElement('a');
+            a.href = dataUrl;
+            a.download = 'ClinicFlow-Global-QR.png';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            showToast('✔️ تم تحميل صورة الكود الجماعي بنجاح!');
         }
 
         function printGlobalQR() {
             const dirUrl = `${API_BASE}/directory.html`;
-            const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=450x450&data=${encodeURIComponent(dirUrl)}`;
+            const qrSrc = generateReliableQRDataUrl(dirUrl, 450);
             const w = window.open('', '', 'width=780,height=780');
             w.document.write(`
                 <html dir="rtl" lang="ar">
                 <body style="font-family:'Tajawal',sans-serif; text-align:center; padding:40px;">
                     <h1 style="color:#10b981; font-size:2.3rem; margin-bottom:10px;">🏥 الدليل الطبي الشامل — ClinicFlow</h1>
-                    <p style="font-size:1.3rem; font-weight:bold; color:#1e293b;">امسح كود QR بكاميرا هاتفك لعرض جميع الأطباء واختصاصاتهم وحجز موعدك (في أجل أقصاه 48 ساعة)</p>
+                    <p style="font-size:1.3rem; font-weight:bold; color:#1e293b;">امسح كود QR بكاميرا هاتفك لعرض جميع الأطباء واختصاصاتهم وحجز موعدك طوال الأسبوع</p>
                     <div style="display:inline-block; padding:22px; border:5px solid #10b981; border-radius:26px; margin:25px 0;">
                         <img src="${qrSrc}" style="width:330px; height:330px; display:block;">
                     </div>
@@ -788,10 +837,9 @@
                 </html>
             `);
             w.document.close();
-            setTimeout(() => { w.print(); w.close(); }, 600);
+            setTimeout(() => { w.print(); w.close(); }, 500);
         }
 
-        // جلب جميع العيادات والأطباء الفرعيين في طلب واحد فائق السرعة دون حلقات بطيئة
         async function loadClinics() {
             try {
                 const res = await fetch(`${API_BASE}/api/admin/clinics`);
@@ -809,7 +857,7 @@
 
                     const subDocs = c.sub_doctors || [];
                     subDoctorsMap[c.id] = subDocs;
-                    totalDocsCount += subDocs.length > 0 ? subDocs.length : 1;
+                    totalDocsCount += subDocs.length;
                 }
 
                 document.getElementById('statTotalClinics').innerText = allClinicsData.length;
@@ -845,7 +893,6 @@
                 const subDocs = subDoctorsMap[c.id] || [];
 
                 const specMatch = selectedSpec === 'ALL' ||
-                    (c.specialty || 'طب عام') === selectedSpec ||
                     subDocs.some(d => (d.specialty || 'طب عام') === selectedSpec);
 
                 if (!specMatch) return false;
@@ -859,7 +906,6 @@
                 return !q ||
                     c.name.toLowerCase().includes(q) ||
                     c.slug.toLowerCase().includes(q) ||
-                    (c.specialty || '').toLowerCase().includes(q) ||
                     (c.phone || '').toLowerCase().includes(q) ||
                     (c.email || '').toLowerCase().includes(q) ||
                     subDocsMatch;
@@ -886,48 +932,51 @@
                 const dateStr = subDate.toLocaleDateString('ar-DZ');
                 const subDocs = subDoctorsMap[c.id] || [];
 
-                const docUrl = `${API_BASE}/doctor.html?clinic=${c.slug}`;
                 const tvUrl = `${API_BASE}/tv.html?clinic=${c.slug}`;
                 const recUrl = `${API_BASE}/reception.html?clinic=${c.slug}`;
                 const patUrl = `${API_BASE}/patient.html?clinic=${c.slug}`;
 
                 let subDocsHtml = '';
                 if (subDocs.length > 0) {
+                    subDocsHtml = subDocs.map(d => {
+                        const dDocUrl = `${API_BASE}/doctor.html?clinic=${d.slug}`;
+                        const dPatUrl = `${API_BASE}/patient.html?clinic=${d.slug}`;
+                        const safeDocName = d.name.replace(/'/g, "\\'");
+                        return `
+                        <div class="subdoc-item">
+                            <div>
+                                <strong>👨‍⚕️ ${d.name}</strong>
+                                <span class="spec-tag">🩺 ${d.specialty || 'طب عام'}</span>
+                                <div style="font-size:0.78rem; color:var(--muted); margin-top:3px;">Slug: ${d.slug} ${d.phone ? ' | 📞 ' + d.phone : ''}</div>
+                            </div>
+                            <div style="display:flex; gap:5px; flex-wrap:wrap;">
+                                <button class="btn btn-sm" onclick="copyLink('${dDocUrl}')">📋 رابط الطبيب</button>
+                                <a class="btn btn-sm btn-blue" href="${dDocUrl}" target="_blank">فتح اللوحة</a>
+                                <button class="btn btn-sm btn-warning" onclick="openSingleQrModal('${safeDocName}', '${d.specialty || 'طب عام'}', '${dPatUrl}')">📱 QR الطبيب</button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteSubDoctor('${d.id}', '${safeDocName}')">🗑️</button>
+                            </div>
+                        </div>
+                        `;
+                    }).join('');
+                } else {
                     subDocsHtml = `
-                        <div class="subdocs-box">
-                            <div style="font-weight:800; font-size:0.88rem; color:var(--accent); margin-bottom:8px;">👨‍⚕️ الأطباء التابعون للعيادة (${subDocs.length}):</div>
-                            ${subDocs.map(d => {
-                                const dDocUrl = `${API_BASE}/doctor.html?clinic=${d.slug}`;
-                                const dPatUrl = `${API_BASE}/patient.html?clinic=${d.slug}`;
-                                return `
-                                <div class="subdoc-item">
-                                    <div>
-                                        <strong>👨‍⚕️ ${d.name}</strong>
-                                        <span class="spec-tag">🩺 ${d.specialty || 'طب عام'}</span>
-                                        <div style="font-size:0.78rem; color:var(--muted); margin-top:3px;">Slug: ${d.slug} ${d.phone ? ' | 📞 ' + d.phone : ''}</div>
-                                    </div>
-                                    <div style="display:flex; gap:5px; flex-wrap:wrap;">
-                                        <button class="btn btn-sm" onclick="copyLink('${dDocUrl}')">📋 رابط الطبيب</button>
-                                        <a class="btn btn-sm btn-blue" href="${dDocUrl}" target="_blank">فتح</a>
-                                        <button class="btn btn-sm btn-warning" onclick="openSingleQrModal('${d.name}', '${d.specialty || 'طب عام'}', '${dPatUrl}')">📱 QR</button>
-                                        <button class="btn btn-sm btn-danger" onclick="deleteSubDoctor('${d.id}', '${d.name}')">🗑️ حذف الطبيب</button>
-                                    </div>
-                                </div>
-                                `;
-                            }).join('')}
+                        <div class="empty-docs-note">
+                            ⚠️ لم تتم إضافة أطباء في هذه العيادة بعد.<br>
+                            اضغط على <strong>(+ إضافة طبيب للعيادة)</strong> لإدراج الأطباء وتوليد روابطهم.
                         </div>
                     `;
                 }
 
+                const safeClinicName = c.name.replace(/'/g, "\\'");
                 html += `
                     <div class="clinic-card">
                         <div>
                             <div class="clinic-top">
                                 <div>
                                     <h3 style="margin:0 0 4px; font-size:1.25rem; border:none; padding:0; color:var(--text);">🏥 ${c.name}</h3>
-                                    <span class="spec-tag">🩺 ${c.specialty || 'طب عام'}</span>
+                                    <span class="docs-count-tag">👨‍⚕️ عدد الأطباء المضافين: ${subDocs.length}</span>
                                     <div style="font-size:0.82rem; color:var(--muted); margin-top:6px; line-height:1.5;">
-                                        🔗 Slug: <strong>${c.slug}</strong>
+                                        🔗 Slug العيادة: <strong>${c.slug}</strong>
                                         ${c.phone ? `<br>📞 ${c.phone}` : ''}
                                         ${c.email ? `<br>✉️ ${c.email}` : ''}
                                     </div>
@@ -941,13 +990,7 @@
                             </div>
 
                             <div class="links-box" style="margin-top:12px;">
-                                <div class="link-row">
-                                    <span>👨‍⚕️ <strong>لوحة الطبيب:</strong></span>
-                                    <div class="link-actions">
-                                        <button class="btn btn-sm" onclick="copyLink('${docUrl}')">نسخ</button>
-                                        <a class="btn btn-sm btn-blue" href="${docUrl}" target="_blank">فتح</a>
-                                    </div>
-                                </div>
+                                <div class="links-box-title">🏢 الروابط العامة للعيادة:</div>
                                 <div class="link-row">
                                     <span>📺 <strong>شاشة التلفاز + QR:</strong></span>
                                     <div class="link-actions">
@@ -956,23 +999,29 @@
                                     </div>
                                 </div>
                                 <div class="link-row">
-                                    <span>🖥️ <strong>مكتب الاستقبال:</strong></span>
+                                    <span>🖥️ <strong>تطبيق مكتب الاستقبال:</strong></span>
                                     <div class="link-actions">
                                         <button class="btn btn-sm" onclick="copyLink('${recUrl}')">نسخ</button>
                                         <a class="btn btn-sm btn-blue" href="${recUrl}" target="_blank">فتح</a>
                                     </div>
                                 </div>
                                 <div class="link-row">
-                                    <span>📱 <strong>صفحة المريض + QR:</strong></span>
+                                    <span>📱 <strong>بوابة العيادة للمرضى + QR:</strong></span>
                                     <div class="link-actions">
                                         <button class="btn btn-sm" onclick="copyLink('${patUrl}')">نسخ</button>
                                         <a class="btn btn-sm btn-blue" href="${patUrl}" target="_blank">فتح</a>
-                                        <button class="btn btn-sm btn-warning" onclick="openSingleQrModal('${c.name}', '${c.specialty || 'طب عام'}', '${patUrl}')">📱 QR</button>
+                                        <button class="btn btn-sm btn-warning" onclick="openSingleQrModal('${safeClinicName}', 'بوابة العيادة', '${patUrl}')">📱 QR</button>
                                     </div>
                                 </div>
                             </div>
 
-                            ${subDocsHtml}
+                            <div class="subdocs-box">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                                    <strong style="font-size:0.9rem; color:var(--accent);">👨‍⚕️ أطباء العيادة (${subDocs.length}):</strong>
+                                    <button class="btn btn-sm" onclick="openAddDoctorModal('${c.id}', '${safeClinicName}')">➕ إضافة طبيب للعيادة</button>
+                                </div>
+                                ${subDocsHtml}
+                            </div>
                         </div>
 
                         <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
@@ -983,13 +1032,12 @@
                                 <button class="btn btn-sm" style="flex:1;" onclick="renewClinic('${c.id}', 12)">+ سنة</button>
                             </div>
                             <div style="display:flex; gap:6px; flex-wrap:wrap;">
-                                <button class="btn btn-sm btn-blue" style="flex:1;" onclick="openAddDoctorModal('${c.id}')">👨‍⚕️ + إضافة طبيب للعيادة</button>
-                                <button class="btn btn-sm btn-purple" style="flex:1;" onclick="copyAllClinicLinks('${c.name}', '${c.slug}')">📋 نسخ كل الروابط</button>
+                                <button class="btn btn-sm btn-purple" style="flex:1;" onclick="copyAllClinicLinks('${c.id}')">📋 نسخ جميع روابط العيادة وأطبائها</button>
                             </div>
                             <div style="display:flex; gap:6px; flex-wrap:wrap;">
-                                <button class="btn btn-sm btn-whatsapp" style="flex:1;" onclick="sendWhatsAppLinks('${c.name}', '${c.slug}', '${c.phone || ''}')">💬 واتساب</button>
-                                <button class="btn btn-sm btn-warning" style="flex:1;" onclick="sendEmailLinks('${c.name}', '${c.slug}', '${c.email || ''}')">✉️ إيميل</button>
-                                <button class="btn btn-sm btn-danger" style="flex:1.2;" onclick="deleteClinic('${c.id}', '${c.name}')">🗑️ حذف العيادة</button>
+                                <button class="btn btn-sm btn-whatsapp" style="flex:1;" onclick="sendWhatsAppLinks('${c.id}')">💬 واتساب</button>
+                                <button class="btn btn-sm btn-warning" style="flex:1;" onclick="sendEmailLinks('${c.id}')">✉️ إيميل</button>
+                                <button class="btn btn-sm btn-danger" style="flex:1.2;" onclick="deleteClinic('${c.id}', '${safeClinicName}')">🗑️ حذف العيادة</button>
                             </div>
                         </div>
                     </div>
@@ -1004,47 +1052,66 @@
             showToast('✔️ تم نسخ الرابط بنجاح!');
         }
 
-        function buildClinicMessage(name, slug) {
-            return `مرحباً بكم في نظام ClinicFlow 🏥 (${name})\n\n` +
-                   `👨‍⚕️ رابط لوحة الطبيب:\n${API_BASE}/doctor.html?clinic=${slug}\n\n` +
-                   `📺 رابط شاشة التلفاز + QR:\n${API_BASE}/tv.html?clinic=${slug}\n\n` +
-                   `🖥️ رابط مكتب الاستقبال:\n${API_BASE}/reception.html?clinic=${slug}\n\n` +
-                   `📱 رابط حجز المريض:\n${API_BASE}/patient.html?clinic=${slug}\n\n` +
-                   `🌐 الدليل الطبي الشامل:\n${API_BASE}/directory.html`;
+        function buildClinicMessageById(clinicId) {
+            const c = allClinicsData.find(item => String(item.id) === String(clinicId));
+            if (!c) return '';
+            const subDocs = subDoctorsMap[c.id] || [];
+
+            let msg = `مرحباً بكم في نظام ClinicFlow 🏥 (${c.name})\n\n` +
+                      `📺 رابط شاشة التلفاز + QR:\n${API_BASE}/tv.html?clinic=${c.slug}\n\n` +
+                      `🖥️ رابط تطبيق مكتب الاستقبال:\n${API_BASE}/reception.html?clinic=${c.slug}\n\n` +
+                      `📱 رابط بوابة العيادة للمرضى:\n${API_BASE}/patient.html?clinic=${c.slug}\n`;
+
+            if (subDocs.length > 0) {
+                msg += `\n👨‍⚕️ روابط الأطباء داخل العيادة:\n`;
+                subDocs.forEach(d => {
+                    msg += `• ${d.name} (${d.specialty || 'طب عام'}):\n  لوحة الطبيب: ${API_BASE}/doctor.html?clinic=${d.slug}\n  حجز المريض: ${API_BASE}/patient.html?clinic=${d.slug}\n`;
+                });
+            }
+
+            msg += `\n🌐 الدليل الطبي الشامل:\n${API_BASE}/directory.html`;
+            return msg;
         }
 
-        function copyAllClinicLinks(name, slug) {
-            const msg = buildClinicMessage(name, slug);
+        function copyAllClinicLinks(clinicId) {
+            const c = allClinicsData.find(item => String(item.id) === String(clinicId));
+            if (!c) return;
+            const msg = buildClinicMessageById(clinicId);
             navigator.clipboard.writeText(msg);
-            showToast(`✔️ تم نسخ جميع روابط (${name}) دفعة واحدة!`);
+            showToast(`✔️ تم نسخ جميع روابط (${c.name}) وأطبائها دفعة واحدة!`);
         }
 
-        function sendWhatsAppLinks(name, slug, phone) {
-            const msg = buildClinicMessage(name, slug);
-            const cleanPhone = (phone || '').replace(/[^0-9]/g, '');
+        function sendWhatsAppLinks(clinicId) {
+            const c = allClinicsData.find(item => String(item.id) === String(clinicId));
+            if (!c) return;
+            const msg = buildClinicMessageById(clinicId);
+            const cleanPhone = (c.phone || '').replace(/[^0-9]/g, '');
             const waUrl = cleanPhone
                 ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`
                 : `https://wa.me/?text=${encodeURIComponent(msg)}`;
             window.open(waUrl, '_blank');
         }
 
-        function sendEmailLinks(name, slug, email) {
-            const subject = `روابط تفعيل نظام ClinicFlow — ${name}`;
-            const body = buildClinicMessage(name, slug);
-            window.location.href = `mailto:${email || ''}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        function sendEmailLinks(clinicId) {
+            const c = allClinicsData.find(item => String(item.id) === String(clinicId));
+            if (!c) return;
+            const subject = `روابط تفعيل نظام ClinicFlow — ${c.name}`;
+            const body = buildClinicMessageById(clinicId);
+            window.location.href = `mailto:${c.email || ''}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
         }
 
         function openSingleQrModal(name, specialty, url) {
             currentSingleQr = { name, specialty, url };
             document.getElementById('singleQrTitle').innerText = `📱 كود QR — ${name}`;
-            document.getElementById('singleQrSpec').innerText = `🩺 الاختصاص: ${specialty}`;
+            document.getElementById('singleQrSpec').innerText = `🩺 ${specialty}`;
             document.getElementById('singleQrUrl').innerText = url;
-            document.getElementById('singleQrImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url)}`;
+            const qrImg = document.getElementById('singleQrImg');
+            qrImg.src = generateReliableQRDataUrl(url, 320);
             document.getElementById('singleQrModal').style.display = 'flex';
         }
 
         function printSingleQR() {
-            const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=420x420&data=${encodeURIComponent(currentSingleQr.url)}`;
+            const qrSrc = generateReliableQRDataUrl(currentSingleQr.url, 420);
             const w = window.open('', '', 'width=720,height=720');
             w.document.write(`
                 <html dir="rtl" lang="ar">
@@ -1063,11 +1130,11 @@
 
         function exportCSVReport() {
             if (!allClinicsData.length) return showToast('⚠️ لا توجد بيانات لتصديرها');
-            let csv = '\uFEFFاسم العيادة,الرابط المختصر,الاختصاص الطبي,رقم الهاتف,البريد الإلكتروني,تاريخ انتهاء الاشتراك,عدد الأطباء الفرعيين\n';
+            let csv = '\uFEFFاسم العيادة,الرابط المختصر,رقم الهاتف,البريد الإلكتروني,تاريخ انتهاء الاشتراك,عدد الأطباء المضافين\n';
             allClinicsData.forEach(c => {
                 const subDate = c.subscription_end ? new Date(c.subscription_end).toLocaleDateString('ar-DZ') : '';
                 const subCount = (subDoctorsMap[c.id] || []).length;
-                csv += `"${c.name}","${c.slug}","${c.specialty || 'طب عام'}","${c.phone || ''}","${c.email || ''}","${subDate}","${subCount}"\n`;
+                csv += `"${c.name}","${c.slug}","${c.phone || ''}","${c.email || ''}","${subDate}","${subCount}"\n`;
             });
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const a = document.createElement('a');
@@ -1082,7 +1149,6 @@
         async function createClinic() {
             const name = document.getElementById('cName').value.trim();
             const slug = document.getElementById('cSlug').value.trim();
-            const specialty = document.getElementById('cSpecialty').value || 'طب عام';
             const phone = document.getElementById('cPhone').value.trim();
             const email = document.getElementById('cEmail').value.trim();
 
@@ -1092,13 +1158,17 @@
                 const res = await fetch(`${API_BASE}/api/clinics`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, slug, specialty, phone, email })
+                    body: JSON.stringify({ name, slug, specialty: 'عيادة طبية', phone, email })
                 });
+                const data = await res.json();
                 if (res.ok) {
                     ['cName', 'cSlug', 'cPhone', 'cEmail'].forEach(id => document.getElementById(id).value = '');
-                    showToast('✔️ تم إنشاء العيادة بنجاح! جاري عرضها في القائمة...');
+                    showToast('✔️ تم إنشاء العيادة بنجاح! يمكنك الآن إضافة الأطباء بداخلها.');
                     await loadClinics();
                     switchTab('clinics-list-tab', document.getElementById('navListBtn'));
+                    if (data.clinic && data.clinic.id) {
+                        openAddDoctorModal(data.clinic.id, data.clinic.name);
+                    }
                 } else {
                     showToast('❌ الرابط المختصر مستخدم مسبقاً، اختر رابطاً آخر');
                 }
@@ -1121,8 +1191,9 @@
             }
         }
 
-        function openAddDoctorModal(clinicId) {
+        function openAddDoctorModal(clinicId, clinicName = 'العيادة') {
             document.getElementById('parentClinicId').value = clinicId;
+            document.getElementById('modalClinicNameTitle').innerText = `(${clinicName})`;
             ['docName', 'docSlug', 'docPhone', 'docEmail'].forEach(id => document.getElementById(id).value = '');
             document.getElementById('addDoctorModal').style.display = 'flex';
         }
@@ -1149,7 +1220,7 @@
                 });
                 if (res.ok) {
                     closeAddDoctorModal();
-                    showToast('✔️ تمت إضافة الطبيب بالتخصص المختار بنجاح!');
+                    showToast('✔️ تمت إضافة الطبيب داخل العيادة وإدراجه في الدليل الجماعي!');
                     loadClinics();
                 } else {
                     showToast('❌ الرابط المختصر للطبيب مستخدم مسبقاً');

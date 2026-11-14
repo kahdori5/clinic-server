@@ -208,7 +208,6 @@
         }
         .mini-pill.curr strong { color: var(--blue); }
 
-        /* شريط اختيار أيام الأسبوع الـ 7 */
         .week-selector-bar {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(125px, 1fr));
@@ -363,7 +362,6 @@
             margin-top: 14px;
         }
 
-        /* تصميم لائحة المرضى المسجلين في الاستقبال */
         .patients-table-wrapper {
             overflow-x: auto;
             border-radius: 16px;
@@ -524,7 +522,7 @@
                     </div>
                 </div>
 
-                <!-- 4. لائحة المرضى المسجلين عند مكتب الاستقبال لليوم والطبيب المختار -->
+                <!-- 4. لائحة المرضى المسجلين عند مكتب الاستقبال -->
                 <div class="panel-card" id="registeredListCard">
                     <h3>
                         <span>📋 <span data-i18n="registeredListTitle">لائحة المرضى المسجلين</span> — <span id="listHeaderInfo" style="color: var(--text);"></span></span>
@@ -882,7 +880,6 @@
             refreshSelectedDoctorQueue();
         }
 
-        // جلب بيانات الطابور ولائحة المرضى المسجلين للطبيب واليوم المختار
         async function refreshSelectedDoctorQueue() {
             try {
                 if (!selectedDateStr) {

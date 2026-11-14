@@ -36,6 +36,7 @@ const initDB = async () => {
                 status VARCHAR(50) DEFAULT 'active',
                 current_number INTEGER DEFAULT 0,
                 last_issued_number INTEGER DEFAULT 0,
+                max_tickets INTEGER DEFAULT 0,
                 UNIQUE(clinic_id, queue_date)
             );
             CREATE TABLE IF NOT EXISTS tickets (
@@ -59,16 +60,17 @@ const initDB = async () => {
             );
         `);
 
-        const clinicCols = [
+        const alterQueries = [
             `ALTER TABLE clinics ADD COLUMN IF NOT EXISTS is_main BOOLEAN DEFAULT true;`,
             `ALTER TABLE clinics ADD COLUMN IF NOT EXISTS parent_id TEXT DEFAULT NULL;`,
             `ALTER TABLE clinics ADD COLUMN IF NOT EXISTS subscription_end DATE DEFAULT (CURRENT_DATE + INTERVAL '1 month');`,
             `ALTER TABLE clinics ADD COLUMN IF NOT EXISTS phone VARCHAR(50) DEFAULT '';`,
             `ALTER TABLE clinics ADD COLUMN IF NOT EXISTS email VARCHAR(255) DEFAULT '';`,
             `ALTER TABLE clinics ADD COLUMN IF NOT EXISTS password VARCHAR(255) DEFAULT NULL;`,
-            `ALTER TABLE clinics ADD COLUMN IF NOT EXISTS specialty VARCHAR(255) DEFAULT 'طب عام';`
+            `ALTER TABLE clinics ADD COLUMN IF NOT EXISTS specialty VARCHAR(255) DEFAULT 'طب عام';`,
+            `ALTER TABLE queues ADD COLUMN IF NOT EXISTS max_tickets INTEGER DEFAULT 0;`
         ];
-        for (let q of clinicCols) {
+        for (let q of alterQueries) {
             try { await db.query(q); } catch (e) {}
         }
 
@@ -126,7 +128,8 @@ app.get('/api/directory/doctors', async (req, res) => {
             SELECT c.id, c.name, c.slug, c.specialty, c.phone, c.is_main, c.parent_id, c.subscription_end,
                    p.name as parent_clinic_name, p.subscription_end as parent_sub,
                    COALESCE(q.current_number, 0) as current_number,
-                   COALESCE(q.last_issued_number, 0) + 1 as next_ticket_today,
+                   COALESCE(q.last_issued_number, 0) as last_issued_number,
+                   COALESCE(q.max_tickets, 0) as max_tickets,
                    COALESCE(q.status, 'active') as status
             FROM clinics c
             INNER JOIN clinics p ON c.parent_id::text = p.id::text
@@ -151,7 +154,9 @@ app.get('/api/directory/doctors', async (req, res) => {
                 phone: row.phone || '',
                 clinic_name: row.parent_clinic_name || row.name,
                 current_number: parseInt(row.current_number || 0),
-                next_ticket_today: parseInt(row.next_ticket_today || 1),
+                last_issued_today: parseInt(row.last_issued_number || 0),
+                next_ticket_today: parseInt(row.last_issued_number || 0) + 1,
+                max_tickets: parseInt(row.max_tickets || 0),
                 status: row.status
             });
         }
@@ -160,7 +165,7 @@ app.get('/api/directory/doctors', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// معاينة الطابور والرقم المتوقع لمدة أسبوع كامل (7 أيام)
+// معاينة الطابور والرقم المتوقع لمدة أسبوع كامل مع إغلاق يوم الجمعة وفحص الحد الأقصى
 app.get('/api/directory/preview/:clinic_slug', async (req, res) => {
     try {
         const { date } = req.query;
@@ -168,30 +173,50 @@ app.get('/api/directory/preview/:clinic_slug', async (req, res) => {
         if (clinic.rows.length === 0) return res.status(404).json({ error: 'الطبيب غير موجود' });
 
         const targetDateRes = date
-            ? await db.query('SELECT ($1::date) as d, CURRENT_DATE as today, (CURRENT_DATE + INTERVAL \'7 days\')::date as max_d', [date])
-            : await db.query('SELECT CURRENT_DATE as d, CURRENT_DATE as today, (CURRENT_DATE + INTERVAL \'7 days\')::date as max_d');
+            ? await db.query('SELECT ($1::date) as d, EXTRACT(DOW FROM $1::date) as dow, CURRENT_DATE as today, (CURRENT_DATE + INTERVAL \'8 days\')::date as max_d', [date])
+            : await db.query('SELECT CURRENT_DATE as d, EXTRACT(DOW FROM CURRENT_DATE) as dow, CURRENT_DATE as today, (CURRENT_DATE + INTERVAL \'8 days\')::date as max_d');
 
-        const { d, today, max_d } = targetDateRes.rows[0];
+        const { d, dow, today, max_d } = targetDateRes.rows[0];
         if (new Date(d) < new Date(today) || new Date(d) > new Date(max_d)) {
-            return res.status(400).json({ error: 'يمكن الحجز فقط خلال أسبوع كامل (7 أيام كحد أقصى)' });
+            return res.status(400).json({ error: 'يمكن الحجز فقط خلال أسبوع كامل' });
         }
 
-        const q = await db.query('SELECT current_number, last_issued_number, status FROM queues WHERE clinic_id = $1 AND queue_date = $2::date', [clinic.rows[0].id, d]);
+        const isFriday = parseInt(dow) === 5;
+        const q = await db.query('SELECT current_number, last_issued_number, COALESCE(max_tickets, 0) as max_tickets, status FROM queues WHERE clinic_id = $1 AND queue_date = $2::date', [clinic.rows[0].id, d]);
+        
         if (q.rows.length === 0) {
-            return res.json({ current_number: 0, prospective_number: 1, status: 'active', doctor_name: clinic.rows[0].name, specialty: clinic.rows[0].specialty || 'طب عام' });
+            return res.json({
+                current_number: 0,
+                last_issued_number: 0,
+                prospective_number: 1,
+                max_tickets: 0,
+                is_friday: isFriday,
+                status: isFriday ? 'friday_closed' : 'active',
+                doctor_name: clinic.rows[0].name,
+                specialty: clinic.rows[0].specialty || 'طب عام'
+            });
         }
+
+        const lastIssued = parseInt(q.rows[0].last_issued_number || 0);
+        const maxTickets = parseInt(q.rows[0].max_tickets || 0);
+        let effectiveStatus = q.rows[0].status;
+        if (isFriday) effectiveStatus = 'friday_closed';
+        else if (maxTickets > 0 && lastIssued >= maxTickets) effectiveStatus = 'full';
 
         res.json({
             current_number: q.rows[0].current_number,
-            prospective_number: q.rows[0].last_issued_number + 1,
-            status: q.rows[0].status,
+            last_issued_number: lastIssued,
+            prospective_number: lastIssued + 1,
+            max_tickets: maxTickets,
+            is_friday: isFriday,
+            status: effectiveStatus,
             doctor_name: clinic.rows[0].name,
             specialty: clinic.rows[0].specialty || 'طب عام'
         });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// مسار جديد لمكتب الاستقبال: جلب لائحة المرضى المسجلين لأي يوم من أيام الأسبوع السبعة
+// مسار مكتب الاستقبال: جلب لائحة المرضى المسجلين والحد الأقصى لأي يوم
 app.get('/api/reception/tickets/:clinic_slug', async (req, res) => {
     try {
         const { date } = req.query;
@@ -206,20 +231,24 @@ app.get('/api/reception/tickets/:clinic_slug', async (req, res) => {
         const row = clinic.rows[0];
 
         const targetDateRes = date
-            ? await db.query('SELECT ($1::date)::text as d', [date])
-            : await db.query('SELECT CURRENT_DATE::text as d');
+            ? await db.query('SELECT ($1::date)::text as d, EXTRACT(DOW FROM $1::date) as dow', [date])
+            : await db.query('SELECT CURRENT_DATE::text as d, EXTRACT(DOW FROM CURRENT_DATE) as dow');
         const targetDate = targetDateRes.rows[0].d;
+        const isFriday = parseInt(targetDateRes.rows[0].dow) === 5;
 
-        const q = await db.query('SELECT id, current_number, last_issued_number, status FROM queues WHERE clinic_id = $1 AND queue_date = $2::date', [row.id, targetDate]);
+        const q = await db.query('SELECT id, current_number, last_issued_number, COALESCE(max_tickets, 0) as max_tickets, status FROM queues WHERE clinic_id = $1 AND queue_date = $2::date', [row.id, targetDate]);
         if (q.rows.length === 0) {
             return res.json({
                 queue_date: targetDate,
+                is_friday: isFriday,
                 doctor_name: row.name,
                 clinic_name: row.parent_clinic_name || row.name,
                 specialty: row.specialty || 'طب عام',
                 current_number: 0,
                 last_issued_number: 0,
+                registered_count: 0,
                 waiting_count: 0,
+                max_tickets: 0,
                 status: 'active',
                 tickets: []
             });
@@ -231,19 +260,55 @@ app.get('/api/reception/tickets/:clinic_slug', async (req, res) => {
         );
 
         const currentNum = q.rows[0].current_number;
+        const registeredCount = ticketsRes.rows.filter(t => t.status !== 'cancelled').length;
         const waitingCount = ticketsRes.rows.filter(t => t.ticket_number > currentNum && t.status !== 'cancelled').length;
 
         res.json({
             queue_date: targetDate,
+            is_friday: isFriday,
             doctor_name: row.name,
             clinic_name: row.parent_clinic_name || row.name,
             specialty: row.specialty || 'طب عام',
             current_number: currentNum,
             last_issued_number: q.rows[0].last_issued_number,
+            registered_count: registeredCount,
             waiting_count: waitingCount,
+            max_tickets: parseInt(q.rows[0].max_tickets || 0),
             status: q.rows[0].status,
             tickets: ticketsRes.rows
         });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// مسار جديد: تحديد أو إلغاء الحد الأقصى لتسجيل المرضى من قِبل الطبيب أو الممرضة
+app.post('/api/queue/set-max-tickets', async (req, res) => {
+    try {
+        const { clinic_slug, max_tickets, booking_date } = req.body;
+        const clinic = await db.query('SELECT id FROM clinics WHERE slug = $1', [clinic_slug]);
+        if (clinic.rows.length === 0) return res.status(404).json({ error: 'العيادة غير موجودة' });
+        const clinicId = clinic.rows[0].id;
+
+        const maxVal = Math.max(0, parseInt(max_tickets) || 0);
+        const dateRes = booking_date
+            ? await db.query('SELECT ($1::date)::text as d', [booking_date])
+            : await db.query('SELECT CURRENT_DATE::text as d');
+        const targetDate = dateRes.rows[0].d;
+
+        let queue = await db.query('SELECT * FROM queues WHERE clinic_id = $1 AND queue_date = $2::date', [clinicId, targetDate]);
+        if (queue.rows.length === 0) {
+            queue = await db.query(
+                `INSERT INTO queues (clinic_id, queue_date, status, current_number, last_issued_number, max_tickets) VALUES ($1, $2::date, 'active', 0, 0, $3) RETURNING *`,
+                [clinicId, targetDate, maxVal]
+            );
+        } else {
+            queue = await db.query(
+                `UPDATE queues SET max_tickets = $1 WHERE id = $2 RETURNING *`,
+                [maxVal, queue.rows[0].id]
+            );
+        }
+
+        io.emit('queue_status_changed', { clinic_slug, max_tickets: maxVal, booking_date: targetDate });
+        res.json({ max_tickets: maxVal, booking_date: targetDate });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -261,7 +326,7 @@ app.post('/api/queue/toggle-status', async (req, res) => {
 
         let queue = await db.query('SELECT * FROM queues WHERE clinic_id = $1 AND queue_date = $2::date', [clinicId, targetDate]);
         if (queue.rows.length === 0) {
-            queue = await db.query(`INSERT INTO queues (clinic_id, queue_date, status, current_number, last_issued_number) VALUES ($1, $2::date, 'paused', 0, 0) RETURNING *`, [clinicId, targetDate]);
+            queue = await db.query(`INSERT INTO queues (clinic_id, queue_date, status, current_number, last_issued_number, max_tickets) VALUES ($1, $2::date, 'paused', 0, 0, 0) RETURNING *`, [clinicId, targetDate]);
             io.emit('queue_status_changed', { clinic_slug, status: 'paused', booking_date: targetDate });
             return res.json({ status: 'paused' });
         }
@@ -281,7 +346,7 @@ app.post('/api/clinics', async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'الرابط مستخدم مسبقاً.' }); }
 });
 
-// إصدار التذاكر مع دعم الحجز طوال الأسبوع الكامل (7 أيام)
+// إصدار التذاكر مع منع الحجز يوم الجمعة والتحقق من الحد الأقصى للمرضى
 app.post('/api/tickets', async (req, res) => {
     try {
         const { clinic_slug, patient_name, booking_date } = req.body;
@@ -297,27 +362,44 @@ app.post('/api/tickets', async (req, res) => {
             return res.status(403).json({ error: 'اشتراك العيادة منتهي.' });
         }
 
-        let targetDateQuery = await db.query(`SELECT CURRENT_DATE::text as target_date`);
+        let targetDateQuery = await db.query(`SELECT CURRENT_DATE::text as target_date, EXTRACT(DOW FROM CURRENT_DATE) as dow`);
         if (booking_date) {
             const checkDate = await db.query(`
-                SELECT ($1::date >= CURRENT_DATE AND $1::date <= (CURRENT_DATE + INTERVAL '7 days')::date) as is_valid,
-                       ($1::date)::text as target_date
+                SELECT ($1::date >= CURRENT_DATE AND $1::date <= (CURRENT_DATE + INTERVAL '8 days')::date) as is_valid,
+                       ($1::date)::text as target_date,
+                       EXTRACT(DOW FROM $1::date) as dow
             `, [booking_date]);
             if (!checkDate.rows[0].is_valid) {
-                return res.status(400).json({ error: 'يمكن التسجيل والحجز في حدود أسبوع كامل (7 أيام) كحد أقصى.' });
+                return res.status(400).json({ error: 'يمكن التسجيل والحجز في حدود أسبوع عمل فقط.' });
             }
             targetDateQuery = checkDate;
         }
+
         const targetDate = targetDateQuery.rows[0].target_date;
+        const dayOfWeek = parseInt(targetDateQuery.rows[0].dow);
+
+        // منع فتح الحجز يوم الجمعة في جميع العيادات
+        if (dayOfWeek === 5) {
+            return res.status(400).json({ error: '🕌 العيادة مغلقة يوم الجمعة (عطلة أسبوعية). يرجى اختيار يوم آخر.' });
+        }
 
         const clinicId = clinic.rows[0].id;
         let queue = await db.query('SELECT * FROM queues WHERE clinic_id = $1 AND queue_date = $2::date', [clinicId, targetDate]);
         if (queue.rows.length === 0) {
-            queue = await db.query(`INSERT INTO queues (clinic_id, queue_date, status, current_number, last_issued_number) VALUES ($1, $2::date, 'active', 0, 0) RETURNING *`, [clinicId, targetDate]);
+            queue = await db.query(`INSERT INTO queues (clinic_id, queue_date, status, current_number, last_issued_number, max_tickets) VALUES ($1, $2::date, 'active', 0, 0, 0) RETURNING *`, [clinicId, targetDate]);
         }
-        if (queue.rows[0].status === 'paused') return res.status(400).json({ error: 'استقبال التذاكر متوقف مؤقتاً لهذا اليوم.' });
 
-        const newNumber = queue.rows[0].last_issued_number + 1;
+        if (queue.rows[0].status === 'paused') {
+            return res.status(400).json({ error: 'استقبال التذاكر متوقف مؤقتاً لهذا اليوم.' });
+        }
+
+        const maxTickets = parseInt(queue.rows[0].max_tickets || 0);
+        const lastIssued = parseInt(queue.rows[0].last_issued_number || 0);
+        if (maxTickets > 0 && lastIssued >= maxTickets) {
+            return res.status(400).json({ error: `🚫 نعتذر، اكتمل العدد الأقصى لتسجيل المرضى في هذا اليوم (${maxTickets} مريض).` });
+        }
+
+        const newNumber = lastIssued + 1;
         await db.query('UPDATE queues SET last_issued_number = $1 WHERE id = $2', [newNumber, queue.rows[0].id]);
         await db.query('INSERT INTO tickets (queue_id, patient_name, ticket_number) VALUES ($1, $2, $3)', [queue.rows[0].id, patient_name || 'مريض', newNumber]);
 
@@ -326,7 +408,6 @@ app.post('/api/tickets', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// إلغاء التذكرة (يدعم إلغاء تذكرة اليوم أو أي يوم خلال الأسبوع من مكتب الاستقبال)
 app.post('/api/tickets/cancel', async (req, res) => {
     try {
         const { clinic_slug, ticket_number, booking_date } = req.body;
@@ -408,10 +489,12 @@ app.get('/api/patients/all/:clinic_slug', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// حالة الطابور اليومي شاملة عدد المسجلين اليوم والحد الأقصى وفحص يوم الجمعة
 app.get('/api/queue-status/:clinic_slug', async (req, res) => {
     try {
         const clinic = await db.query(`
-            SELECT c.id, c.name, c.specialty, c.is_main, c.parent_id, p.name as parent_clinic_name
+            SELECT c.id, c.name, c.specialty, c.is_main, c.parent_id, p.name as parent_clinic_name,
+                   EXTRACT(DOW FROM CURRENT_DATE) as today_dow
             FROM clinics c
             LEFT JOIN clinics p ON c.parent_id::text = p.id::text
             WHERE c.slug = $1
@@ -421,14 +504,18 @@ app.get('/api/queue-status/:clinic_slug', async (req, res) => {
         
         const row = clinic.rows[0];
         const mainClinicName = row.parent_clinic_name || row.name;
+        const isFridayToday = parseInt(row.today_dow) === 5;
 
-        let queue = await db.query('SELECT id, current_number, last_issued_number, status FROM queues WHERE clinic_id = $1 AND queue_date = CURRENT_DATE', [row.id]);
+        let queue = await db.query('SELECT id, current_number, last_issued_number, COALESCE(max_tickets, 0) as max_tickets, status FROM queues WHERE clinic_id = $1 AND queue_date = CURRENT_DATE', [row.id]);
         if (queue.rows.length === 0) {
             return res.json({
                 current_number: 0,
                 last_issued_number: 0,
+                registered_today: 0,
                 waiting_count: 0,
                 ahead_count: 0,
+                max_tickets: 0,
+                is_friday: isFridayToday,
                 my_ticket_status: 'waiting',
                 status: 'active',
                 doctor_name: row.name,
@@ -440,6 +527,7 @@ app.get('/api/queue-status/:clinic_slug', async (req, res) => {
         const qId = queue.rows[0].id;
         const currentNum = queue.rows[0].current_number;
         const lastIssued = queue.rows[0].last_issued_number;
+        const maxTickets = parseInt(queue.rows[0].max_tickets || 0);
 
         let currentPatientName = '';
         let currentTicketStatus = 'waiting';
@@ -450,6 +538,9 @@ app.get('/api/queue-status/:clinic_slug', async (req, res) => {
                 currentTicketStatus = t.rows[0].status;
             }
         }
+
+        const regRes = await db.query(`SELECT COUNT(*) FROM tickets WHERE queue_id = $1 AND status != 'cancelled'`, [qId]);
+        const registeredToday = parseInt(regRes.rows[0].count || 0);
 
         const waitingRes = await db.query(`SELECT COUNT(*) FROM tickets WHERE queue_id = $1 AND ticket_number > $2 AND status != 'cancelled'`, [qId, currentNum]);
         const waitingCount = parseInt(waitingRes.rows[0].count || 0);
@@ -472,8 +563,11 @@ app.get('/api/queue-status/:clinic_slug', async (req, res) => {
         res.json({
             current_number: currentNum,
             last_issued_number: lastIssued,
+            registered_today: registeredToday,
             waiting_count: waitingCount,
             ahead_count: aheadCount,
+            max_tickets: maxTickets,
+            is_friday: isFridayToday,
             my_ticket_status: myTicketStatus,
             status: queue.rows[0].status,
             current_patient_name: currentPatientName,
@@ -491,9 +585,11 @@ app.get('/api/doctor-stats/:clinic_slug', async (req, res) => {
         if (clinic.rows.length === 0) return res.status(404).json({ error: 'deleted' });
         const cId = clinic.rows[0].id;
         
-        let q = await db.query('SELECT id, current_number, last_issued_number FROM queues WHERE clinic_id = $1 AND queue_date = CURRENT_DATE', [cId]);
-        let today = 0, waiting = 0;
+        let q = await db.query('SELECT id, current_number, last_issued_number, COALESCE(max_tickets, 0) as max_tickets FROM queues WHERE clinic_id = $1 AND queue_date = CURRENT_DATE', [cId]);
+        let today = 0, waiting = 0, last_issued = 0, max_tickets = 0;
         if (q.rows.length > 0) {
+            last_issued = parseInt(q.rows[0].last_issued_number || 0);
+            max_tickets = parseInt(q.rows[0].max_tickets || 0);
             const totalRes = await db.query(`SELECT COUNT(*) FROM tickets WHERE queue_id = $1 AND status != 'cancelled'`, [q.rows[0].id]);
             today = parseInt(totalRes.rows[0].count || 0);
             const waitRes = await db.query(`SELECT COUNT(*) FROM tickets WHERE queue_id = $1 AND ticket_number > $2 AND status != 'cancelled'`, [q.rows[0].id, q.rows[0].current_number]);
@@ -520,7 +616,7 @@ app.get('/api/doctor-stats/:clinic_slug', async (req, res) => {
             busiest_day = daysAr[busiest_day_index];
         }
 
-        res.json({ today, waiting, weekly, monthly, busiest_day, busiest_day_index });
+        res.json({ today, waiting, last_issued, max_tickets, weekly, monthly, busiest_day, busiest_day_index });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -549,7 +645,7 @@ app.get('/api/clinic-doctors/:main_slug', async (req, res) => {
         
         let result = [];
         for (let doc of docList) {
-            const q = await db.query('SELECT id, current_number, last_issued_number, status FROM queues WHERE clinic_id = $1 AND queue_date = CURRENT_DATE', [doc.id]);
+            const q = await db.query('SELECT id, current_number, last_issued_number, COALESCE(max_tickets, 0) as max_tickets, status FROM queues WHERE clinic_id = $1 AND queue_date = CURRENT_DATE', [doc.id]);
             if (q.rows.length > 0) {
                 const waitRes = await db.query(`SELECT COUNT(*) FROM tickets WHERE queue_id = $1 AND ticket_number > $2 AND status != 'cancelled'`, [q.rows[0].id, q.rows[0].current_number]);
                 result.push({
@@ -559,6 +655,7 @@ app.get('/api/clinic-doctors/:main_slug', async (req, res) => {
                     clinic_name: clinicTitle,
                     current: q.rows[0].current_number,
                     last_issued: q.rows[0].last_issued_number,
+                    max_tickets: parseInt(q.rows[0].max_tickets || 0),
                     waiting: parseInt(waitRes.rows[0].count || 0),
                     status: q.rows[0].status
                 });
@@ -570,6 +667,7 @@ app.get('/api/clinic-doctors/:main_slug', async (req, res) => {
                     clinic_name: clinicTitle,
                     current: 0,
                     last_issued: 0,
+                    max_tickets: 0,
                     waiting: 0,
                     status: 'active'
                 });
@@ -602,7 +700,7 @@ app.post('/api/admin/add-doctor', async (req, res) => {
         const { parent_id, name, slug, phone, email, specialty } = req.body;
         await db.query('INSERT INTO clinics (name, slug, is_main, parent_id, phone, email, specialty) VALUES ($1, $2, false, $3, $4, $5, $6)', [name, slug, parent_id, phone || '', email || '', specialty || 'طب عام']);
         res.json({ message: 'تم' });
-    } catch (err) { res.status(500).json({ error: 'خطأ' }); }
+    } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.post('/api/admin/renew', async (req, res) => {
