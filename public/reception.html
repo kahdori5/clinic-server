@@ -478,7 +478,7 @@
 
             <div>
                 <button id="installAppBtn" onclick="installReceptionApp()" data-i18n="btnInstallRec">💻 تثبيت تطبيق الاستقبال</button>
-                <div style="padding: 10px 20px 20px; text-align: center; color: var(--muted); font-size: 0.8rem;">Reception Desk App v4.3</div>
+                <div style="padding: 10px 20px 20px; text-align: center; color: var(--muted); font-size: 0.8rem;">Reception Desk App v4.4</div>
             </div>
         </div>
 
@@ -547,7 +547,6 @@
                             <strong id="recProspectiveNum" style="color: var(--blue); font-size: 2.3rem;">#1</strong>
                         </div>
 
-                        <button class="btn btn-blue" id="recCallNextBtn" onclick="callNextFromReception()" data-i18n="btnCallNext">📢 مناداة المريض التالي (لليوم الحالي)</button>
                         <button class="btn btn-warning" id="recTogglePauseBtn" onclick="togglePauseFromReception()" style="margin-bottom: 0;">⏸️ إيقاف استقبال التذاكر مؤقتاً</button>
 
                         <!-- خانة تحديد العدد الأقصى للتذاكر طوال الأسبوع عند الاستقبال -->
@@ -649,7 +648,6 @@
                 lblCurrentNum: "الرقم الحالي بالداخل",
                 lblWaitingCount: "المنتظرون في هذا اليوم",
                 lblNextTicket: "الرقم القادم الذي سيُمنح للمريض التالي",
-                btnCallNext: "📢 مناداة المريض التالي (لليوم الحالي)",
                 pauseQueue: "⏸️ إيقاف استقبال التذاكر مؤقتاً",
                 resumeQueue: "▶️ تفعيل استقبال التذاكر",
                 registeredListTitle: "لائحة المرضى المسجلين",
@@ -685,7 +683,6 @@
                 lblCurrentNum: "Numéro Actuel",
                 lblWaitingCount: "En attente ce jour",
                 lblNextTicket: "Prochain Numéro à attribuer",
-                btnCallNext: "📢 Appeler le suivant (Aujourd'hui)",
                 pauseQueue: "⏸️ Suspendre la file",
                 resumeQueue: "▶️ Réactiver la file",
                 registeredListTitle: "Liste des Patients Inscrits",
@@ -721,7 +718,6 @@
                 lblCurrentNum: "Current Active Number",
                 lblWaitingCount: "Waiting on Selected Day",
                 lblNextTicket: "Next Prospective Ticket Number",
-                btnCallNext: "📢 Call Next Patient (Today)",
                 pauseQueue: "⏸️ Pause Queue",
                 resumeQueue: "▶️ Resume Queue",
                 registeredListTitle: "Registered Patients List",
@@ -776,7 +772,6 @@
             const currentInfo = getFormattedDateOffset(selectedDayOffset);
             selectedDateStr = currentInfo.dateStr;
             document.getElementById('selectedDateBanner').innerText = `📅 يوم التسجيل والعرض المختار: ${getDayLabel(selectedDayOffset)} — ${selectedDateStr}`;
-            document.getElementById('recCallNextBtn').style.display = selectedDayOffset === 0 ? 'inline-flex' : 'none';
         }
 
         function selectWeekDay(offset) {
@@ -925,7 +920,6 @@
             refreshSelectedDoctorQueue();
         }
 
-        // حفظ العدد الأقصى للتذاكر من مكتب الاستقبال (طوال الأسبوع أو لليوم المحدد)
         async function saveReceptionMaxTickets(applyToAllWeek) {
             const rawVal = document.getElementById('recMaxTicketsInput').value;
             const maxVal = Math.max(0, parseInt(rawVal) || 0);
@@ -1174,23 +1168,6 @@
                 });
                 showToast(`✔️ تم إلغاء التذكرة رقم #${ticketNum}`);
                 loadReceptionData();
-            } catch (e) {}
-        }
-
-        async function callNextFromReception() {
-            try {
-                const res = await fetch(`${API_BASE}/api/call-next`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ clinic_slug: activeDocSlug })
-                });
-                const data = await res.json();
-                if (res.ok) {
-                    showToast(`📢 تم النداء على: ${data.message}`);
-                    loadReceptionData();
-                } else {
-                    showToast(`⚠️ ${data.error || 'لا يوجد مرضى في الانتظار'}`);
-                }
             } catch (e) {}
         }
 
