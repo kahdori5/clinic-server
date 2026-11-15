@@ -114,7 +114,6 @@
         .btn-outline:hover { background: var(--accent) !important; color: #ffffff !important; }
         .status-btns { display: flex; gap: 10px; margin-bottom: 15px; }
 
-        /* شريط اختيار أيام الأسبوع الـ 7 داخل لوحة الطبيب */
         .week-selector-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 22px; }
         .day-card-btn { background: var(--card); border: 2px solid var(--border); border-radius: 14px; padding: 12px 8px; text-align: center; cursor: pointer; transition: 0.2s; font-family: inherit; color: var(--text); }
         .day-card-btn:hover { border-color: var(--accent); }
@@ -134,7 +133,6 @@
         .st-absent { background: rgba(245, 158, 11, 0.16); color: var(--warning); }
         .st-cancelled { background: rgba(239, 68, 68, 0.14); color: var(--danger); text-decoration: line-through; }
 
-        /* البطاقات الإحصائية التفاعلية (مخفية حتى الضغط عليها) */
         .stats-hint { color: var(--muted); font-size: 0.95rem; font-weight: bold; margin-top: -15px; margin-bottom: 22px; }
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 18px; margin-bottom: 25px; }
         .stat-card { background: var(--card); padding: 22px; border-radius: 20px; border: 2px solid var(--border); display: flex; align-items: center; gap: 16px; box-shadow: 0 5px 15px rgba(0,0,0,0.02); transition: 0.3s; cursor: pointer; user-select: none; }
@@ -230,7 +228,7 @@
             
             <div>
                 <button id="installAppBtn" onclick="installApp()" data-i18n="btnInstallApp">💻 تثبيت تطبيق الطبيب</button>
-                <div style="padding: 10px 20px 20px; text-align: center; color: var(--muted); font-size: 0.8rem;">Doctor App v4.1</div>
+                <div style="padding: 10px 20px 20px; text-align: center; color: var(--muted); font-size: 0.8rem;">Doctor App v4.2</div>
             </div>
         </div>
 
@@ -279,11 +277,11 @@
 
                             <div class="form-grid">
                                 <div class="input-group"><label data-i18n="lblAge">العمر:</label><input type="text" id="mAge"></div>
-                                <div class="input-group"><label data-i18n="lblBlood">فصيلة الدم:</label><input type="text" id="mBlood"></div>
+                                <div class="input-group"><label data-i18n="lblBlood">فصيلة الدم (للملف الطبي فقط):</label><input type="text" id="mBlood"></div>
                             </div>
                             <div class="form-grid">
                                 <div class="input-group"><label data-i18n="lblAllergy">حساسية للأدوية:</label><input type="text" id="mAllergy"></div>
-                                <div class="input-group"><label data-i18n="lblChronic">أمراض مزمنة:</label><input type="text" id="mChronic"></div>
+                                <div class="input-group"><label data-i18n="lblChronic">أمراض مزمنة (للملف الطبي فقط):</label><input type="text" id="mChronic"></div>
                             </div>
                             <div class="input-group">
                                 <label data-i18n="lblNotes">التشخيص والملاحظات:</label>
@@ -473,6 +471,11 @@
         let currentQueueStatus = 'active';
         let lastBusiestDayIndex = -1;
         let doctorSpecialty = 'طب عام';
+        let doctorPhone = '';
+        let doctorEmail = '';
+        let clinicAddress = '';
+        let mainClinicTitle = 'العيادة الطبية';
+
         let statsRaw = { waiting: 0, today: 0, weekly: 0, monthly: 0, busiest_day_index: -1 };
         let activeStatKey = null;
         let currentChartType = 'bar';
@@ -494,7 +497,7 @@
                 menuCall: "📢 شاشة النداء والفحص", menuSchedule: "📅 لائحة المسجلين (7 أيام)", menuPatients: "📂 أرشيف المرضى", menuStats: "📊 الإحصائيات البيانية", menuSettings: "⚙️ الإعدادات والحماية", docTitle: "لوحة الطبيب", btnTheme: "🌓 الوضع الليلي", btnInstallApp: "💻 تثبيت تطبيق الطبيب",
                 insideNow: "رقم المريض بالداخل", callNext: "📢 مناداة المريض التالي", btnDone: "✔️ تم الكشف", btnAbsent: "❌ غائب",
                 pauseQueue: "⏸️ إيقاف استقبال التذاكر مؤقتاً", resumeQueue: "▶️ تفعيل استقبال التذاكر",
-                medicalFileTitle: "📋 الملف الطبي", optional: "اختياري", lblPatientName: "اسم المريض:", lblAge: "العمر:", lblBlood: "الدم:", lblAllergy: "حساسية:", lblChronic: "أمراض مزمنة:", lblNotes: "التشخيص:", btnSaveFile: "💾 حفظ الملف الطبي للمريض", prescTitle: "💊 الوصفة الطبية", btnPrintPresc: "🖨️ طباعة الوصفة الطبية الرسمية",
+                medicalFileTitle: "📋 الملف الطبي", optional: "اختياري", lblPatientName: "اسم المريض:", lblAge: "العمر:", lblBlood: "فصيلة الدم (للملف الطبي فقط):", lblAllergy: "حساسية:", lblChronic: "أمراض مزمنة (للملف الطبي فقط):", lblNotes: "التشخيص:", btnSaveFile: "💾 حفظ الملف الطبي للمريض", prescTitle: "💊 الوصفة الطبية", btnPrintPresc: "🖨️ طباعة الوصفة الطبية الرسمية",
                 scheduleHeader: "📅 لائحة المرضى المسجلين (جدول الـ 7 أيام)",
                 archiveTitle: "📂 أرشيف المرضى", btnNewPatient: "+ مريض جديد", searchPlaceholder: "🔍 ابحث...", loading: "تحميل...", noPatients: "لا يوجد مرضى.", 
                 viewBtn: "👁️ التفاصيل والتعديل", deleteBtn: "🗑️ حذف", editTitle: "📄 تفاصيل ملف المريض", backBtn: "⬅️ عودة", saveEditBtn: "💾 حفظ",
@@ -509,7 +512,7 @@
                 menuCall: "📢 Appel & Consultation", menuSchedule: "📅 Inscrits (7 Jours)", menuPatients: "📂 Archives", menuStats: "📊 Statistiques", menuSettings: "⚙️ Paramètres", docTitle: "Tableau de bord", btnTheme: "🌓 Sombre", btnInstallApp: "💻 Installer l'App",
                 insideNow: "Patient Actuel", callNext: "📢 Suivant", btnDone: "✔️ Terminé", btnAbsent: "❌ Absent",
                 pauseQueue: "⏸️ Suspendre la file", resumeQueue: "▶️ Réactiver la file",
-                medicalFileTitle: "📋 Dossier", optional: "Optionnel", lblPatientName: "Nom:", lblAge: "Âge:", lblBlood: "Sang:", lblAllergy: "Allergies:", lblChronic: "Chroniques:", lblNotes: "Notes:", btnSaveFile: "💾 Enregistrer", prescTitle: "💊 Ordonnance", btnPrintPresc: "🖨️ Imprimer l'Ordonnance",
+                medicalFileTitle: "📋 Dossier", optional: "Optionnel", lblPatientName: "Nom:", lblAge: "Âge:", lblBlood: "Sang (Dossier):", lblAllergy: "Allergies:", lblChronic: "Chroniques (Dossier):", lblNotes: "Notes:", btnSaveFile: "💾 Enregistrer", prescTitle: "💊 Ordonnance", btnPrintPresc: "🖨️ Imprimer l'Ordonnance",
                 scheduleHeader: "📅 Liste des Patients Inscrits (7 Jours)",
                 archiveTitle: "📂 Archives", btnNewPatient: "+ Nouveau", searchPlaceholder: "🔍 Chercher...", loading: "Chargement...", noPatients: "Aucun patient.", 
                 viewBtn: "👁️ Détails & Modifier", deleteBtn: "🗑️ Supprimer", editTitle: "📄 Modifier Dossier", backBtn: "⬅️ Retour", saveEditBtn: "💾 Enregistrer",
@@ -524,7 +527,7 @@
                 menuCall: "📢 Call & Consult", menuSchedule: "📅 7-Day Schedule", menuPatients: "📂 Archive", menuStats: "📊 Analytics", menuSettings: "⚙️ Settings", docTitle: "Doctor Dashboard", btnTheme: "🌓 Dark", btnInstallApp: "💻 Install App",
                 insideNow: "Current Patient", callNext: "📢 Call Next", btnDone: "✔️ Done", btnAbsent: "❌ Absent",
                 pauseQueue: "⏸️ Pause Queue", resumeQueue: "▶️ Resume Queue",
-                medicalFileTitle: "📋 Record", optional: "Optional", lblPatientName: "Name:", lblAge: "Age:", lblBlood: "Blood:", lblAllergy: "Allergies:", lblChronic: "Chronic:", lblNotes: "Notes:", btnSaveFile: "💾 Save Record", prescTitle: "💊 Prescription", btnPrintPresc: "🖨️ Print Official Prescription",
+                medicalFileTitle: "📋 Record", optional: "Optional", lblPatientName: "Name:", lblAge: "Age:", lblBlood: "Blood (Record only):", lblAllergy: "Allergies:", lblChronic: "Chronic (Record only):", lblNotes: "Notes:", btnSaveFile: "💾 Save Record", prescTitle: "💊 Prescription", btnPrintPresc: "🖨️ Print Official Prescription",
                 scheduleHeader: "📅 Registered Patients Schedule (7 Days)",
                 archiveTitle: "📂 Archive", btnNewPatient: "+ New", searchPlaceholder: "🔍 Search...", loading: "Loading...", noPatients: "No patients.", 
                 viewBtn: "👁️ Details & Edit", deleteBtn: "🗑️ Delete", editTitle: "📄 Edit Record", backBtn: "⬅️ Back", saveEditBtn: "💾 Save",
@@ -721,6 +724,9 @@
                 if (res.status === 404) return blockDeletedDoctor();
                 const data = await res.json();
                 if (data.specialty) doctorSpecialty = data.specialty;
+                if (data.doctor_phone) doctorPhone = data.doctor_phone;
+                if (data.doctor_email) doctorEmail = data.doctor_email;
+                if (data.clinic_address) clinicAddress = data.clinic_address;
                 if (data.hasPassword) {
                     const savedAuth = sessionStorage.getItem(`doc_auth_${CLINIC_SLUG}`);
                     if (!savedAuth) { document.getElementById('lockScreen').style.display = 'flex'; }
@@ -771,7 +777,6 @@
             } catch(e) { showToast('خطأ في العملية', 'error'); }
         }
 
-        // تثبيت تطبيق الطبيب مباشرة كبرنامج سطح مكتب مستقل دون التوقف عند نافذة Edge
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
@@ -867,8 +872,15 @@
                 currentQueueStatus = data.status || 'active';
                 updateQueueBtnText();
                 if (data.doctor_name) activeDoctorName = data.doctor_name;
-                if (data.clinic_name) document.getElementById('sidebarClinicBrand').innerText = `🏥 ${data.clinic_name}`;
+                if (data.clinic_name) {
+                    mainClinicTitle = data.clinic_name;
+                    document.getElementById('sidebarClinicBrand').innerText = `🏥 ${data.clinic_name}`;
+                }
                 if (data.specialty) doctorSpecialty = data.specialty;
+                if (data.doctor_phone !== undefined) doctorPhone = data.doctor_phone;
+                if (data.doctor_email !== undefined) doctorEmail = data.doctor_email;
+                if (data.clinic_address !== undefined) clinicAddress = data.clinic_address;
+
                 document.getElementById('clinicNameDisplay').innerText = `👨‍⚕️ ${activeDoctorName}`;
                 document.getElementById('currentNumber').innerText = currentNum === 0 ? '--' : currentNum;
                 if (currentNum > 0 && data.current_patient_name) {
@@ -1112,12 +1124,12 @@
             } catch (e) { showToast(dict[currentLang].errSave, 'error'); }
         }
 
+        // طباعة الوصفة الطبية الرسمية (تتضمن رقم الطبيب، الإيميل، والعنوان، وبدون فصيلة الدم أو الأمراض المزمنة)
         function printPrescription() {
             const pName = document.getElementById('mPatientNameInput').value.trim() || activePatientName || 'المريض';
             const prescriptionText = document.getElementById('mPrescription').value.trim();
             if (!prescriptionText) return showToast('اكتب الأدوية أولاً', 'warning');
             const ageText = document.getElementById('mAge').value.trim() || '--';
-            const bloodText = document.getElementById('mBlood').value.trim() || '--';
             const dateStr = new Date().toLocaleDateString('ar-DZ');
 
             const pharmacyEmblemSVG = `
@@ -1143,24 +1155,26 @@
                     <style>
                         @page { size: A4; margin: 12mm; }
                         body { font-family: 'Tajawal', Arial, sans-serif; margin: 0; padding: 0; color: #1e293b; background: #fff; }
-                        .sheet { border: 2.5px solid #10b981; border-radius: 18px; padding: 28px 32px; min-height: 92vh; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden; }
+                        .sheet { border: 2.5px solid #10b981; border-radius: 18px; padding: 26px 32px; min-height: 92vh; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden; }
                         .watermark { position: absolute; top: 54%; left: 50%; transform: translate(-50%, -50%); opacity: 0.05; pointer-events: none; z-index: 0; }
                         .watermark svg { width: 340px; height: 340px; }
-                        .top-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px double #10b981; padding-bottom: 18px; z-index: 1; }
-                        .doc-ar h2 { margin: 0 0 5px; color: #047857; font-size: 1.45rem; }
-                        .doc-ar p { margin: 2px 0; color: #475569; font-weight: 700; font-size: 0.95rem; }
+                        .top-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px double #10b981; padding-bottom: 16px; z-index: 1; gap: 15px; }
+                        .doc-ar h2 { margin: 0 0 4px; color: #047857; font-size: 1.4rem; }
+                        .doc-ar p { margin: 3px 0; color: #334155; font-weight: 700; font-size: 0.92rem; }
                         .doc-fr { text-align: left; direction: ltr; }
-                        .doc-fr h3 { margin: 0 0 4px; color: #047857; font-size: 1.15rem; }
-                        .doc-fr p { margin: 2px 0; color: #475569; font-weight: 700; font-size: 0.9rem; }
-                        .patient-ribbon { display: grid; grid-template-columns: 2fr 1fr 1fr 1.2fr; gap: 10px; background: #f0fdf4; border: 1.5px solid #a7f3d0; border-radius: 12px; padding: 14px 18px; margin: 20px 0; font-size: 1rem; font-weight: 700; z-index: 1; }
+                        .doc-fr h3 { margin: 0 0 5px; color: #047857; font-size: 1.15rem; }
+                        .doc-fr p { margin: 3px 0; color: #334155; font-weight: 700; font-size: 0.88rem; }
+                        /* شريط بيانات المريض بدون زمرة الدم وبدون الأمراض المزمنة */
+                        .patient-ribbon { display: grid; grid-template-columns: 2fr 1fr 1.2fr; gap: 12px; background: #f0fdf4; border: 1.5px solid #a7f3d0; border-radius: 12px; padding: 14px 18px; margin: 18px 0; font-size: 1.02rem; font-weight: 700; z-index: 1; }
                         .patient-ribbon div span { color: #059669; font-weight: 800; }
                         .rx-title { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; z-index: 1; }
                         .rx-symbol { font-size: 2.6rem; font-weight: 900; color: #10b981; font-family: Georgia, serif; line-height: 1; }
                         .rx-label { font-size: 1.2rem; font-weight: 800; color: #047857; border-bottom: 2px solid #10b981; padding-bottom: 3px; }
-                        .medications-box { flex: 1; font-size: 1.25rem; font-weight: 700; line-height: 2.2; white-space: pre-wrap; padding: 15px 10px; z-index: 1; min-height: 360px; }
-                        .footer-area { display: flex; justify-content: space-between; align-items: flex-end; border-top: 2px dashed #cbd5e1; padding-top: 20px; margin-top: 20px; z-index: 1; }
-                        .stamp-box { width: 220px; height: 105px; border: 2px dashed #94a3b8; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 10px; color: #64748b; font-weight: 800; font-size: 0.95rem; }
-                        .wish-note { color: #059669; font-weight: 800; font-size: 1rem; }
+                        .medications-box { flex: 1; font-size: 1.25rem; font-weight: 700; line-height: 2.2; white-space: pre-wrap; padding: 15px 10px; z-index: 1; min-height: 350px; }
+                        .footer-area { display: flex; justify-content: space-between; align-items: flex-end; border-top: 2px dashed #cbd5e1; padding-top: 18px; margin-top: 20px; z-index: 1; gap: 15px; }
+                        .stamp-box { width: 220px; height: 100px; border: 2px dashed #94a3b8; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 10px; color: #64748b; font-weight: 800; font-size: 0.95rem; }
+                        .clinic-contact-footer { font-size: 0.92rem; font-weight: 700; color: #334155; line-height: 1.8; }
+                        .wish-note { color: #059669; font-weight: 800; font-size: 1rem; margin-top: 4px; }
                     </style>
                 </head>
                 <body>
@@ -1169,31 +1183,41 @@
                         <div>
                             <div class="top-header">
                                 <div class="doc-ar">
-                                    <h2>العيادة الطبية — ${activeDoctorName}</h2>
+                                    <h2>🏥 ${mainClinicTitle} — 👨‍⚕️ ${activeDoctorName}</h2>
                                     <p>🩺 التخصص: ${doctorSpecialty}</p>
-                                    <p>وصفة طبية رسمية (Ordonnance Médicale)</p>
+                                    ${clinicAddress ? `<p>📍 العنوان: ${clinicAddress}</p>` : ''}
+                                    ${doctorPhone ? `<p>📞 هاتف الطبيب: ${doctorPhone}</p>` : ''}
+                                    ${doctorEmail ? `<p>✉️ البريد الإلكتروني: ${doctorEmail}</p>` : ''}
                                 </div>
                                 <div>${pharmacyEmblemSVG}</div>
                                 <div class="doc-fr">
-                                    <h3>ORDO-PHARMACIE</h3>
+                                    <h3>ORDONNANCE MÉDICALE</h3>
                                     <p>Date: ${dateStr}</p>
                                     <p>Réf: #${currentNum > 0 ? currentNum : 'RX'}</p>
+                                    ${doctorPhone ? `<p>Tél: ${doctorPhone}</p>` : ''}
+                                    ${doctorEmail ? `<p>${doctorEmail}</p>` : ''}
                                 </div>
                             </div>
+
                             <div class="patient-ribbon">
                                 <div><span>👤 المريض:</span> ${pName}</div>
                                 <div><span>🎂 العمر:</span> ${ageText}</div>
-                                <div><span>🩸 الزمرة:</span> ${bloodText}</div>
                                 <div><span>📅 التاريخ:</span> ${dateStr}</div>
                             </div>
+
                             <div class="rx-title">
                                 <span class="rx-label">💊 الأدوية والجرعات الموصوفة:</span>
                                 <span class="rx-symbol">℞</span>
                             </div>
                             <div class="medications-box">${prescriptionText}</div>
                         </div>
+
                         <div class="footer-area">
-                            <div class="wish-note">🌿 نتمنى لكم الشفاء العاجل ودوام الصحة والعافية</div>
+                            <div class="clinic-contact-footer">
+                                ${clinicAddress ? `<div>📍 <strong>العنوان:</strong> ${clinicAddress}</div>` : ''}
+                                ${(doctorPhone || doctorEmail) ? `<div>${doctorPhone ? `📞 <strong>الهاتف:</strong> ${doctorPhone}` : ''} ${doctorEmail ? ` | ✉️ <strong>الإيميل:</strong> ${doctorEmail}` : ''}</div>` : ''}
+                                <div class="wish-note">🌿 نتمنى لكم الشفاء العاجل ودوام الصحة والعافية</div>
+                            </div>
                             <div class="stamp-box">ختم وتوقيع الطبيب (Cachet & Signature)</div>
                         </div>
                     </div>

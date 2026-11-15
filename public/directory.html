@@ -37,7 +37,7 @@
         .doc-card:hover { transform: translateY(-5px); border-color: var(--accent); box-shadow: 0 15px 30px rgba(16, 185, 129, 0.1); }
         .specialty-badge { display: inline-block; background: rgba(16, 185, 129, 0.12); color: var(--accent); padding: 6px 14px; border-radius: 999px; font-size: 0.85rem; font-weight: 800; margin-bottom: 12px; width: fit-content; }
         .doc-name { font-size: 1.35rem; font-weight: 800; margin: 0 0 6px; color: var(--text); }
-        .clinic-sub { font-size: 0.9rem; color: var(--muted); margin-bottom: 18px; font-weight: 500; }
+        .clinic-sub { font-size: 0.9rem; color: var(--muted); margin-bottom: 16px; font-weight: 600; line-height: 1.6; }
 
         .live-bar { display: flex; justify-content: space-between; background: var(--bg); padding: 12px 16px; border-radius: 14px; margin-bottom: 18px; border: 1px solid var(--border); }
         .live-item { text-align: center; flex: 1; }
@@ -92,12 +92,12 @@
     <div class="container">
         <div class="hero">
             <h1 data-i18n="dirTitle">الدليل الطبي الشامل وحجز المواعيد الأسبوعي</h1>
-            <p data-i18n="dirSub">اختر التخصص الطبي أو ابحث باسم الطبيب واحجز دورك في أي يوم طوال الأسبوع الكامل (7 أيام)</p>
+            <p data-i18n="dirSub">اختر التخصص الطبي أو ابحث باسم الطبيب أو العنوان واحجز دورك طوال الأسبوع الكامل (7 أيام)</p>
         </div>
 
         <div class="search-box">
             <div class="search-grid">
-                <input type="text" id="searchInput" class="search-input" placeholder="🔍 ابحث باسم الطبيب أو العيادة..." oninput="renderDoctors()">
+                <input type="text" id="searchInput" class="search-input" placeholder="🔍 ابحث باسم الطبيب، العيادة، أو العنوان..." oninput="renderDoctors()">
                 <select id="specialtyDropdown" class="specialty-select" onchange="selectSpecialty(this.value)"></select>
             </div>
             <div class="specialty-pills" id="specialtyPills"></div>
@@ -112,6 +112,7 @@
             <button class="close-btn" onclick="closeDoctorModal()">✕</button>
             <span class="specialty-badge" id="modalDocSpecialty">--</span>
             <h2 style="margin: 5px 0;" id="modalDocName">--</h2>
+            <p style="margin: 4px 0 8px; color: var(--muted); font-size: 0.9rem; font-weight: 700;" id="modalDocAddress">--</p>
             
             <div class="qr-frame">
                 <img id="modalDocQr" src="" alt="Doctor QR">
@@ -246,7 +247,11 @@
 
             const filtered = allDoctors.filter(d => {
                 const matchSpec = selectedSpecialty === 'ALL' || (d.specialty || 'طب عام') === selectedSpecialty;
-                const matchQuery = !q || d.name.toLowerCase().includes(q) || (d.specialty || '').toLowerCase().includes(q) || (d.clinic_name || '').toLowerCase().includes(q);
+                const matchQuery = !q ||
+                    d.name.toLowerCase().includes(q) ||
+                    (d.specialty || '').toLowerCase().includes(q) ||
+                    (d.clinic_name || '').toLowerCase().includes(q) ||
+                    (d.address || '').toLowerCase().includes(q);
                 return matchSpec && matchQuery;
             });
 
@@ -260,7 +265,11 @@
                     <div>
                         <div class="specialty-badge">🩺 ${doc.specialty || 'طب عام'}</div>
                         <h3 class="doc-name">👨‍⚕️ ${doc.name}</h3>
-                        <div class="clinic-sub">📍 ${doc.clinic_name || doc.name} ${doc.phone ? ' | 📞 ' + doc.phone : ''}</div>
+                        <div class="clinic-sub">
+                            🏥 ${doc.clinic_name || doc.name}
+                            ${doc.address ? `<br>📍 ${doc.address}` : ''}
+                            ${doc.phone ? `<br>📞 ${doc.phone}` : ''}
+                        </div>
                     </div>
                     <div>
                         <div class="live-bar">
@@ -285,6 +294,9 @@
 
             document.getElementById('modalDocSpecialty').innerText = `🩺 ${activeDoctor.specialty || 'طب عام'}`;
             document.getElementById('modalDocName').innerText = `👨‍⚕️ ${activeDoctor.name}`;
+            document.getElementById('modalDocAddress').innerText = activeDoctor.address
+                ? `🏥 ${activeDoctor.clinic_name} — 📍 ${activeDoctor.address}`
+                : `🏥 ${activeDoctor.clinic_name}`;
 
             const docDirectUrl = `${window.location.origin}/patient.html?clinic=${encodeURIComponent(activeDoctor.slug)}`;
             document.getElementById('modalDocQr').src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(docDirectUrl)}`;
