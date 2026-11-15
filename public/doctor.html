@@ -110,9 +110,54 @@
         .btn-absent { background: #ef4444 !important; flex: 1; }
         .btn-danger { background: #ef4444 !important; color: #ffffff !important; }
         .btn-warning { background: var(--warning) !important; color: #ffffff !important; }
+        .btn-blue { background: var(--blue) !important; color: #ffffff !important; }
         .btn-outline { background: transparent !important; border: 2px solid var(--accent) !important; color: var(--accent) !important; }
         .btn-outline:hover { background: var(--accent) !important; color: #ffffff !important; }
         .status-btns { display: flex; gap: 10px; margin-bottom: 15px; }
+
+        /* صندوق تحديد العدد الأقصى للتذاكر طوال الأسبوع */
+        .max-limit-box {
+            background: var(--bg);
+            border: 2px dashed var(--accent);
+            border-radius: 18px;
+            padding: 16px;
+            margin-top: 18px;
+            text-align: start;
+        }
+        .max-limit-box h4 {
+            margin: 0 0 8px;
+            color: var(--accent);
+            font-size: 0.98rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .max-limit-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .max-limit-row input {
+            flex: 1;
+            min-width: 110px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--card);
+            color: var(--text);
+            font-family: inherit;
+            font-weight: 800;
+            text-align: center;
+            font-size: 1rem;
+        }
+        .max-limit-row button {
+            width: auto;
+            margin: 0;
+            padding: 10px 14px;
+            font-size: 0.88rem;
+            border-radius: 10px;
+        }
 
         .week-selector-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 22px; }
         .day-card-btn { background: var(--card); border: 2px solid var(--border); border-radius: 14px; padding: 12px 8px; text-align: center; cursor: pointer; transition: 0.2s; font-family: inherit; color: var(--text); }
@@ -228,7 +273,7 @@
             
             <div>
                 <button id="installAppBtn" onclick="installApp()" data-i18n="btnInstallApp">💻 تثبيت تطبيق الطبيب</button>
-                <div style="padding: 10px 20px 20px; text-align: center; color: var(--muted); font-size: 0.8rem;">Doctor App v4.2</div>
+                <div style="padding: 10px 20px 20px; text-align: center; color: var(--muted); font-size: 0.8rem;">Doctor App v4.3</div>
             </div>
         </div>
 
@@ -249,7 +294,7 @@
 
             <div class="content-scroll">
                 
-                <!-- التبويب 1: شاشة النداء والملف الطبي والوصفة الرسمية -->
+                <!-- التبويب 1: شاشة النداء والملف الطبي والوصفة الرسمية + تحديد العدد الأقصى للتذاكر -->
                 <div id="call-tab" class="tab-content active">
                     <div class="call-wrapper">
                         <div class="control-card">
@@ -265,6 +310,19 @@
                             </div>
                             <button class="btn btn-call" onclick="callNextPatient()" data-i18n="callNext">📢 مناداة المريض التالي</button>
                             <button class="btn btn-warning" id="toggleQueueBtn" onclick="toggleQueueStatus()" style="margin-bottom: 0; font-size: 1rem;">⏸️ إيقاف استقبال التذاكر مؤقتاً</button>
+
+                            <!-- خانة تحديد العدد الأقصى للتذاكر طوال الأسبوع عند الطبيب -->
+                            <div class="max-limit-box">
+                                <h4>
+                                    <span>🎯 العدد الأقصى للتذاكر يومياً (طوال الأسبوع):</span>
+                                    <span id="currentMaxBadge" style="color:var(--text); font-size:0.85rem;">مفتوح</span>
+                                </h4>
+                                <div class="max-limit-row">
+                                    <input type="number" id="docWeeklyMaxInput" min="0" placeholder="0 = غير محدود">
+                                    <button class="btn" onclick="saveDoctorMaxTickets(true)">💾 تطبيق طوال الأسبوع</button>
+                                </div>
+                                <small style="display:block; color:var(--muted); margin-top:6px; font-weight:600;">💡 اكتب 0 لجعل عدد التذاكر مفتوحاً بدون حد أقصى.</small>
+                            </div>
                         </div>
 
                         <div class="medical-card" id="medicalCard">
@@ -299,7 +357,7 @@
                     </div>
                 </div>
 
-                <!-- التبويب 2: لائحة المرضى المسجلين طوال الأسبوع (7 أيام) -->
+                <!-- التبويب 2: لائحة المرضى المسجلين طوال الأسبوع (7 أيام) + التحكم في الحد الأقصى لكل يوم أو للأسبوع -->
                 <div id="schedule-tab" class="tab-content" style="display: none;">
                     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:18px;">
                         <h2 style="margin:0; color:var(--text);" data-i18n="scheduleHeader">📅 لائحة المرضى المسجلين (جدول الـ 7 أيام)</h2>
@@ -307,6 +365,19 @@
                     </div>
 
                     <div class="week-selector-bar" id="docWeekSelectorBar"></div>
+
+                    <!-- التحكم في العدد الأقصى للتذاكر من داخل جدول الأسبوع -->
+                    <div class="max-limit-box" style="margin-top:0; margin-bottom:20px; background:var(--card);">
+                        <h4>
+                            <span>🎯 التحكم في العدد الأقصى للتذاكر (<span id="scheduleDayMaxLabel">اليوم المختار</span>):</span>
+                            <span id="scheduleMaxStatusBadge" style="color:var(--accent); font-weight:800;">--</span>
+                        </h4>
+                        <div class="max-limit-row">
+                            <input type="number" id="docDayMaxInput" min="0" placeholder="أدخل العدد الأقصى للتذاكر (0 = غير محدود)">
+                            <button class="btn btn-blue" onclick="saveDoctorMaxTickets(false)">📅 حفظ لهذا اليوم فقط</button>
+                            <button class="btn" onclick="saveDoctorMaxTickets(true)">🗓️ تعميم على طوال الأسبوع (7 أيام)</button>
+                        </div>
+                    </div>
 
                     <input type="text" id="docScheduleSearch" class="search-bar" placeholder="🔍 ابحث في لائحة المسجلين لهذا اليوم بالاسم أو رقم التذكرة..." oninput="renderDocScheduleTable()">
 
@@ -475,6 +546,7 @@
         let doctorEmail = '';
         let clinicAddress = '';
         let mainClinicTitle = 'العيادة الطبية';
+        let doctorMaxDailyTickets = 0;
 
         let statsRaw = { waiting: 0, today: 0, weekly: 0, monthly: 0, busiest_day_index: -1 };
         let activeStatKey = null;
@@ -585,12 +657,47 @@
                 `;
             }).join('');
             docSelectedDateStr = getFormattedDateOffset(docSelectedDayOffset).dateStr;
+            if (document.getElementById('scheduleDayMaxLabel')) {
+                document.getElementById('scheduleDayMaxLabel').innerText = docSelectedDateStr;
+            }
         }
 
         function selectDocScheduleDay(offset) {
             docSelectedDayOffset = offset;
             renderDocWeekSelector();
             fetchDocScheduleTickets();
+        }
+
+        // حفظ العدد الأقصى للتذاكر طوال الأسبوع أو لليوم المحدد
+        async function saveDoctorMaxTickets(applyToAllWeek) {
+            const inputId = applyToAllWeek && document.getElementById('call-tab').style.display !== 'none'
+                ? 'docWeeklyMaxInput'
+                : 'docDayMaxInput';
+            const rawVal = document.getElementById(inputId).value;
+            const maxVal = Math.max(0, parseInt(rawVal) || 0);
+
+            try {
+                const res = await fetch(`${API_BASE}/api/queue/set-max-tickets`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        clinic_slug: CLINIC_SLUG,
+                        max_tickets: maxVal,
+                        apply_to_all_week: applyToAllWeek,
+                        booking_date: docSelectedDateStr
+                    })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast(`✔️ ${data.message}`, 'success');
+                    await fetchStatus();
+                    await fetchDocScheduleTickets();
+                } else {
+                    showToast(`❌ ${data.error || 'خطأ في الحفظ'}`, 'error');
+                }
+            } catch (e) {
+                showToast('❌ خطأ اتصال بالخادم', 'error');
+            }
         }
 
         async function fetchDocScheduleTickets() {
@@ -602,7 +709,17 @@
                 docScheduleTickets = data.tickets || [];
                 docScheduleCurrentNum = data.current_number || 0;
                 const validCount = docScheduleTickets.filter(t => t.status !== 'cancelled').length;
-                document.getElementById('docScheduleCountBadge').innerText = `${validCount} مريض مسجل`;
+                const maxForDay = data.max_tickets || 0;
+
+                document.getElementById('docScheduleCountBadge').innerText = maxForDay > 0
+                    ? `${validCount} / ${maxForDay} مريض مسجل`
+                    : `${validCount} مريض مسجل`;
+
+                document.getElementById('docDayMaxInput').value = maxForDay > 0 ? maxForDay : '';
+                document.getElementById('scheduleMaxStatusBadge').innerText = maxForDay > 0
+                    ? (data.is_full ? `🚫 اكتمل العدد (${maxForDay} تذكرة)` : `الحد الأقصى: ${maxForDay} تذكرة`)
+                    : 'مفتوح (غير محدود)';
+
                 renderDocScheduleTable();
             } catch (e) {}
         }
@@ -881,6 +998,12 @@
                 if (data.doctor_email !== undefined) doctorEmail = data.doctor_email;
                 if (data.clinic_address !== undefined) clinicAddress = data.clinic_address;
 
+                doctorMaxDailyTickets = data.max_tickets || 0;
+                document.getElementById('docWeeklyMaxInput').value = doctorMaxDailyTickets > 0 ? doctorMaxDailyTickets : '';
+                document.getElementById('currentMaxBadge').innerText = doctorMaxDailyTickets > 0
+                    ? `${doctorMaxDailyTickets} تذكرة/يوم`
+                    : 'مفتوح (غير محدود)';
+
                 document.getElementById('clinicNameDisplay').innerText = `👨‍⚕️ ${activeDoctorName}`;
                 document.getElementById('currentNumber').innerText = currentNum === 0 ? '--' : currentNum;
                 if (currentNum > 0 && data.current_patient_name) {
@@ -1124,7 +1247,6 @@
             } catch (e) { showToast(dict[currentLang].errSave, 'error'); }
         }
 
-        // طباعة الوصفة الطبية الرسمية (تتضمن رقم الطبيب، الإيميل، والعنوان، وبدون فصيلة الدم أو الأمراض المزمنة)
         function printPrescription() {
             const pName = document.getElementById('mPatientNameInput').value.trim() || activePatientName || 'المريض';
             const prescriptionText = document.getElementById('mPrescription').value.trim();
@@ -1164,7 +1286,6 @@
                         .doc-fr { text-align: left; direction: ltr; }
                         .doc-fr h3 { margin: 0 0 5px; color: #047857; font-size: 1.15rem; }
                         .doc-fr p { margin: 3px 0; color: #334155; font-weight: 700; font-size: 0.88rem; }
-                        /* شريط بيانات المريض بدون زمرة الدم وبدون الأمراض المزمنة */
                         .patient-ribbon { display: grid; grid-template-columns: 2fr 1fr 1.2fr; gap: 12px; background: #f0fdf4; border: 1.5px solid #a7f3d0; border-radius: 12px; padding: 14px 18px; margin: 18px 0; font-size: 1.02rem; font-weight: 700; z-index: 1; }
                         .patient-ribbon div span { color: #059669; font-weight: 800; }
                         .rx-title { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; z-index: 1; }
@@ -1314,6 +1435,7 @@
         const socket = io(API_BASE);
         socket.on('new_ticket', (data) => { if (data.clinic_slug === CLINIC_SLUG) { fetchStats(); fetchDocScheduleTickets(); } });
         socket.on('ticket_cancelled', (data) => { if (data.clinic_slug === CLINIC_SLUG) { showToast(`⚠️ ألغى المريض (${data.patient_name}) تذكرته`, 'warning'); fetchStats(); fetchDocScheduleTickets(); } });
+        socket.on('queue_status_changed', (data) => { if (data.clinic_slug === CLINIC_SLUG) { fetchStatus(); fetchDocScheduleTickets(); } });
         socket.on('doctor_deleted', (data) => { if (data.clinic_slug === CLINIC_SLUG) blockDeletedDoctor(); });
     </script>
 </body>

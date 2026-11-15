@@ -276,7 +276,7 @@
             gap: 10px;
         }
 
-        input[type="text"] {
+        input[type="text"], input[type="number"] {
             width: 100%;
             padding: 15px;
             border-radius: 14px;
@@ -289,7 +289,7 @@
             outline: none;
             transition: 0.25s;
         }
-        input[type="text"]:focus { border-color: var(--accent); }
+        input[type="text"]:focus, input[type="number"]:focus { border-color: var(--accent); }
 
         .btn {
             width: 100%;
@@ -351,6 +351,36 @@
             color: var(--text);
         }
         .counter-box.highlight strong { color: var(--accent); }
+
+        /* صندوق تحديد العدد الأقصى للتذاكر في الاستقبال */
+        .max-limit-box {
+            background: var(--bg);
+            border: 2px dashed var(--accent);
+            border-radius: 18px;
+            padding: 16px;
+            margin-top: 16px;
+        }
+        .max-limit-box h4 {
+            margin: 0 0 10px;
+            color: var(--accent);
+            font-size: 0.96rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .max-limit-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .max-limit-actions button {
+            flex: 1;
+            margin-bottom: 0;
+            padding: 11px 12px;
+            font-size: 0.88rem;
+        }
 
         .last-ticket-receipt {
             display: none;
@@ -448,7 +478,7 @@
 
             <div>
                 <button id="installAppBtn" onclick="installReceptionApp()" data-i18n="btnInstallRec">💻 تثبيت تطبيق الاستقبال</button>
-                <div style="padding: 10px 20px 20px; text-align: center; color: var(--muted); font-size: 0.8rem;">Reception Desk App v4.1</div>
+                <div style="padding: 10px 20px 20px; text-align: center; color: var(--muted); font-size: 0.8rem;">Reception Desk App v4.3</div>
             </div>
         </div>
 
@@ -477,7 +507,7 @@
                 <h3 class="section-title" data-i18n="selectDayHeader">📅 2. اختر يوم التسجيل أو العرض (متاح طوال 7 أيام):</h3>
                 <div class="week-selector-bar" id="weekSelectorBar"></div>
 
-                <!-- 3. منطقة قطع التذكرة ومراقبة الطابور -->
+                <!-- 3. منطقة قطع التذكرة ومراقبة الطابور + تحديد العدد الأقصى للتذاكر -->
                 <div class="reception-workspace">
                     <div class="panel-card">
                         <h3 id="issueCardHeader">🎟️ تسجيل مريض وقطع تذكرة</h3>
@@ -488,8 +518,8 @@
                         <label style="display:block; font-weight:800; color:var(--muted); margin-bottom:8px;" data-i18n="lblPatientName">اسم المريض الكامل:</label>
                         <input type="text" id="recPatientName" placeholder="✍️ اكتب اسم المريض الكامل هنا..." onkeypress="if(event.key === 'Enter') issueTicket(true)">
 
-                        <button class="btn" onclick="issueTicket(true)" data-i18n="btnIssueAndPrint">🖨️ تسجيل المريض وطباعة التذكرة فوراً</button>
-                        <button class="btn btn-blue" onclick="issueTicket(false)" data-i18n="btnIssueOnly">➕ تسجيل المريض في اللائحة (بدون طباعة)</button>
+                        <button class="btn" id="recIssuePrintBtn" onclick="issueTicket(true)" data-i18n="btnIssueAndPrint">🖨️ تسجيل المريض وطباعة التذكرة فوراً</button>
+                        <button class="btn btn-blue" id="recIssueOnlyBtn" onclick="issueTicket(false)" data-i18n="btnIssueOnly">➕ تسجيل المريض في اللائحة (بدون طباعة)</button>
 
                         <div class="last-ticket-receipt" id="lastTicketBox">
                             <div style="font-weight: 800; color: var(--accent); margin-bottom: 5px;" data-i18n="lastIssuedTitle">✔️ تم تسجيل المريض بنجاح</div>
@@ -519,6 +549,19 @@
 
                         <button class="btn btn-blue" id="recCallNextBtn" onclick="callNextFromReception()" data-i18n="btnCallNext">📢 مناداة المريض التالي (لليوم الحالي)</button>
                         <button class="btn btn-warning" id="recTogglePauseBtn" onclick="togglePauseFromReception()" style="margin-bottom: 0;">⏸️ إيقاف استقبال التذاكر مؤقتاً</button>
+
+                        <!-- خانة تحديد العدد الأقصى للتذاكر طوال الأسبوع عند الاستقبال -->
+                        <div class="max-limit-box">
+                            <h4>
+                                <span>🎯 العدد الأقصى للتذاكر:</span>
+                                <span id="recMaxStatusBadge" style="color:var(--text);">مفتوح (غير محدود)</span>
+                            </h4>
+                            <input type="number" id="recMaxTicketsInput" min="0" placeholder="أدخل العدد الأقصى للتذاكر (0 = مفتوح)" style="margin-bottom:10px; padding:11px; text-align:center; font-weight:800;">
+                            <div class="max-limit-actions">
+                                <button class="btn" onclick="saveReceptionMaxTickets(true)">🗓️ تطبيق طوال الأسبوع (7 أيام)</button>
+                                <button class="btn btn-blue" onclick="saveReceptionMaxTickets(false)">📅 لهذا اليوم فقط</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -855,6 +898,7 @@
 
             grid.innerHTML = clinicDoctors.map(d => {
                 const isSelected = d.slug === activeDocSlug;
+                const maxBadge = d.max_tickets > 0 ? `<div style="font-size:0.75rem; color:${d.is_full ? 'var(--danger)' : 'var(--muted)'}; font-weight:800; margin-top:4px;">🎯 الحد الأقصى: ${d.max_tickets} ${d.is_full ? '(مكتمل)' : ''}</div>` : '';
                 return `
                     <div class="doc-select-card ${isSelected ? 'selected' : ''}" onclick="selectDoctorForReception('${d.slug}')">
                         <div class="doc-top-pills">
@@ -869,6 +913,7 @@
                         </div>
                         <div style="font-size:1.2rem; font-weight:800; color:var(--text); margin-bottom:4px;">👨‍⚕️ ${d.name}</div>
                         <div style="font-size:0.85rem; font-weight:800; color:var(--accent);">🩺 ${d.specialty || 'طب عام'}</div>
+                        ${maxBadge}
                     </div>
                 `;
             }).join('');
@@ -878,6 +923,34 @@
             activeDocSlug = slug;
             renderDoctorsGrid();
             refreshSelectedDoctorQueue();
+        }
+
+        // حفظ العدد الأقصى للتذاكر من مكتب الاستقبال (طوال الأسبوع أو لليوم المحدد)
+        async function saveReceptionMaxTickets(applyToAllWeek) {
+            const rawVal = document.getElementById('recMaxTicketsInput').value;
+            const maxVal = Math.max(0, parseInt(rawVal) || 0);
+
+            try {
+                const res = await fetch(`${API_BASE}/api/queue/set-max-tickets`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        clinic_slug: activeDocSlug,
+                        max_tickets: maxVal,
+                        apply_to_all_week: applyToAllWeek,
+                        booking_date: selectedDateStr
+                    })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast(`✔️ ${data.message}`);
+                    await loadReceptionData();
+                } else {
+                    showToast(`❌ ${data.error || 'تعذر حفظ العدد الأقصى'}`);
+                }
+            } catch (e) {
+                showToast('❌ خطأ اتصال بالخادم');
+            }
         }
 
         async function refreshSelectedDoctorQueue() {
@@ -896,6 +969,9 @@
                 currentActiveNumberOnDate = data.current_number || 0;
                 registeredTicketsList = data.tickets || [];
 
+                const maxTickets = data.max_tickets || 0;
+                const activeTicketsCount = registeredTicketsList.filter(t => t.status !== 'cancelled').length;
+
                 document.getElementById('sidebarClinicTitle').innerText = `🏥 ${mainClinicTitle}`;
                 document.getElementById('issueCardHeader').innerText = `🎟️ تسجيل مريض عند: ${activeDocName} (${activeDocSpecialty})`;
                 document.getElementById('queueMonitorHeader').innerText = `📊 طابور ${activeDocName} (${selectedDateStr})`;
@@ -905,8 +981,15 @@
                 document.getElementById('recWaitingCount').innerText = data.waiting_count || 0;
                 document.getElementById('recProspectiveNum').innerText = `#${(data.last_issued_number || 0) + 1}`;
 
-                const activeTicketsCount = registeredTicketsList.filter(t => t.status !== 'cancelled').length;
-                document.getElementById('totalRegisteredBadge').innerText = `${activeTicketsCount} مريض مسجل`;
+                document.getElementById('totalRegisteredBadge').innerText = maxTickets > 0
+                    ? `${activeTicketsCount} / ${maxTickets} مريض مسجل`
+                    : `${activeTicketsCount} مريض مسجل`;
+
+                document.getElementById('recMaxTicketsInput').value = maxTickets > 0 ? maxTickets : '';
+                document.getElementById('recMaxStatusBadge').innerText = maxTickets > 0
+                    ? (data.is_full ? `🚫 مكتمل (${maxTickets} تذكرة)` : `${activeTicketsCount} من أصل ${maxTickets} تذكرة`)
+                    : 'مفتوح (غير محدود)';
+                document.getElementById('recMaxStatusBadge').style.color = data.is_full ? 'var(--danger)' : 'var(--accent)';
 
                 updatePauseBtnText();
                 renderRegisteredPatientsTable();

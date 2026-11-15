@@ -7,7 +7,7 @@
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/3063/3063063.png">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #f4f7f6; --card: #ffffff; --text: #1e293b; --accent: #10b981; --border: #e2e8f0; --muted: #64748b; --danger: #ef4444; --warning: #f59e0b; }
+        :root { --bg: #f4f7f6; --card: #ffffff; --text: #1e293b; --accent: #10b981; --border: #e2e8f0; --muted: #64748b; --danger: #ef4444; --warning: #f59e0b; --blue: #3b82f6; }
         [data-theme="dark"] { --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --accent: #10b981; --border: #334155; --muted: #94a3b8; }
         * { box-sizing: border-box; }
         html, body { font-family: 'Tajawal', sans-serif; background: var(--bg); color: var(--text); margin: 0; min-height: 100vh; overflow-x: hidden; overflow-y: auto; scroll-behavior: smooth; transition: 0.3s; }
@@ -39,13 +39,18 @@
         .doc-name { font-size: 1.35rem; font-weight: 800; margin: 0 0 6px; color: var(--text); }
         .clinic-sub { font-size: 0.9rem; color: var(--muted); margin-bottom: 16px; font-weight: 600; line-height: 1.6; }
 
-        .live-bar { display: flex; justify-content: space-between; background: var(--bg); padding: 12px 16px; border-radius: 14px; margin-bottom: 18px; border: 1px solid var(--border); }
+        .live-bar { display: flex; justify-content: space-between; background: var(--bg); padding: 12px 16px; border-radius: 14px; margin-bottom: 14px; border: 1px solid var(--border); }
         .live-item { text-align: center; flex: 1; }
         .live-item span { display: block; font-size: 0.8rem; color: var(--muted); font-weight: bold; }
         .live-item strong { font-size: 1.3rem; color: var(--text); }
 
+        .max-limit-tag { font-size: 0.82rem; font-weight: 800; padding: 6px 12px; border-radius: 10px; margin-bottom: 12px; text-align: center; }
+        .tag-open { background: rgba(59, 130, 246, 0.1); color: var(--blue); }
+        .tag-full { background: rgba(239, 68, 68, 0.12); color: var(--danger); }
+
         .btn-select { width: 100%; padding: 14px; border-radius: 12px; border: none; background: var(--accent); color: #fff; font-weight: 800; font-size: 1rem; cursor: pointer; font-family: inherit; transition: 0.2s; }
         .btn-select:hover { filter: brightness(1.08); }
+        .btn-select:disabled { cursor: not-allowed; opacity: 0.9; }
 
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.8); z-index: 9999; display: none; justify-content: center; align-items: center; padding: 15px; overflow-y: auto; }
         .modal-card { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 28px; width: 100%; max-width: 560px; text-align: center; position: relative; max-height: 92vh; overflow-y: auto; }
@@ -59,7 +64,7 @@
         .date-btn.active { border-color: var(--accent); background: rgba(16, 185, 129, 0.14); color: var(--accent); }
         .date-btn small { display: block; font-size: 0.74rem; color: var(--muted); margin-top: 3px; font-weight: 700; }
 
-        .preview-numbers { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
+        .preview-numbers { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
         .num-box { background: var(--bg); border: 1px solid var(--border); padding: 14px; border-radius: 16px; }
         .num-box.highlight { border: 2px solid var(--accent); background: rgba(16, 185, 129, 0.06); }
         .num-box span { display: block; font-size: 0.85rem; color: var(--muted); font-weight: bold; margin-bottom: 4px; }
@@ -132,6 +137,8 @@
                     <strong id="previewProspectiveNum">--</strong>
                 </div>
             </div>
+
+            <div id="modalLimitStatus" class="max-limit-tag tag-open" style="display: none;"></div>
 
             <div id="bookingFormArea">
                 <input type="text" id="patientNameInput" class="booking-input" placeholder="✍️ اكتب اسمك الكامل هنا قبل قطع التذكرة...">
@@ -260,7 +267,15 @@
                 return;
             }
 
-            grid.innerHTML = filtered.map(doc => `
+            grid.innerHTML = filtered.map(doc => {
+                let limitHtml = '';
+                if (doc.max_tickets && doc.max_tickets > 0) {
+                    limitHtml = doc.is_full
+                        ? `<div class="max-limit-tag tag-full">🚫 اكتمل العدد لليوم (${doc.max_tickets} تذكرة) — متاح للأيام القادمة</div>`
+                        : `<div class="max-limit-tag tag-open">🎯 الحد الأقصى اليومي: ${doc.max_tickets} تذكرة</div>`;
+                }
+
+                return `
                 <div class="doc-card" onclick="openDoctorModal('${doc.slug}')">
                     <div>
                         <div class="specialty-badge">🩺 ${doc.specialty || 'طب عام'}</div>
@@ -282,10 +297,12 @@
                                 <strong style="color:var(--accent);">#${doc.next_ticket_today}</strong>
                             </div>
                         </div>
+                        ${limitHtml}
                         <button class="btn-select">📲 عرض QR الطبيب والحجز (7 أيام)</button>
                     </div>
                 </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         async function openDoctorModal(slug) {
@@ -341,14 +358,36 @@
                 const data = await res.json();
                 document.getElementById('previewCurrentNum').innerText = data.current_number === 0 ? '--' : data.current_number;
                 document.getElementById('previewProspectiveNum').innerText = `#${data.prospective_number}`;
+
+                const limitBanner = document.getElementById('modalLimitStatus');
+                if (data.max_tickets && data.max_tickets > 0) {
+                    limitBanner.style.display = 'block';
+                    if (data.is_full) {
+                        limitBanner.className = 'max-limit-tag tag-full';
+                        limitBanner.innerText = `🚫 اكتمل العدد الأقصى المسموح به لهذا اليوم (${data.max_tickets} تذكرة) — اختر يوماً آخر`;
+                    } else {
+                        const booked = data.active_booked_count || 0;
+                        limitBanner.className = 'max-limit-tag tag-open';
+                        limitBanner.innerText = `🎯 التذاكر المحجوزة لهذا اليوم: ${booked} من أصل ${data.max_tickets} تذكرة`;
+                    }
+                } else {
+                    limitBanner.style.display = 'none';
+                }
+
                 const btn = document.getElementById('confirmBookBtn');
                 if (data.status === 'paused') {
                     btn.disabled = true;
                     btn.innerText = '⏸️ استقبال التذاكر متوقف مؤقتاً لهذا اليوم';
                     btn.style.background = 'var(--warning)';
+                } else if (data.is_full) {
+                    btn.disabled = true;
+                    btn.innerText = `🚫 اكتمل العدد الأقصى للتذاكر لهذا اليوم (${data.max_tickets} تذكرة)`;
+                    btn.style.background = 'var(--danger)';
                 } else {
                     btn.disabled = false;
-                    btn.innerText = '🎟️ تأكيد الحجز وقطع التذكرة';
+                    btn.innerText = data.max_tickets > 0
+                        ? `🎟️ تأكيد الحجز وقطع التذكرة (الحد الأقصى: ${data.max_tickets})`
+                        : '🎟️ تأكيد الحجز وقطع التذكرة';
                     btn.style.background = 'var(--accent)';
                 }
             } catch (e) {}
@@ -407,6 +446,7 @@
         const socket = io();
         socket.on('new_ticket', () => { loadDirectory(); if (activeDoctor) fetchDatePreview(); });
         socket.on('call_patient', () => { loadDirectory(); if (activeDoctor) fetchDatePreview(); });
+        socket.on('queue_status_changed', () => { loadDirectory(); if (activeDoctor) fetchDatePreview(); });
         socket.on('doctor_deleted', () => { loadDirectory(); });
     </script>
 </body>
