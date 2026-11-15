@@ -411,14 +411,29 @@
                 const data = await res.json();
                 if (!res.ok) return alert(data.error || 'خطأ في الحجز');
 
-                if (selectedDateIndex === 0) {
-                    localStorage.setItem(`ticket_${activeDoctor.slug}`, data.ticket_number);
-                    localStorage.setItem(`name_${activeDoctor.slug}`, pName);
-                }
+                const cleanDate = String(data.booking_date || selectedDateStr).slice(0, 10);
+                const payload = JSON.stringify({
+                    docSlug: activeDoctor.slug,
+                    mainSlug: activeDoctor.slug,
+                    ticket: parseInt(data.ticket_number),
+                    name: pName,
+                    date: cleanDate
+                });
+
+                // حفظ مزدوج للتذكرة والتاريخ في LocalStorage و Cookies لمدة 7 أيام لضمان عدم ضياعها عند إغلاق المتصفح
+                localStorage.setItem(`cf_ticket_obj_${activeDoctor.slug}`, payload);
+                localStorage.setItem(`ticket_${activeDoctor.slug}`, String(data.ticket_number));
+                localStorage.setItem(`name_${activeDoctor.slug}`, pName);
+                localStorage.setItem(`date_${activeDoctor.slug}`, cleanDate);
+                localStorage.setItem('last_visited_clinic_slug', activeDoctor.slug);
+
+                const exp = new Date();
+                exp.setTime(exp.getTime() + (7 * 24 * 60 * 60 * 1000));
+                document.cookie = `cf_ticket_${activeDoctor.slug}=${encodeURIComponent(payload)};expires=${exp.toUTCString()};path=/;SameSite=Lax`;
 
                 document.getElementById('bookingFormArea').style.display = 'none';
                 document.getElementById('bookedTicketNumber').innerText = `#${data.ticket_number}`;
-                document.getElementById('bookedDateDisplay').innerText = `📅 ${selectedDateStr} — 👤 ${pName}`;
+                document.getElementById('bookedDateDisplay').innerText = `📅 ${cleanDate} — 👤 ${pName}`;
                 document.getElementById('ticketSuccessBox').style.display = 'block';
                 await loadDirectory();
                 await fetchDatePreview();
