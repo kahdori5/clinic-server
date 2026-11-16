@@ -115,6 +115,7 @@
         .btn-outline:hover { background: var(--accent) !important; color: #ffffff !important; }
         .status-btns { display: flex; gap: 10px; margin-bottom: 15px; }
 
+        /* صندوق تحديد العدد الأقصى للتذاكر طوال الأسبوع */
         .max-limit-box {
             background: var(--bg);
             border: 2px dashed var(--accent);
@@ -272,7 +273,7 @@
             
             <div>
                 <button id="installAppBtn" onclick="installApp()" data-i18n="btnInstallApp">💻 تثبيت تطبيق الطبيب</button>
-                <div style="padding: 10px 20px 20px; text-align: center; color: var(--muted); font-size: 0.8rem;">Doctor App v4.5</div>
+                <div style="padding: 10px 20px 20px; text-align: center; color: var(--muted); font-size: 0.8rem;">Doctor App v4.3</div>
             </div>
         </div>
 
@@ -293,7 +294,7 @@
 
             <div class="content-scroll">
                 
-                <!-- التبويب 1: شاشة النداء والفحص -->
+                <!-- التبويب 1: شاشة النداء والملف الطبي والوصفة الرسمية + تحديد العدد الأقصى للتذاكر -->
                 <div id="call-tab" class="tab-content active">
                     <div class="call-wrapper">
                         <div class="control-card">
@@ -310,15 +311,17 @@
                             <button class="btn btn-call" onclick="callNextPatient()" data-i18n="callNext">📢 مناداة المريض التالي</button>
                             <button class="btn btn-warning" id="toggleQueueBtn" onclick="toggleQueueStatus()" style="margin-bottom: 0; font-size: 1rem;">⏸️ إيقاف استقبال التذاكر مؤقتاً</button>
 
+                            <!-- خانة تحديد العدد الأقصى للتذاكر طوال الأسبوع عند الطبيب -->
                             <div class="max-limit-box">
                                 <h4>
-                                    <span>🎯 العدد الأقصى للتذاكر يومياً:</span>
+                                    <span>🎯 العدد الأقصى للتذاكر يومياً (طوال الأسبوع):</span>
                                     <span id="currentMaxBadge" style="color:var(--text); font-size:0.85rem;">مفتوح</span>
                                 </h4>
                                 <div class="max-limit-row">
                                     <input type="number" id="docWeeklyMaxInput" min="0" placeholder="0 = غير محدود">
-                                    <button class="btn" onclick="saveDoctorMaxTickets(true)">💾 حفظ الحد الأقصى</button>
+                                    <button class="btn" onclick="saveDoctorMaxTickets(true)">💾 تطبيق طوال الأسبوع</button>
                                 </div>
+                                <small style="display:block; color:var(--muted); margin-top:6px; font-weight:600;">💡 اكتب 0 لجعل عدد التذاكر مفتوحاً بدون حد أقصى.</small>
                             </div>
                         </div>
 
@@ -332,11 +335,11 @@
 
                             <div class="form-grid">
                                 <div class="input-group"><label data-i18n="lblAge">العمر:</label><input type="text" id="mAge"></div>
-                                <div class="input-group"><label data-i18n="lblBlood">فصيلة الدم:</label><input type="text" id="mBlood"></div>
+                                <div class="input-group"><label data-i18n="lblBlood">فصيلة الدم (للملف الطبي فقط):</label><input type="text" id="mBlood"></div>
                             </div>
                             <div class="form-grid">
                                 <div class="input-group"><label data-i18n="lblAllergy">حساسية للأدوية:</label><input type="text" id="mAllergy"></div>
-                                <div class="input-group"><label data-i18n="lblChronic">أمراض مزمنة:</label><input type="text" id="mChronic"></div>
+                                <div class="input-group"><label data-i18n="lblChronic">أمراض مزمنة (للملف الطبي فقط):</label><input type="text" id="mChronic"></div>
                             </div>
                             <div class="input-group">
                                 <label data-i18n="lblNotes">التشخيص والملاحظات:</label>
@@ -354,7 +357,7 @@
                     </div>
                 </div>
 
-                <!-- التبويب 2: جدول الـ 7 أيام -->
+                <!-- التبويب 2: لائحة المرضى المسجلين طوال الأسبوع (7 أيام) + التحكم في الحد الأقصى لكل يوم أو للأسبوع -->
                 <div id="schedule-tab" class="tab-content" style="display: none;">
                     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:18px;">
                         <h2 style="margin:0; color:var(--text);" data-i18n="scheduleHeader">📅 لائحة المرضى المسجلين (جدول الـ 7 أيام)</h2>
@@ -363,7 +366,20 @@
 
                     <div class="week-selector-bar" id="docWeekSelectorBar"></div>
 
-                    <input type="text" id="docScheduleSearch" class="search-bar" placeholder="🔍 ابحث في لائحة المسجلين بهذا اليوم..." oninput="renderDocScheduleTable()">
+                    <!-- التحكم في العدد الأقصى للتذاكر من داخل جدول الأسبوع -->
+                    <div class="max-limit-box" style="margin-top:0; margin-bottom:20px; background:var(--card);">
+                        <h4>
+                            <span>🎯 التحكم في العدد الأقصى للتذاكر (<span id="scheduleDayMaxLabel">اليوم المختار</span>):</span>
+                            <span id="scheduleMaxStatusBadge" style="color:var(--accent); font-weight:800;">--</span>
+                        </h4>
+                        <div class="max-limit-row">
+                            <input type="number" id="docDayMaxInput" min="0" placeholder="أدخل العدد الأقصى للتذاكر (0 = غير محدود)">
+                            <button class="btn btn-blue" onclick="saveDoctorMaxTickets(false)">📅 حفظ لهذا اليوم فقط</button>
+                            <button class="btn" onclick="saveDoctorMaxTickets(true)">🗓️ تعميم على طوال الأسبوع (7 أيام)</button>
+                        </div>
+                    </div>
+
+                    <input type="text" id="docScheduleSearch" class="search-bar" placeholder="🔍 ابحث في لائحة المسجلين لهذا اليوم بالاسم أو رقم التذكرة..." oninput="renderDocScheduleTable()">
 
                     <div class="patients-table-wrapper">
                         <table class="patients-table">
@@ -419,7 +435,7 @@
                     </div>
                 </div>
 
-                <!-- التبويب 4: الإحصائيات -->
+                <!-- التبويب 4: الإحصائيات التفاعلية بالمنحنيات والأعمدة البيانية -->
                 <div id="stats-tab" class="tab-content" style="display: none;">
                     <h2 style="margin-top: 0; margin-bottom: 22px; color: var(--text);" data-i18n="statsHeader">لوحة الإحصائيات والتحليل البياني</h2>
                     <p class="stats-hint" data-i18n="statsClickHint">👆 اضغط على أي بطاقة إحصائية لإظهار بياناتها ورسمها البياني التفصيلي:</p>
@@ -488,20 +504,8 @@
                     </div>
                 </div>
 
-                <!-- التبويب 5: إعدادات العطل والغياب والحماية -->
+                <!-- التبويب 5: الإعدادات والحماية -->
                 <div id="settings-tab" class="tab-content" style="display: none;">
-                    <div class="control-card" style="max-width: 600px; margin: 0 auto; text-align: start; margin-bottom: 25px;">
-                        <h2 style="color: var(--accent); margin-top: 0;">🏖️ إدارة أيام العطل وعدم التواجد (الغياب)</h2>
-                        <p style="color: var(--muted); font-size: 0.92rem; font-weight: bold;">أيام الجمعة عطلة رسمية مغلقة تلقائياً لكل العيادات. يمكنك هنا اختيار أي تاريخ آخر لا تريد الحضور فيه لتعطيل الحجز:</p>
-                        
-                        <div class="input-group">
-                            <label>اختر التاريخ المراد تسجيله كعطلة/غياب:</label>
-                            <input type="date" id="doctorOffDateInput" style="width:100%; padding:12px; border-radius:12px; border:1px solid var(--border); background:var(--bg); color:var(--text); margin-bottom:12px; outline:none;">
-                        </div>
-                        <button class="btn btn-danger" onclick="submitDoctorOffDay()">🚫 تعطيل الحجز في هذا اليوم (إعلان غياب)</button>
-                        <div id="doctorOffDaysList" style="margin-top: 15px; font-size: 0.9rem; font-weight: bold; color: var(--muted);"></div>
-                    </div>
-
                     <div class="control-card" style="max-width: 600px; margin: 0 auto; text-align: start;">
                         <h2 style="color: var(--text); margin-top: 0;" data-i18n="secTitle">🛡️ إعدادات الحماية والخصوصية</h2>
                         <p style="color: var(--muted); margin-bottom: 25px; font-weight: bold;" data-i18n="secDesc">لحماية عيادتك وملفات مرضاك من التطفل، قم بتعيين كلمة سر تمنع أي شخص من الدخول إلى هذه اللوحة بدونها.</p>
@@ -653,6 +657,9 @@
                 `;
             }).join('');
             docSelectedDateStr = getFormattedDateOffset(docSelectedDayOffset).dateStr;
+            if (document.getElementById('scheduleDayMaxLabel')) {
+                document.getElementById('scheduleDayMaxLabel').innerText = docSelectedDateStr;
+            }
         }
 
         function selectDocScheduleDay(offset) {
@@ -661,8 +668,12 @@
             fetchDocScheduleTickets();
         }
 
+        // حفظ العدد الأقصى للتذاكر طوال الأسبوع أو لليوم المحدد
         async function saveDoctorMaxTickets(applyToAllWeek) {
-            const rawVal = document.getElementById('docWeeklyMaxInput').value;
+            const inputId = applyToAllWeek && document.getElementById('call-tab').style.display !== 'none'
+                ? 'docWeeklyMaxInput'
+                : 'docDayMaxInput';
+            const rawVal = document.getElementById(inputId).value;
             const maxVal = Math.max(0, parseInt(rawVal) || 0);
 
             try {
@@ -672,51 +683,21 @@
                     body: JSON.stringify({
                         clinic_slug: CLINIC_SLUG,
                         max_tickets: maxVal,
-                        apply_to_all_week: applyToAllWeek
+                        apply_to_all_week: applyToAllWeek,
+                        booking_date: docSelectedDateStr
                     })
                 });
                 const data = await res.json();
                 if (res.ok) {
                     showToast(`✔️ ${data.message}`, 'success');
                     await fetchStatus();
+                    await fetchDocScheduleTickets();
                 } else {
                     showToast(`❌ ${data.error || 'خطأ في الحفظ'}`, 'error');
                 }
             } catch (e) {
                 showToast('❌ خطأ اتصال بالخادم', 'error');
             }
-        }
-
-        async function submitDoctorOffDay() {
-            const dateVal = document.getElementById('doctorOffDateInput').value;
-            if (!dateVal) return alert('يرجى اختيار التاريخ أولاً');
-            try {
-                const res = await fetch(`${API_BASE}/api/doctor/toggle-off-day`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ clinic_slug: CLINIC_SLUG, off_date: dateVal })
-                });
-                const data = await res.json();
-                if (res.ok) {
-                    showToast(data.message, 'success');
-                    loadDoctorOffDays();
-                } else {
-                    showToast(`⚠️ ${data.error || 'تعذر تسجيل الغياب'}`, 'warning');
-                }
-            } catch (e) { showToast('❌ خطأ اتصال', 'error'); }
-        }
-
-        async function loadDoctorOffDays() {
-            try {
-                const res = await fetch(`${API_BASE}/api/doctor/off-days/${CLINIC_SLUG}`);
-                const list = await res.json();
-                const container = document.getElementById('doctorOffDaysList');
-                if (list.length === 0) {
-                    container.innerHTML = 'لا توجد أيام غياب شخصية مسجلة حالياً (أيام الجمعة وحدها عطلة أساسية).';
-                    return;
-                }
-                container.innerHTML = `📅 الأيام المعطلة شخصياً: <br>` + list.map(d => `<span style="display:inline-block; background:rgba(239,68,68,0.12); color:var(--danger); padding:4px 10px; border-radius:8px; margin:4px; font-weight:800;">${d}</span>`).join('');
-            } catch (e) {}
         }
 
         async function fetchDocScheduleTickets() {
@@ -730,9 +711,14 @@
                 const validCount = docScheduleTickets.filter(t => t.status !== 'cancelled').length;
                 const maxForDay = data.max_tickets || 0;
 
-                document.getElementById('docScheduleCountBadge').innerText = data.is_off_day
-                    ? `🏖️ عطلة في هذا اليوم`
-                    : (maxForDay > 0 ? `${validCount} / ${maxForDay} مريض مسجل` : `${validCount} مريض مسجل`);
+                document.getElementById('docScheduleCountBadge').innerText = maxForDay > 0
+                    ? `${validCount} / ${maxForDay} مريض مسجل`
+                    : `${validCount} مريض مسجل`;
+
+                document.getElementById('docDayMaxInput').value = maxForDay > 0 ? maxForDay : '';
+                document.getElementById('scheduleMaxStatusBadge').innerText = maxForDay > 0
+                    ? (data.is_full ? `🚫 اكتمل العدد (${maxForDay} تذكرة)` : `الحد الأقصى: ${maxForDay} تذكرة`)
+                    : 'مفتوح (غير محدود)';
 
                 renderDocScheduleTable();
             } catch (e) {}
@@ -745,7 +731,7 @@
             const filtered = docScheduleTickets.filter(t => !q || (t.patient_name || '').toLowerCase().includes(q) || String(t.ticket_number).includes(q));
 
             if (!filtered.length) {
-                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:30px; color:var(--muted);">لا يوجد مرضى مسجلون في هذا اليوم أو اليوم عطلة رسمية / إجازة معلنة.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:30px; color:var(--muted);">لا يوجد مرضى مسجلون في هذا اليوم حتى الآن.</td></tr>`;
                 return;
             }
 
@@ -755,6 +741,7 @@
                 else if (t.status === 'completed') badge = `<span class="status-pill st-completed">✔️ تم الكشف</span>`;
                 else if (t.status === 'absent') badge = `<span class="status-pill st-absent">⚠️ غائب</span>`;
                 else if (docSelectedDayOffset === 0 && t.ticket_number === docScheduleCurrentNum) badge = `<span class="status-pill st-inside">📢 بالداخل الآن</span>`;
+                else if (docSelectedDayOffset === 0 && t.ticket_number < docScheduleCurrentNum) badge = `<span class="status-pill st-completed">✔️ تم الكشف</span>`;
 
                 return `
                     <tr>
@@ -970,7 +957,6 @@
             await fetchStatus();
             await fetchStats();
             await fetchDocScheduleTickets();
-            loadDoctorOffDays();
         };
 
         function displayPatientState(pName, ticketStatus) {
