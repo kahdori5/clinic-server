@@ -84,12 +84,7 @@ const initDB = async () => {
             try { await db.query(q); } catch (e) {}
         }
 
-        await db.query(`CREATE INDEX IF NOT EXISTS idx_clinics_slug ON clinics(slug);`);
-        await db.query(`CREATE INDEX IF NOT EXISTS idx_clinics_parent ON clinics(parent_id);`);
-        await db.query(`CREATE INDEX IF NOT EXISTS idx_queues_clinic_date ON queues(clinic_id, queue_date);`);
-        await db.query(`CREATE INDEX IF NOT EXISTS idx_records_slug ON patient_records(clinic_slug);`);
-
-        console.log("🚀 قاعدة البيانات جاهزة مع تفعيل عطلة الجمعة التلقائية وإدارة غياب الطبيب!");
+        console.log("🚀 قاعدة البيانات مهيأة بالكامل وجاهزة!");
     } catch (e) {
         console.error("❌ خطأ في تهيئة قاعدة البيانات:", e.message);
     }
@@ -107,9 +102,8 @@ app.get('/api/doctor/auth-status/:slug', async (req, res) => {
         `, [req.params.slug]);
         if (clinic.rows.length === 0) return res.status(404).json({ error: 'deleted' });
         const row = clinic.rows[0];
-        const hasPassword = Boolean(row.password && row.password.length > 0);
         res.json({
-            hasPassword,
+            hasPassword: Boolean(row.password && row.password.length > 0),
             specialty: row.specialty || 'طب عام',
             doctor_phone: row.phone || row.parent_phone || '',
             doctor_email: row.email || row.parent_email || '',
@@ -137,15 +131,7 @@ app.post('/api/doctor/set-password', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.post('/api/doctor/set-specialty', async (req, res) => {
-    try {
-        const { clinic_slug, specialty } = req.body;
-        await db.query('UPDATE clinics SET specialty = $1 WHERE slug = $2', [specialty || 'طب عام', clinic_slug]);
-        res.json({ message: 'تم تحديث الاختصاص الطبي بنجاح' });
-    } catch (err) { res.status(500).json({ error: err.message }); }
-});
-
-// مسارات إدارة أيام عطل وغياب الطبيب الشخصية
+// إدارة أيام الغياب الشخصية للطبيب
 app.get('/api/doctor/off-days/:slug', async (req, res) => {
     try {
         const clinic = await db.query('SELECT id FROM clinics WHERE slug = $1', [req.params.slug]);
@@ -164,26 +150,23 @@ app.post('/api/doctor/toggle-off-day', async (req, res) => {
 
         const d = new Date(off_date);
         if (d.getDay() === 5) {
-            return res.status(400).json({ error: 'يوم الجمعة عطلة رسمية أساسية لجميع الأطباء ولا يحتاج لتسجيله يدوياً.' });
+            return res.status(400).json({ error: 'يوم الجمعة عطلة رسمية أساسية ولا يحتاج لتسجيله يدوياً.' });
         }
 
         const existing = await db.query('SELECT id FROM doctor_off_days WHERE clinic_id = $1 AND off_date = $2::date', [clinicId, off_date]);
         if (existing.rows.length > 0) {
             await db.query('DELETE FROM doctor_off_days WHERE id = $1', [existing.rows[0].id]);
-            res.json({ status: 'removed', message: '✔️ تم إلغاء عطلة الغياب وإعادة تفعيل الحجز في هذا التاريخ' });
+            res.json({ status: 'removed', message: '✔️ تم إلغاء عطلة الغياب وإعادة تفعيل العمل في هذا التاريخ' });
         } else {
             await db.query('INSERT INTO doctor_off_days (clinic_id, off_date) VALUES ($1, $2::date)', [clinicId, off_date]);
-            res.json({ status: 'added', message: '✔️ تم تسجيل هذا التاريخ كعطلة/غياب للطبيب' });
+            res.json({ status: 'added', message: '✔️ تم تسجيل هذا التاريخ كعطلة للطبيب' });
         }
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// دالة فحص ما إذا كان اليوم عطلة (يوم الجمعة التلقائي أو يوم غياب معلن للطبيب)
 async function isDayOff(clinicId, dateStr) {
     const d = new Date(dateStr);
-    // 5 يوافق يوم الجمعة (0 الأحد، ... 5 الجمعة)
-    if (d.getDay() === 5) return true;
-
+    if (d.getDay() === 5) return true; // الجمعة عطلة تلقائية لكل الأطباء والعيادات
     const checkOff = await db.query('SELECT id FROM doctor_off_days WHERE clinic_id = $1 AND off_date = $2::date', [clinicId, dateStr]);
     return checkOff.rows.length > 0;
 }
@@ -218,15 +201,11 @@ app.post('/api/queue/set-max-tickets', async (req, res) => {
         }
 
         io.emit('queue_status_changed', { clinic_slug, max_tickets: parsedLimit });
-        res.json({
-            message: apply_to_all_week
-                ? (parsedLimit > 0 ? `تم تحديد العدد الأقصى بـ ${parsedLimit} تذكرة يومياً طوال الأسبوع` : 'تم جعل عدد التذاكر غير محدود طوال الأسبوع')
-                : (parsedLimit > 0 ? `تم تحديد العدد الأقصى لهذا اليوم بـ ${parsedLimit} تذكرة` : 'تم جعل عدد التذاكر لهذا اليوم غير محدود'),
-            max_tickets: parsedLimit
-        });
+        res.json({ message: 'تم تحديث الحد الأقصى للتذاكر بنجاح', max_tickets: parsedLimit });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// إصلاح مشكلة ظهور الأطباء في الدليل الجماعي
 app.get('/api/directory/doctors', async (req, res) => {
     try {
         const clinicsRes = await db.query(`
