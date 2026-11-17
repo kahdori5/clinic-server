@@ -139,7 +139,7 @@ app.post('/api/doctor/set-specialty', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// مسار جديد للطبيب ومكتب الاستقبال: تحديد العدد الأقصى للتذاكر طوال الأسبوع أو ليوم محدد
+// تحديد العدد الأقصى للتذاكر طوال الأسبوع أو ليوم محدد
 app.post('/api/queue/set-max-tickets', async (req, res) => {
     try {
         const { clinic_slug, max_tickets, apply_to_all_week, booking_date } = req.body;
@@ -231,7 +231,7 @@ app.get('/api/directory/doctors', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// معاينة الطابور والرقم المتوقع لمدة أسبوع كامل (7 أيام) مع فحص الحد الأقصى للتذاكر
+// معاينة الطابور والرقم المتوقع مع حظر يوم الجمعة
 app.get('/api/directory/preview/:clinic_slug', async (req, res) => {
     try {
         const { date } = req.query;
@@ -242,12 +242,25 @@ app.get('/api/directory/preview/:clinic_slug', async (req, res) => {
         const defaultMax = parseInt(cRow.max_daily_tickets || 0);
 
         const targetDateRes = date
-            ? await db.query('SELECT ($1::date) as d, CURRENT_DATE as today, (CURRENT_DATE + INTERVAL \'7 days\')::date as max_d', [date])
-            : await db.query('SELECT CURRENT_DATE as d, CURRENT_DATE as today, (CURRENT_DATE + INTERVAL \'7 days\')::date as max_d');
+            ? await db.query('SELECT ($1::date) as d, EXTRACT(DOW FROM $1::date) as dow, CURRENT_DATE as today, (CURRENT_DATE + INTERVAL \'7 days\')::date as max_d', [date])
+            : await db.query('SELECT CURRENT_DATE as d, EXTRACT(DOW FROM CURRENT_DATE) as dow, CURRENT_DATE as today, (CURRENT_DATE + INTERVAL \'7 days\')::date as max_d');
 
-        const { d, today, max_d } = targetDateRes.rows[0];
+        const { d, dow, today, max_d } = targetDateRes.rows[0];
         if (new Date(d) < new Date(today) || new Date(d) > new Date(max_d)) {
             return res.status(400).json({ error: 'يمكن الحجز فقط خلال أسبوع كامل (7 أيام كحد أقصى)' });
+        }
+
+        // يوم الجمعة (رقم 5 في الأسبوع) عطلة رسمية لا يوجد فيها عمل
+        if (parseInt(dow) === 5) {
+            return res.json({
+                current_number: 0,
+                prospective_number: 0,
+                status: 'friday_off',
+                doctor_name: cRow.name,
+                specialty: cRow.specialty || 'طب عام',
+                max_tickets: defaultMax,
+                is_full: true
+            });
         }
 
         const q = await db.query('SELECT id, current_number, last_issued_number, status, max_tickets FROM queues WHERE clinic_id = $1 AND queue_date = $2::date', [cRow.id, d]);
@@ -285,7 +298,7 @@ app.get('/api/directory/preview/:clinic_slug', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// جلب لائحة المرضى المسجلين لأي يوم من أيام الأسبوع السبعة مع بيانات الحد الأقصى
+// جلب لائحة المرضى المسجلين لأي يوم من أيام الأسبوع مع بيانات الحد الأقصى
 app.get('/api/reception/tickets/:clinic_slug', async (req, res) => {
     try {
         const { date } = req.query;
@@ -392,7 +405,7 @@ app.post('/api/clinics', async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'الرابط مستخدم مسبقاً.' }); }
 });
 
-// إصدار التذاكر مع التحقق من العدد الأقصى المسموح به للتذاكر في ذلك اليوم
+// إصدار التذاكر مع منع الحجز يوم الجمعة والتحقق من العدد الأقصى
 app.post('/api/tickets', async (req, res) => {
     try {
         const { clinic_slug, patient_name, booking_date } = req.body;
@@ -409,11 +422,12 @@ app.post('/api/tickets', async (req, res) => {
             return res.status(403).json({ error: 'اشتراك العيادة منتهي.' });
         }
 
-        let targetDateQuery = await db.query(`SELECT CURRENT_DATE::text as target_date`);
+        let targetDateQuery = await db.query(`SELECT CURRENT_DATE::text as target_date, EXTRACT(DOW FROM CURRENT_DATE) as dow`);
         if (booking_date) {
             const checkDate = await db.query(`
                 SELECT ($1::date >= CURRENT_DATE AND $1::date <= (CURRENT_DATE + INTERVAL '7 days')::date) as is_valid,
-                       ($1::date)::text as target_date
+                       ($1::date)::text as target_date,
+                       EXTRACT(DOW FROM $1::date) as dow
             `, [booking_date]);
             if (!checkDate.rows[0].is_valid) {
                 return res.status(400).json({ error: 'يمكن التسجيل والحجز في حدود أسبوع كامل (7 أيام) كحد أقصى.' });
@@ -421,6 +435,12 @@ app.post('/api/tickets', async (req, res) => {
             targetDateQuery = checkDate;
         }
         const targetDate = targetDateQuery.rows[0].target_date;
+        const targetDow = parseInt(targetDateQuery.rows[0].dow);
+
+        // منع قطع التذاكر يوم الجمعة نهائياً
+        if (targetDow === 5) {
+            return res.status(400).json({ error: 'يوم الجمعة عطلة أسبوعية، لا يوجد عمل أو حجوزات يوم الجمعة.' });
+        }
 
         const clinicId = cRow.id;
         let queue = await db.query('SELECT * FROM queues WHERE clinic_id = $1 AND queue_date = $2::date', [clinicId, targetDate]);

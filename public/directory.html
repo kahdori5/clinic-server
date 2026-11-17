@@ -97,7 +97,7 @@
     <div class="container">
         <div class="hero">
             <h1 data-i18n="dirTitle">الدليل الطبي الشامل وحجز المواعيد الأسبوعي</h1>
-            <p data-i18n="dirSub">اختر التخصص الطبي أو ابحث باسم الطبيب أو العنوان واحجز دورك طوال الأسبوع الكامل (7 أيام)</p>
+            <p data-i18n="dirSub">اختر التخصص الطبي أو ابحث باسم الطبيب أو العنوان واحجز دورك طوال أيام العمل في الأسبوع</p>
         </div>
 
         <div class="search-box">
@@ -111,7 +111,6 @@
         <div class="doctors-grid" id="doctorsGrid"></div>
     </div>
 
-    <!-- نافذة الطبيب المختار: كود QR الخاص بالطبيب + الحجز طوال 7 أيام -->
     <div class="modal-overlay" id="doctorBookingModal">
         <div class="modal-card">
             <button class="close-btn" onclick="closeDoctorModal()">✕</button>
@@ -124,7 +123,7 @@
             </div>
             <p style="margin: 0 0 12px; font-size: 0.82rem; color: var(--muted); font-weight: bold;">كود QR الخاص بالطبيب (للمسح أو الحجز المباشر بالأسفل)</p>
 
-            <div style="text-align: start; font-weight: 800; font-size: 0.92rem; margin-bottom: 6px; color: var(--text);">📅 اختر يوم الحجز (متاح طوال الأسبوع الكامل - 7 أيام):</div>
+            <div style="text-align: start; font-weight: 800; font-size: 0.92rem; margin-bottom: 6px; color: var(--text);">📅 اختر يوم الحجز (أيام العمل — الجمعة عطلة):</div>
             <div class="date-selector" id="dateSelector"></div>
 
             <div class="preview-numbers">
@@ -186,7 +185,7 @@
         let selectedSpecialty = 'ALL';
         let activeDoctor = null;
         let selectedDateStr = '';
-        let selectedDateIndex = 0;
+        let selectedDateIndex = new Date().getDay() === 5 ? 1 : 0;
         let currentLang = localStorage.getItem('dir_lang') || 'ar';
 
         function getFormattedDateOffset(daysOffset) {
@@ -197,7 +196,8 @@
             const dd = String(d.getDate()).padStart(2, '0');
             return {
                 dateStr: `${yyyy}-${mm}-${dd}`,
-                dayName: daysAr[d.getDay()]
+                dayName: daysAr[d.getDay()],
+                dayIndex: d.getDay()
             };
         }
 
@@ -298,7 +298,7 @@
                             </div>
                         </div>
                         ${limitHtml}
-                        <button class="btn-select">📲 عرض QR الطبيب والحجز (7 أيام)</button>
+                        <button class="btn-select">📲 عرض QR الطبيب والحجز الأسبوعي</button>
                     </div>
                 </div>
                 `;
@@ -322,16 +322,19 @@
             document.getElementById('bookingFormArea').style.display = 'block';
             document.getElementById('patientNameInput').value = '';
 
-            selectedDateIndex = 0;
-            selectedDateStr = getFormattedDateOffset(0).dateStr;
+            const workingOffsets = [0, 1, 2, 3, 4, 5, 6].filter(offset => getFormattedDateOffset(offset).dayIndex !== 5);
+            selectedDateIndex = workingOffsets[0];
+            selectedDateStr = getFormattedDateOffset(selectedDateIndex).dateStr;
             renderDateButtons();
             document.getElementById('doctorBookingModal').style.display = 'flex';
             await fetchDatePreview();
         }
 
+        // استبعاد يوم الجمعة (dayIndex === 5) نهائياً من أزرار الحجز
         function renderDateButtons() {
             const container = document.getElementById('dateSelector');
-            container.innerHTML = [0, 1, 2, 3, 4, 5, 6].map(offset => {
+            const workingOffsets = [0, 1, 2, 3, 4, 5, 6].filter(offset => getFormattedDateOffset(offset).dayIndex !== 5);
+            container.innerHTML = workingOffsets.map(offset => {
                 const info = getFormattedDateOffset(offset);
                 let dayTitle = info.dayName;
                 if (offset === 0) dayTitle = `اليوم (${info.dayName})`;
@@ -375,7 +378,11 @@
                 }
 
                 const btn = document.getElementById('confirmBookBtn');
-                if (data.status === 'paused') {
+                if (data.status === 'friday_off') {
+                    btn.disabled = true;
+                    btn.innerText = '🏖️ يوم الجمعة عطلة أسبوعية';
+                    btn.style.background = 'var(--danger)';
+                } else if (data.status === 'paused') {
                     btn.disabled = true;
                     btn.innerText = '⏸️ استقبال التذاكر متوقف مؤقتاً لهذا اليوم';
                     btn.style.background = 'var(--warning)';
@@ -420,7 +427,6 @@
                     date: cleanDate
                 });
 
-                // حفظ مزدوج للتذكرة والتاريخ في LocalStorage و Cookies لمدة 7 أيام لضمان عدم ضياعها عند إغلاق المتصفح
                 localStorage.setItem(`cf_ticket_obj_${activeDoctor.slug}`, payload);
                 localStorage.setItem(`ticket_${activeDoctor.slug}`, String(data.ticket_number));
                 localStorage.setItem(`name_${activeDoctor.slug}`, pName);

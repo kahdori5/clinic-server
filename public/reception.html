@@ -503,7 +503,7 @@
                 <h3 class="section-title" data-i18n="selectDocHeader">👨‍⚕️ 1. اختر الطبيب لتسجيل المرضى أو عرض لائحته:</h3>
                 <div class="doctors-grid" id="receptionDoctorsGrid"></div>
 
-                <!-- 2. اختيار اليوم من الأسبوع الكامل (7 أيام) -->
+                <!-- 2. اختيار اليوم من الأسبوع (مع استبعاد يوم الجمعة) -->
                 <h3 class="section-title" data-i18n="selectDayHeader">📅 2. اختر يوم التسجيل أو العرض (متاح طوال 7 أيام):</h3>
                 <div class="week-selector-bar" id="weekSelectorBar"></div>
 
@@ -757,7 +757,11 @@
 
         function renderWeekSelector() {
             const bar = document.getElementById('weekSelectorBar');
-            bar.innerHTML = [0, 1, 2, 3, 4, 5, 6].map(offset => {
+            const workingOffsets = [0, 1, 2, 3, 4, 5, 6].filter(offset => getFormattedDateOffset(offset).dayIndex !== 5);
+            if (!workingOffsets.includes(selectedDayOffset)) {
+                selectedDayOffset = workingOffsets[0];
+            }
+            bar.innerHTML = workingOffsets.map(offset => {
                 const info = getFormattedDateOffset(offset);
                 const label = getDayLabel(offset);
                 const isActive = selectedDayOffset === offset ? 'active' : '';

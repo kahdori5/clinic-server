@@ -112,7 +112,6 @@
             font-weight: 700;
         }
 
-        /* أزرار اختيار اللغة */
         .lang-grid {
             display: flex;
             flex-direction: column;
@@ -140,7 +139,6 @@
             transform: translateY(-2px);
         }
 
-        /* اختيار الطبيب إذا كان الرابط للعيادة الرئيسية */
         .doctors-choice-list {
             display: flex;
             flex-direction: column;
@@ -166,7 +164,6 @@
             background: rgba(16, 185, 129, 0.1);
         }
 
-        /* شريط اختيار أيام الأسبوع الـ 7 */
         .week-days-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(98px, 1fr));
@@ -197,7 +194,6 @@
             margin-top: 2px;
         }
 
-        /* صناديق الأرقام */
         .numbers-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -265,7 +261,6 @@
         .btn-danger { background: var(--danger) !important; }
         .btn-blue { background: var(--blue) !important; }
 
-        /* تنبيهات اقتراب الدور (عندما يتبقى 2 أو 3 مرضى) */
         .proximity-alert {
             display: none;
             padding: 16px;
@@ -326,7 +321,7 @@
             <p style="color: var(--muted); font-weight: bold;" data-i18n="deletedDesc">يرجى مراجعة إدارة العيادة أو مسح الكود المحدث.</p>
         </div>
 
-        <!-- المرحلة 1: اختيار اللغة (تظهر فقط للمريض الجديد الذي لا يملك تذكرة محفوظة) -->
+        <!-- المرحلة 1: اختيار اللغة -->
         <div class="card" id="stepLang" style="display: none;">
             <div class="clinic-badge" id="langStepSpecialty">🩺 العيادة الطبية</div>
             <h2 class="clinic-title" id="langStepTitle">مرحباً بك في نظام الحجز الذكي</h2>
@@ -348,23 +343,20 @@
             </div>
         </div>
 
-        <!-- المرحلة 2: معاينة الرقم المتوقع والحجز (قبل قطع التذكرة) -->
+        <!-- المرحلة 2: معاينة الرقم المتوقع والحجز (أيام العمل فقط بدون يوم الجمعة) -->
         <div class="card" id="stepBooking" style="display: none;">
             <div class="clinic-badge" id="bookSpecialtyBadge">🩺 طب عام</div>
             <h2 class="clinic-title" id="bookDoctorTitle">--</h2>
             <p class="clinic-address" id="bookClinicAddress"></p>
 
-            <!-- يظهر فقط إذا مسح المريض كود العيادة الرئيسية التي تضم عدة أطباء -->
             <div id="multiDoctorsSection" style="display: none;">
                 <div style="text-align: start; font-weight: 800; font-size: 0.9rem; margin-bottom: 8px; color: var(--muted);" data-i18n="chooseDocPrompt">👨‍⚕️ اختر الطبيب:</div>
                 <div class="doctors-choice-list" id="doctorsChoiceContainer"></div>
             </div>
 
-            <!-- اختيار يوم الحجز خلال الأسبوع الكامل (7 أيام) -->
-            <div style="text-align: start; font-weight: 800; font-size: 0.9rem; margin-bottom: 6px; color: var(--muted);" data-i18n="chooseDayPrompt">📅 اختر يوم الموعد (متاح طوال 7 أيام):</div>
+            <div style="text-align: start; font-weight: 800; font-size: 0.9rem; margin-bottom: 6px; color: var(--muted);" data-i18n="chooseDayPrompt">📅 اختر يوم الموعد (أيام العمل — الجمعة عطلة):</div>
             <div class="week-days-grid" id="patientWeekGrid"></div>
 
-            <!-- عرض الرقم الحالي والرقم المتوقع قبل التسجيل -->
             <div class="numbers-grid">
                 <div class="num-card">
                     <span data-i18n="lblCurrentActive">الرقم الحالي بالعيادة</span>
@@ -382,7 +374,7 @@
             <button class="btn-main" id="btnCutTicket" onclick="submitPatientBooking()" data-i18n="btnCutTicket">🎟️ احجز تذكرتك الآن</button>
         </div>
 
-        <!-- المرحلة 3: شاشة التذكرة المحجوزة والمتابعة الحية (تفتح تلقائياً حتى بعد إغلاق المتصفح وإعادة فتحه) -->
+        <!-- المرحلة 3: شاشة التذكرة المحجوزة والمتابعة الحية -->
         <div class="card" id="stepTicketView" style="display: none;">
             <div class="clinic-badge" id="ticketSpecialtyBadge">🩺 طب عام</div>
             <h2 class="clinic-title" id="ticketDoctorTitle">--</h2>
@@ -395,7 +387,6 @@
                 <div style="font-weight: 700; color: var(--muted); font-size: 0.9rem; margin-top: 4px;" id="myDateDisplay">📅 --</div>
             </div>
 
-            <!-- إشعار اقتراب الدور (عندما يتبقى 2 أو 3 مرضى) -->
             <div id="proximityAlertBanner" class="proximity-alert"></div>
 
             <div class="numbers-grid">
@@ -430,7 +421,7 @@
 
         let activeDocSlug = INITIAL_CLINIC_SLUG;
         let clinicDoctorsList = [];
-        let selectedDayOffset = 0;
+        let selectedDayOffset = new Date().getDay() === 5 ? 1 : 0;
         let selectedDateStr = '';
         let currentLang = localStorage.getItem('patient_lang') || 'ar';
         let activeTicketData = null;
@@ -447,7 +438,7 @@
                 deletedTitle: "هذا الرابط متوقف حالياً",
                 deletedDesc: "يرجى مراجعة إدارة العيادة أو مسح الكود المحدث.",
                 chooseDocPrompt: "👨‍⚕️ اختر الطبيب:",
-                chooseDayPrompt: "📅 اختر يوم الموعد (متاح طوال 7 أيام):",
+                chooseDayPrompt: "📅 اختر يوم الموعد (أيام العمل — الجمعة عطلة):",
                 dayToday: "اليوم",
                 dayTomorrow: "غداً",
                 lblCurrentActive: "الرقم الحالي بالعيادة",
@@ -471,7 +462,7 @@
                 deletedTitle: "Ce lien est désactivé",
                 deletedDesc: "Veuillez contacter la réception de la clinique.",
                 chooseDocPrompt: "👨‍⚕️ Choisissez le médecin :",
-                chooseDayPrompt: "📅 Choisissez le jour du rendez-vous (7 jours) :",
+                chooseDayPrompt: "📅 Choisissez le jour du rendez-vous (Vendredi férié) :",
                 dayToday: "Aujourd'hui",
                 dayTomorrow: "Demain",
                 lblCurrentActive: "Numéro Actuel",
@@ -495,7 +486,7 @@
                 deletedTitle: "This Link is Inactive",
                 deletedDesc: "Please check with the clinic reception.",
                 chooseDocPrompt: "👨‍⚕️ Select Doctor:",
-                chooseDayPrompt: "📅 Select Appointment Day (7 Days):",
+                chooseDayPrompt: "📅 Select Appointment Day (Friday is off):",
                 dayToday: "Today",
                 dayTomorrow: "Tomorrow",
                 lblCurrentActive: "Current Active Number",
@@ -517,7 +508,6 @@
             }
         };
 
-        // دالة موحدة للحصول على التاريخ المحلي بصيغة YYYY-MM-DD مطابقة تماماً للخادم
         function getFormattedDateOffset(daysOffset = 0) {
             const d = new Date();
             d.setDate(d.getDate() + daysOffset);
@@ -530,7 +520,6 @@
             };
         }
 
-        // دوال الحفظ المزدوج (LocalStorage + Cookies لمدة 7 أيام) لضمان عدم ضياع التذكرة عند إغلاق المتصفح
         function setCookieBackup(name, val, days = 7) {
             const d = new Date();
             d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
@@ -557,7 +546,6 @@
             };
             const jsonStr = JSON.stringify(payload);
 
-            // حفظ تحت معرّف الطبيب ومعرّف العيادة الأصلي وفي الكوكيز
             localStorage.setItem(`cf_ticket_obj_${docSlug}`, jsonStr);
             localStorage.setItem(`cf_ticket_obj_${INITIAL_CLINIC_SLUG}`, jsonStr);
             localStorage.setItem(`ticket_${docSlug}`, String(ticketNumber));
@@ -571,7 +559,6 @@
         function loadPatientTicketFromStorage(slugToCheck) {
             const todayStr = getFormattedDateOffset(0).dateStr;
 
-            // 1. محاولة القراءة من الكائن الموحد في LocalStorage أو Cookies
             const rawJson = localStorage.getItem(`cf_ticket_obj_${slugToCheck}`)
                 || localStorage.getItem(`cf_ticket_obj_${INITIAL_CLINIC_SLUG}`)
                 || getCookieBackup(`cf_ticket_${slugToCheck}`)
@@ -592,7 +579,6 @@
                 } catch (e) {}
             }
 
-            // 2. التوافق مع المفاتيح الفردية (في حال حجز من الدليل العام directory.html)
             const legacyTicket = localStorage.getItem(`ticket_${slugToCheck}`);
             const legacyName = localStorage.getItem(`name_${slugToCheck}`) || 'مريض';
             const legacyDate = String(localStorage.getItem(`date_${slugToCheck}`) || todayStr).slice(0, 10);
@@ -665,10 +651,17 @@
             }
         }
 
+        // استبعاد يوم الجمعة (dayIndex === 5) نهائياً من أزرار الحجز
         function renderPatientWeekButtons() {
             const grid = document.getElementById('patientWeekGrid');
             if (!grid) return;
-            grid.innerHTML = [0, 1, 2, 3, 4, 5, 6].map(offset => {
+
+            const workingOffsets = [0, 1, 2, 3, 4, 5, 6].filter(offset => getFormattedDateOffset(offset).dayIndex !== 5);
+            if (!workingOffsets.includes(selectedDayOffset)) {
+                selectedDayOffset = workingOffsets[0];
+            }
+
+            grid.innerHTML = workingOffsets.map(offset => {
                 const info = getFormattedDateOffset(offset);
                 let label = daysNames[currentLang][info.dayIndex];
                 if (offset === 0) label = `${dict[currentLang].dayToday} (${label})`;
@@ -710,12 +703,10 @@
             }
         }
 
-        // فحص قائمة أطباء العيادة واسترجاع تذكرة المريض المحفوظة فور فتح المتصفح
         async function initPatientPortal() {
             if (localStorage.getItem('theme') === 'dark') {
                 document.body.setAttribute('data-theme', 'dark');
             }
-            selectedDateStr = getFormattedDateOffset(0).dateStr;
             applyTranslations();
 
             try {
@@ -723,7 +714,6 @@
                 clinicDoctorsList = await docsRes.json();
 
                 if (clinicDoctorsList.length > 0) {
-                    // التحقق مما إذا كان للمريض تذكرة محفوظة عند أي طبيب في العيادة
                     for (const d of clinicDoctorsList) {
                         const found = loadPatientTicketFromStorage(d.slug);
                         if (found) {
@@ -744,7 +734,6 @@
 
             renderMultiDoctorsList();
 
-            // إذا وُجدت تذكرة محفوظة للمريض، نتحقق منها مع الخادم ونعرضها فوراً دون إجباره على التسجيل من جديد
             if (activeTicketData) {
                 showTicketTrackingStep();
                 await refreshLiveTicketTracking();
@@ -900,7 +889,6 @@
             const targetDocSlug = activeTicketData.docSlug || activeDocSlug;
 
             try {
-                // جلب بيانات الطبيب والعيادة
                 const statusRes = await fetch(`${API_BASE}/api/queue-status/${targetDocSlug}?my_ticket=${activeTicketData.ticket}`);
                 if (statusRes.status === 404) {
                     document.getElementById('stepTicketView').style.display = 'none';
@@ -915,13 +903,11 @@
                     ? `🏥 ${statusData.clinic_name} — 📍 ${statusData.clinic_address}`
                     : `🏥 ${statusData.clinic_name || ''}`;
 
-                // التحقق من حالة التذكرة في اليوم المحجوز (سواء اليوم أو يوم قادم في الأسبوع)
                 const queueRes = await fetch(`${API_BASE}/api/reception/tickets/${targetDocSlug}?date=${activeTicketData.date}`);
                 if (queueRes.ok) {
                     const queueData = await queueRes.json();
                     const foundTicket = (queueData.tickets || []).find(t => parseInt(t.ticket_number) === parseInt(activeTicketData.ticket));
 
-                    // إذا لم تكن التذكرة موجودة في قاعدة البيانات أو تم إلغاؤها، نعيد فتح شاشة التسجيل
                     if (!foundTicket || foundTicket.status === 'cancelled') {
                         clearPatientTicketStorage(targetDocSlug);
                         document.getElementById('stepTicketView').style.display = 'none';
@@ -935,7 +921,6 @@
                 const cancelBtn = document.getElementById('btnCancelMyTicket');
                 const bookAnotherBtn = document.getElementById('btnBookAnotherTicket');
 
-                // إذا كان الحجز ليوم قادم في الأسبوع
                 if (activeTicketData.date > todayStr) {
                     const prevRes = await fetch(`${API_BASE}/api/directory/preview/${targetDocSlug}?date=${activeTicketData.date}`);
                     const prevData = prevRes.ok ? await prevRes.json() : { current_number: 0 };
@@ -950,7 +935,6 @@
                     return;
                 }
 
-                // إذا كان الحجز لليوم الحالي
                 const currentNum = statusData.current_number || 0;
                 const aheadCount = statusData.ahead_count || 0;
                 document.getElementById('liveCurrentActive').innerText = currentNum === 0 ? '--' : currentNum;
