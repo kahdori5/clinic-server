@@ -208,6 +208,17 @@
         }
         .mini-pill.curr strong { color: var(--blue); }
 
+        .presence-chip {
+            display: inline-block;
+            margin-top: 8px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 800;
+        }
+        .presence-in { background: rgba(16, 185, 129, 0.16); color: var(--accent); }
+        .presence-out { background: rgba(245, 158, 11, 0.16); color: var(--warning); }
+
         .week-selector-bar {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(125px, 1fr));
@@ -276,7 +287,7 @@
             gap: 10px;
         }
 
-        input[type="text"], input[type="number"] {
+        input[type="text"], input[type="number"], input[type="time"] {
             width: 100%;
             padding: 15px;
             border-radius: 14px;
@@ -289,7 +300,7 @@
             outline: none;
             transition: 0.25s;
         }
-        input[type="text"]:focus, input[type="number"]:focus { border-color: var(--accent); }
+        input[type="text"]:focus, input[type="number"]:focus, input[type="time"]:focus { border-color: var(--accent); }
 
         .btn {
             width: 100%;
@@ -352,7 +363,6 @@
         }
         .counter-box.highlight strong { color: var(--accent); }
 
-        /* صندوق تحديد العدد الأقصى للتذاكر في الاستقبال */
         .max-limit-box {
             background: var(--bg);
             border: 2px dashed var(--accent);
@@ -380,6 +390,54 @@
             margin-bottom: 0;
             padding: 11px 12px;
             font-size: 0.88rem;
+        }
+
+        .hours-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .hours-grid label {
+            display: block;
+            font-size: 0.82rem;
+            font-weight: 800;
+            color: var(--muted);
+            margin-bottom: 5px;
+        }
+        .hours-grid input[type="time"] {
+            margin-bottom: 0;
+            padding: 10px;
+            text-align: center;
+            font-weight: 800;
+        }
+
+        .presence-control-box {
+            background: var(--bg);
+            border: 2px solid var(--border);
+            border-radius: 18px;
+            padding: 16px;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+        .presence-control-box.present {
+            border-color: var(--accent);
+            background: rgba(16, 185, 129, 0.08);
+        }
+        .presence-control-box.absent {
+            border-color: var(--warning);
+            background: rgba(245, 158, 11, 0.08);
+        }
+        .presence-caption {
+            font-size: 0.82rem;
+            font-weight: 800;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+        .presence-status-text {
+            font-size: 1.05rem;
+            font-weight: 800;
+            margin-bottom: 10px;
         }
 
         .last-ticket-receipt {
@@ -478,14 +536,14 @@
 
             <div>
                 <button id="installAppBtn" onclick="installReceptionApp()" data-i18n="btnInstallRec">💻 تثبيت تطبيق الاستقبال</button>
-                <div style="padding: 10px 20px 20px; text-align: center; color: var(--muted); font-size: 0.8rem;">Reception Desk App v4.4</div>
+                <div style="padding: 10px 20px 20px; text-align: center; color: var(--muted); font-size: 0.8rem;">Reception Desk App v4.6</div>
             </div>
         </div>
 
         <div class="main-content">
             <header>
                 <div style="font-weight: 800; font-size: 1.3rem; display: flex; align-items: center; gap: 10px;">
-                    🖥️ <span data-i18n="recHeaderTitle">مكتب الاستقبال وتسجيل المرضى (7 أيام)</span>
+                    🖥️ <span data-i18n="recHeaderTitle">مكتب الاستقبال وتسجيل المرضى</span>
                 </div>
                 <div class="controls">
                     <select id="langSelect" onchange="changeLang(this.value)">
@@ -500,14 +558,14 @@
             <div class="content-scroll">
 
                 <!-- 1. اختيار الطبيب داخل العيادة -->
-                <h3 class="section-title" data-i18n="selectDocHeader">👨‍⚕️ 1. اختر الطبيب لتسجيل المرضى أو عرض لائحته:</h3>
+                <h3 class="section-title" data-i18n="selectDocHeader">👨‍⚕️ 1. اختر الطبيب لتسجيل المرضى أو تحديث حضوره:</h3>
                 <div class="doctors-grid" id="receptionDoctorsGrid"></div>
 
-                <!-- 2. اختيار اليوم من الأسبوع (مع استبعاد يوم الجمعة) -->
-                <h3 class="section-title" data-i18n="selectDayHeader">📅 2. اختر يوم التسجيل أو العرض (متاح طوال 7 أيام):</h3>
+                <!-- 2. اختيار اليوم من أيام العمل (بدون يوم الجمعة) -->
+                <h3 class="section-title" data-i18n="selectDayHeader">📅 2. اختر يوم التسجيل أو العرض (الجمعة عطلة):</h3>
                 <div class="week-selector-bar" id="weekSelectorBar"></div>
 
-                <!-- 3. منطقة قطع التذكرة ومراقبة الطابور + تحديد العدد الأقصى للتذاكر -->
+                <!-- 3. منطقة قطع التذكرة ومراقبة الطابور + حضور الطبيب + أوقات العمل + الحد الأقصى -->
                 <div class="reception-workspace">
                     <div class="panel-card">
                         <h3 id="issueCardHeader">🎟️ تسجيل مريض وقطع تذكرة</h3>
@@ -527,10 +585,39 @@
                             <div style="font-weight: 700; color: var(--muted); margin: 6px 0 12px;" id="lastTicketPatient">--</div>
                             <button class="btn btn-warning" style="margin-bottom:0; padding:10px;" onclick="printLastTicket()" data-i18n="btnReprint">🖨️ إعادة طباعة التذكرة</button>
                         </div>
+
+                        <!-- تعديل أوقات فتح وغلق العيادة -->
+                        <div class="max-limit-box" style="margin-top: 20px;">
+                            <h4>
+                                <span data-i18n="hoursTitle">🕒 أوقات فتح وغلق العيادة:</span>
+                                <span id="recHoursBadge" style="color:var(--text);">08:00 - 16:00</span>
+                            </h4>
+                            <div class="hours-grid">
+                                <div>
+                                    <label data-i18n="lblOpenTime">وقت الفتح:</label>
+                                    <input type="time" id="recOpenTime" value="08:00">
+                                </div>
+                                <div>
+                                    <label data-i18n="lblCloseTime">وقت الغلق:</label>
+                                    <input type="time" id="recCloseTime" value="16:00">
+                                </div>
+                            </div>
+                            <button class="btn btn-blue" style="margin-bottom:0; padding:12px;" onclick="saveClinicHours()" data-i18n="btnSaveHours">💾 حفظ وتعديل أوقات العمل</button>
+                        </div>
                     </div>
 
                     <div class="panel-card">
                         <h3 id="queueMonitorHeader">📊 إحصائيات اليوم المختار</h3>
+
+                        <!-- تأكيد حضور الطبيب (لليوم الحالي فقط) -->
+                        <div class="presence-control-box absent" id="presenceControlBox">
+                            <div class="presence-caption" data-i18n="presenceTodayCaption">📅 حالة حضور الطبيب (اليوم فقط)</div>
+                            <div class="presence-status-text" id="presenceStatusText">🟠 الطبيب لم يحضر بعد اليوم</div>
+                            <button class="btn" id="togglePresenceBtn" onclick="toggleDoctorPresence()" style="margin-bottom:0;">
+                                ✅ تأكيد حضور الطبيب الآن
+                            </button>
+                        </div>
+
                         <div class="live-counters">
                             <div class="counter-box">
                                 <span data-i18n="lblCurrentNum">الرقم الحالي بالداخل</span>
@@ -557,7 +644,7 @@
                             </h4>
                             <input type="number" id="recMaxTicketsInput" min="0" placeholder="أدخل العدد الأقصى للتذاكر (0 = مفتوح)" style="margin-bottom:10px; padding:11px; text-align:center; font-weight:800;">
                             <div class="max-limit-actions">
-                                <button class="btn" onclick="saveReceptionMaxTickets(true)">🗓️ تطبيق طوال الأسبوع (7 أيام)</button>
+                                <button class="btn" onclick="saveReceptionMaxTickets(true)">🗓️ تطبيق طوال الأسبوع</button>
                                 <button class="btn btn-blue" onclick="saveReceptionMaxTickets(false)">📅 لهذا اليوم فقط</button>
                             </div>
                         </div>
@@ -613,10 +700,11 @@
         let registeredTicketsList = [];
         let currentActiveNumberOnDate = 0;
 
-        let selectedDayOffset = 0;
+        let selectedDayOffset = new Date().getDay() === 5 ? 1 : 0;
         let selectedDateStr = '';
         let lastPrintedTicket = null;
         let currentQueueStatus = 'active';
+        let currentDoctorPresent = false;
         let currentLang = localStorage.getItem('rec_lang') || 'ar';
 
         document.getElementById('openTvLink').href = `/tv.html?clinic=${encodeURIComponent(MAIN_CLINIC_SLUG)}`;
@@ -634,10 +722,10 @@
                 navList: "📋 لائحة المرضى المسجلين",
                 navOpenTv: "📺 فتح شاشة التلفاز",
                 btnInstallRec: "💻 تثبيت تطبيق الاستقبال",
-                recHeaderTitle: "مكتب الاستقبال وتسجيل المرضى (7 أيام)",
+                recHeaderTitle: "مكتب الاستقبال وتسجيل المرضى",
                 btnTheme: "🌓 الوضع الليلي",
-                selectDocHeader: "👨‍⚕️ 1. اختر الطبيب لتسجيل المرضى أو عرض لائحته:",
-                selectDayHeader: "📅 2. اختر يوم التسجيل أو العرض (متاح طوال 7 أيام):",
+                selectDocHeader: "👨‍⚕️ 1. اختر الطبيب لتسجيل المرضى أو تحديث حضوره:",
+                selectDayHeader: "📅 2. اختر يوم التسجيل أو العرض (الجمعة عطلة):",
                 dayToday: "اليوم",
                 dayTomorrow: "غداً",
                 lblPatientName: "اسم المريض الكامل:",
@@ -645,6 +733,15 @@
                 btnIssueOnly: "➕ تسجيل المريض في اللائحة (بدون طباعة)",
                 lastIssuedTitle: "✔️ تم تسجيل المريض بنجاح",
                 btnReprint: "🖨️ إعادة طباعة التذكرة",
+                hoursTitle: "🕒 أوقات فتح وغلق العيادة:",
+                lblOpenTime: "وقت الفتح:",
+                lblCloseTime: "وقت الغلق:",
+                btnSaveHours: "💾 حفظ وتعديل أوقات العمل",
+                presenceTodayCaption: "📅 حالة حضور الطبيب (اليوم فقط)",
+                docPresentText: "🟢 الطبيب حاضر في العيادة الآن",
+                docAbsentText: "🟠 الطبيب لم يحضر بعد اليوم",
+                btnMarkPresent: "✅ تأكيد حضور الطبيب الآن",
+                btnMarkNotPresent: "↩️ تغيير الحالة إلى: لم يحضر بعد",
                 lblCurrentNum: "الرقم الحالي بالداخل",
                 lblWaitingCount: "المنتظرون في هذا اليوم",
                 lblNextTicket: "الرقم القادم الذي سيُمنح للمريض التالي",
@@ -665,14 +762,14 @@
             },
             fr: {
                 recAppSub: "Application Réception & Tickets",
-                navTickets: "🎟️ Réservation (7 Jours)",
+                navTickets: "🎟️ Réservation Hebdomadaire",
                 navList: "📋 Liste des Patients Inscrits",
                 navOpenTv: "📺 Ouvrir l'écran TV",
                 btnInstallRec: "💻 Installer l'App Réception",
-                recHeaderTitle: "Bureau de Réception (7 Jours)",
+                recHeaderTitle: "Bureau de Réception",
                 btnTheme: "🌓 Mode Sombre",
                 selectDocHeader: "👨‍⚕️ 1. Sélectionnez le médecin :",
-                selectDayHeader: "📅 2. Choisissez le jour (7 jours disponibles) :",
+                selectDayHeader: "📅 2. Choisissez le jour (Vendredi férié) :",
                 dayToday: "Aujourd'hui",
                 dayTomorrow: "Demain",
                 lblPatientName: "Nom complet du patient :",
@@ -680,6 +777,15 @@
                 btnIssueOnly: "➕ Inscrire sans imprimer",
                 lastIssuedTitle: "✔️ Patient inscrit avec succès",
                 btnReprint: "🖨️ Réimprimer le Ticket",
+                hoursTitle: "🕒 Horaires d'ouverture de la clinique :",
+                lblOpenTime: "Ouverture :",
+                lblCloseTime: "Fermeture :",
+                btnSaveHours: "💾 Enregistrer les horaires",
+                presenceTodayCaption: "📅 Présence du médecin (Aujourd'hui)",
+                docPresentText: "🟢 Le médecin est présent maintenant",
+                docAbsentText: "🟠 Le médecin n'est pas encore arrivé aujourd'hui",
+                btnMarkPresent: "✅ Confirmer l'arrivée du médecin",
+                btnMarkNotPresent: "↩️ Marquer comme non arrivé",
                 lblCurrentNum: "Numéro Actuel",
                 lblWaitingCount: "En attente ce jour",
                 lblNextTicket: "Prochain Numéro à attribuer",
@@ -700,14 +806,14 @@
             },
             en: {
                 recAppSub: "Reception & Ticketing App",
-                navTickets: "🎟️ 7-Day Ticketing",
+                navTickets: "🎟️ Weekly Ticketing",
                 navList: "📋 Registered Patients List",
                 navOpenTv: "📺 Open TV Display",
                 btnInstallRec: "💻 Install Reception App",
-                recHeaderTitle: "Reception Desk & 7-Day Booking",
+                recHeaderTitle: "Reception Desk & Booking",
                 btnTheme: "🌓 Dark Mode",
                 selectDocHeader: "👨‍⚕️ 1. Select Doctor:",
-                selectDayHeader: "📅 2. Select Booking Day (Full 7-Day Week):",
+                selectDayHeader: "📅 2. Select Booking Day (Friday is off):",
                 dayToday: "Today",
                 dayTomorrow: "Tomorrow",
                 lblPatientName: "Patient Full Name:",
@@ -715,6 +821,15 @@
                 btnIssueOnly: "➕ Register Patient Without Printing",
                 lastIssuedTitle: "✔️ Patient Registered Successfully",
                 btnReprint: "🖨️ Reprint Ticket",
+                hoursTitle: "🕒 Clinic Opening & Closing Hours:",
+                lblOpenTime: "Opens at:",
+                lblCloseTime: "Closes at:",
+                btnSaveHours: "💾 Save Working Hours",
+                presenceTodayCaption: "📅 Doctor Presence (Today Only)",
+                docPresentText: "🟢 Doctor is present at the clinic",
+                docAbsentText: "🟠 Doctor has not arrived yet today",
+                btnMarkPresent: "✅ Mark Doctor as Arrived",
+                btnMarkNotPresent: "↩️ Mark as Not Arrived Yet",
                 lblCurrentNum: "Current Active Number",
                 lblWaitingCount: "Waiting on Selected Day",
                 lblNextTicket: "Next Prospective Ticket Number",
@@ -781,7 +896,7 @@
         function selectWeekDay(offset) {
             selectedDayOffset = offset;
             renderWeekSelector();
-            refreshSelectedDoctorQueue();
+            refreshSelectedDoctorQueue(true);
         }
 
         function showToast(msg) {
@@ -805,6 +920,7 @@
             });
             renderWeekSelector();
             updatePauseBtnText();
+            updatePresenceUI();
             renderRegisteredPatientsTable();
         }
 
@@ -823,6 +939,76 @@
             } else {
                 btn.innerText = dict[currentLang].pauseQueue;
                 btn.style.background = 'var(--warning)';
+            }
+        }
+
+        function updatePresenceUI() {
+            const box = document.getElementById('presenceControlBox');
+            const statusText = document.getElementById('presenceStatusText');
+            const btn = document.getElementById('togglePresenceBtn');
+            if (!box || !statusText || !btn) return;
+
+            if (currentDoctorPresent) {
+                box.className = 'presence-control-box present';
+                statusText.style.color = 'var(--accent)';
+                statusText.innerText = `${dict[currentLang].docPresentText} (${activeDocName})`;
+                btn.innerText = dict[currentLang].btnMarkNotPresent;
+                btn.style.background = 'var(--warning)';
+            } else {
+                box.className = 'presence-control-box absent';
+                statusText.style.color = 'var(--warning)';
+                statusText.innerText = `${dict[currentLang].docAbsentText} (${activeDocName})`;
+                btn.innerText = dict[currentLang].btnMarkPresent;
+                btn.style.background = 'var(--accent)';
+            }
+        }
+
+        async function toggleDoctorPresence() {
+            try {
+                const res = await fetch(`${API_BASE}/api/doctor/toggle-presence`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ clinic_slug: activeDocSlug })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    currentDoctorPresent = Boolean(data.doctor_present);
+                    updatePresenceUI();
+                    showToast(data.message);
+                    await loadReceptionData();
+                } else {
+                    showToast(`❌ ${data.error || 'تعذر تحديث حالة الحضور'}`);
+                }
+            } catch (e) {
+                showToast('❌ خطأ اتصال بالخادم');
+            }
+        }
+
+        async function saveClinicHours() {
+            const openTime = document.getElementById('recOpenTime').value;
+            const closeTime = document.getElementById('recCloseTime').value;
+            if (!openTime || !closeTime) return showToast('⚠️ يرجى اختيار وقت الفتح ووقت الغلق');
+
+            try {
+                const res = await fetch(`${API_BASE}/api/clinic/set-hours`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        clinic_slug: activeDocSlug,
+                        open_time: openTime,
+                        close_time: closeTime
+                    })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    document.getElementById('recHoursBadge').innerText = `${openTime} - ${closeTime}`;
+                    showToast(`✔️ ${data.message}`);
+                    await loadReceptionData();
+                } else {
+                    showToast(`❌ ${data.error || 'تعذر حفظ أوقات العمل'}`);
+                }
+            } catch (e) {
+                showToast('❌ خطأ اتصال بالخادم');
             }
         }
 
@@ -869,7 +1055,7 @@
             showToast('✔️ تم تحميل مشغل تطبيق الاستقبال لسطح المكتب! افتحه لتشغيله كبرنامج مستقل.');
         }
 
-        async function loadReceptionData() {
+        async function loadReceptionData(forceInputSync = false) {
             try {
                 const res = await fetch(`${API_BASE}/api/clinic-doctors/${MAIN_CLINIC_SLUG}`);
                 clinicDoctors = await res.json();
@@ -884,7 +1070,7 @@
                     }
                 }
                 renderDoctorsGrid();
-                await refreshSelectedDoctorQueue();
+                await refreshSelectedDoctorQueue(forceInputSync);
             } catch (e) {}
         }
 
@@ -898,6 +1084,9 @@
             grid.innerHTML = clinicDoctors.map(d => {
                 const isSelected = d.slug === activeDocSlug;
                 const maxBadge = d.max_tickets > 0 ? `<div style="font-size:0.75rem; color:${d.is_full ? 'var(--danger)' : 'var(--muted)'}; font-weight:800; margin-top:4px;">🎯 الحد الأقصى: ${d.max_tickets} ${d.is_full ? '(مكتمل)' : ''}</div>` : '';
+                const presenceBadge = d.doctor_present
+                    ? `<div class="presence-chip presence-in">🟢 حاضر اليوم</div>`
+                    : `<div class="presence-chip presence-out">🟠 لم يحضر بعد</div>`;
                 return `
                     <div class="doc-select-card ${isSelected ? 'selected' : ''}" onclick="selectDoctorForReception('${d.slug}')">
                         <div class="doc-top-pills">
@@ -912,6 +1101,7 @@
                         </div>
                         <div style="font-size:1.2rem; font-weight:800; color:var(--text); margin-bottom:4px;">👨‍⚕️ ${d.name}</div>
                         <div style="font-size:0.85rem; font-weight:800; color:var(--accent);">🩺 ${d.specialty || 'طب عام'}</div>
+                        ${presenceBadge}
                         ${maxBadge}
                     </div>
                 `;
@@ -921,7 +1111,7 @@
         function selectDoctorForReception(slug) {
             activeDocSlug = slug;
             renderDoctorsGrid();
-            refreshSelectedDoctorQueue();
+            refreshSelectedDoctorQueue(true);
         }
 
         async function saveReceptionMaxTickets(applyToAllWeek) {
@@ -942,7 +1132,7 @@
                 const data = await res.json();
                 if (res.ok) {
                     showToast(`✔️ ${data.message}`);
-                    await loadReceptionData();
+                    await loadReceptionData(true);
                 } else {
                     showToast(`❌ ${data.error || 'تعذر حفظ العدد الأقصى'}`);
                 }
@@ -951,7 +1141,8 @@
             }
         }
 
-        async function refreshSelectedDoctorQueue() {
+        // مصحّح: عدم استبدال قيم الحقول إذا كانت الممرضة تكتب بداخلها حالياً
+        async function refreshSelectedDoctorQueue(forceInputSync = false) {
             try {
                 if (!selectedDateStr) {
                     selectedDateStr = getFormattedDateOffset(selectedDayOffset).dateStr;
@@ -964,8 +1155,19 @@
                 activeDocName = data.doctor_name || activeDocName;
                 activeDocSpecialty = data.specialty || 'طب عام';
                 currentQueueStatus = data.status || 'active';
+                currentDoctorPresent = Boolean(data.doctor_present);
                 currentActiveNumberOnDate = data.current_number || 0;
                 registeredTicketsList = data.tickets || [];
+
+                const openTime = data.open_time || '08:00';
+                const closeTime = data.close_time || '16:00';
+                const openInput = document.getElementById('recOpenTime');
+                const closeInput = document.getElementById('recCloseTime');
+                const maxInput = document.getElementById('recMaxTicketsInput');
+
+                if (forceInputSync || document.activeElement !== openInput) openInput.value = openTime;
+                if (forceInputSync || document.activeElement !== closeInput) closeInput.value = closeTime;
+                document.getElementById('recHoursBadge').innerText = `${openTime} - ${closeTime}`;
 
                 const maxTickets = data.max_tickets || 0;
                 const activeTicketsCount = registeredTicketsList.filter(t => t.status !== 'cancelled').length;
@@ -983,13 +1185,16 @@
                     ? `${activeTicketsCount} / ${maxTickets} مريض مسجل`
                     : `${activeTicketsCount} مريض مسجل`;
 
-                document.getElementById('recMaxTicketsInput').value = maxTickets > 0 ? maxTickets : '';
+                if (forceInputSync || document.activeElement !== maxInput) {
+                    maxInput.value = maxTickets > 0 ? maxTickets : '';
+                }
                 document.getElementById('recMaxStatusBadge').innerText = maxTickets > 0
                     ? (data.is_full ? `🚫 مكتمل (${maxTickets} تذكرة)` : `${activeTicketsCount} من أصل ${maxTickets} تذكرة`)
                     : 'مفتوح (غير محدود)';
                 document.getElementById('recMaxStatusBadge').style.color = data.is_full ? 'var(--danger)' : 'var(--accent)';
 
                 updatePauseBtnText();
+                updatePresenceUI();
                 renderRegisteredPatientsTable();
             } catch (e) {}
         }
@@ -1204,15 +1409,17 @@
             }
             renderWeekSelector();
             changeLang(currentLang);
-            loadReceptionData();
+            loadReceptionData(true);
         };
 
         const socket = io(API_BASE);
-        socket.on('new_ticket', () => loadReceptionData());
-        socket.on('call_patient', () => loadReceptionData());
-        socket.on('queue_status_changed', () => loadReceptionData());
-        socket.on('ticket_cancelled', () => loadReceptionData());
-        socket.on('ticket_status_updated', () => loadReceptionData());
+        socket.on('new_ticket', () => loadReceptionData(false));
+        socket.on('call_patient', () => loadReceptionData(false));
+        socket.on('queue_status_changed', () => loadReceptionData(false));
+        socket.on('ticket_cancelled', () => loadReceptionData(false));
+        socket.on('ticket_status_updated', () => loadReceptionData(false));
+        socket.on('doctor_presence_changed', () => loadReceptionData(false));
+        socket.on('clinic_hours_changed', () => loadReceptionData(false));
     </script>
 </body>
 </html>

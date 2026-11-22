@@ -106,10 +106,43 @@
             color: var(--text);
         }
         .clinic-address {
-            margin: 0 0 18px;
+            margin: 0 0 10px;
             font-size: 0.88rem;
             color: var(--muted);
             font-weight: 700;
+        }
+
+        .clinic-meta-strip {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .hours-pill {
+            display: inline-block;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 8px 14px;
+            border-radius: 12px;
+            font-size: 0.88rem;
+            font-weight: 800;
+        }
+        .presence-banner {
+            padding: 11px 14px;
+            border-radius: 14px;
+            font-size: 0.95rem;
+            font-weight: 800;
+        }
+        .presence-arrived {
+            background: rgba(16, 185, 129, 0.15);
+            border: 2px solid var(--accent);
+            color: var(--accent);
+        }
+        .presence-waiting {
+            background: rgba(245, 158, 11, 0.15);
+            border: 2px solid var(--warning);
+            color: var(--warning);
         }
 
         .lang-grid {
@@ -343,11 +376,17 @@
             </div>
         </div>
 
-        <!-- المرحلة 2: معاينة الرقم المتوقع والحجز (أيام العمل فقط بدون يوم الجمعة) -->
+        <!-- المرحلة 2: معاينة الرقم المتوقع والحجز -->
         <div class="card" id="stepBooking" style="display: none;">
             <div class="clinic-badge" id="bookSpecialtyBadge">🩺 طب عام</div>
             <h2 class="clinic-title" id="bookDoctorTitle">--</h2>
             <p class="clinic-address" id="bookClinicAddress"></p>
+
+            <!-- أوقات عمل العيادة + حالة حضور الطبيب اليوم -->
+            <div class="clinic-meta-strip">
+                <div class="hours-pill" id="bookClinicHours">🕒 08:00 - 16:00</div>
+                <div class="presence-banner presence-waiting" id="bookDoctorPresence">🟠 الطبيب لم يحضر بعد اليوم</div>
+            </div>
 
             <div id="multiDoctorsSection" style="display: none;">
                 <div style="text-align: start; font-weight: 800; font-size: 0.9rem; margin-bottom: 8px; color: var(--muted);" data-i18n="chooseDocPrompt">👨‍⚕️ اختر الطبيب:</div>
@@ -379,6 +418,12 @@
             <div class="clinic-badge" id="ticketSpecialtyBadge">🩺 طب عام</div>
             <h2 class="clinic-title" id="ticketDoctorTitle">--</h2>
             <p class="clinic-address" id="ticketClinicAddress"></p>
+
+            <!-- أوقات عمل العيادة + حالة حضور الطبيب اليوم -->
+            <div class="clinic-meta-strip">
+                <div class="hours-pill" id="ticketClinicHours">🕒 08:00 - 16:00</div>
+                <div class="presence-banner presence-waiting" id="ticketDoctorPresence">🟠 الطبيب لم يحضر بعد اليوم</div>
+            </div>
 
             <div style="background: rgba(16, 185, 129, 0.1); border: 2px dashed var(--accent); border-radius: 20px; padding: 18px; margin-bottom: 18px;">
                 <div style="font-size: 0.9rem; font-weight: 800; color: var(--accent);" data-i18n="yourTicketLabel">🎟️ رقم تذكرتك المحجوزة</div>
@@ -441,6 +486,9 @@
                 chooseDayPrompt: "📅 اختر يوم الموعد (أيام العمل — الجمعة عطلة):",
                 dayToday: "اليوم",
                 dayTomorrow: "غداً",
+                hoursLabel: "🕒 أوقات العمل:",
+                docArrived: "🟢 الطبيب حاضر في العيادة اليوم",
+                docNotArrived: "🟠 الطبيب لم يحضر بعد اليوم",
                 lblCurrentActive: "الرقم الحالي بالعيادة",
                 lblProspectiveNum: "الرقم الذي ستحصل عليه",
                 lblAheadCount: "المرضى المتبقون قبلك",
@@ -449,6 +497,7 @@
                 yourTicketLabel: "🎟️ رقم تذكرتك المحجوزة",
                 btnCancelTicket: "❌ إلغاء التذكرة",
                 btnBookNew: "➕ حجز تذكرة جديدة",
+                fridayOffMsg: "🏖️ يوم الجمعة عطلة أسبوعية، لا يوجد عمل",
                 queuePausedMsg: "⏸️ استقبال التذاكر متوقف مؤقتاً لهذا اليوم",
                 queueFullMsg: "🚫 اكتمل العدد الأقصى للتذاكر لهذا اليوم",
                 nearTurnMsg: "🔔 اقترب دورك! لم يتبقَّ قبلك سوى {n} في الانتظار، يرجى التواجد بالعيادة.",
@@ -465,6 +514,9 @@
                 chooseDayPrompt: "📅 Choisissez le jour du rendez-vous (Vendredi férié) :",
                 dayToday: "Aujourd'hui",
                 dayTomorrow: "Demain",
+                hoursLabel: "🕒 Horaires :",
+                docArrived: "🟢 Le médecin est présent aujourd'hui",
+                docNotArrived: "🟠 Le médecin n'est pas encore arrivé aujourd'hui",
                 lblCurrentActive: "Numéro Actuel",
                 lblProspectiveNum: "Votre Prochain Numéro",
                 lblAheadCount: "Patients avant vous",
@@ -473,6 +525,7 @@
                 yourTicketLabel: "🎟️ Votre Numéro de Ticket",
                 btnCancelTicket: "❌ Annuler mon ticket",
                 btnBookNew: "➕ Prendre un nouveau ticket",
+                fridayOffMsg: "🏖️ Le vendredi est un jour férié",
                 queuePausedMsg: "⏸️ La file d'attente est temporairement suspendue",
                 queueFullMsg: "🚫 Nombre maximum de tickets atteint pour ce jour",
                 nearTurnMsg: "🔔 Votre tour approche ! Il ne reste que {n} patient(s) avant vous.",
@@ -489,6 +542,9 @@
                 chooseDayPrompt: "📅 Select Appointment Day (Friday is off):",
                 dayToday: "Today",
                 dayTomorrow: "Tomorrow",
+                hoursLabel: "🕒 Working Hours:",
+                docArrived: "🟢 The doctor is present today",
+                docNotArrived: "🟠 The doctor has not arrived yet today",
                 lblCurrentActive: "Current Active Number",
                 lblProspectiveNum: "Your Prospective Number",
                 lblAheadCount: "Patients Ahead of You",
@@ -497,6 +553,7 @@
                 yourTicketLabel: "🎟️ Your Booked Ticket Number",
                 btnCancelTicket: "❌ Cancel My Ticket",
                 btnBookNew: "➕ Book a New Ticket",
+                fridayOffMsg: "🏖️ Friday is a weekly day off",
                 queuePausedMsg: "⏸️ Ticket booking is temporarily paused for this day",
                 queueFullMsg: "🚫 Maximum tickets limit reached for this day",
                 nearTurnMsg: "🔔 Your turn is very close! Only {n} patient(s) ahead of you.",
@@ -507,6 +564,29 @@
                 errEnterName: "Please enter your full name first"
             }
         };
+
+        // مصحّح: إظهار حالة حضور الطبيب فقط عندما يكون اليوم المختار/المحجوز هو اليوم الحالي
+        function updateHoursAndPresenceElements(prefix, openTime, closeTime, isPresent, showPresence) {
+            const hoursEl = document.getElementById(`${prefix}ClinicHours`);
+            const presenceEl = document.getElementById(`${prefix}DoctorPresence`);
+            if (hoursEl) {
+                hoursEl.innerText = `${dict[currentLang].hoursLabel} ${openTime || '08:00'} - ${closeTime || '16:00'}`;
+            }
+            if (presenceEl) {
+                if (!showPresence) {
+                    presenceEl.style.display = 'none';
+                    return;
+                }
+                presenceEl.style.display = 'block';
+                if (isPresent) {
+                    presenceEl.className = 'presence-banner presence-arrived';
+                    presenceEl.innerText = dict[currentLang].docArrived;
+                } else {
+                    presenceEl.className = 'presence-banner presence-waiting';
+                    presenceEl.innerText = dict[currentLang].docNotArrived;
+                }
+            }
+        }
 
         function getFormattedDateOffset(daysOffset = 0) {
             const d = new Date();
@@ -651,7 +731,6 @@
             }
         }
 
-        // استبعاد يوم الجمعة (dayIndex === 5) نهائياً من أزرار الحجز
         function renderPatientWeekButtons() {
             const grid = document.getElementById('patientWeekGrid');
             if (!grid) return;
@@ -701,6 +780,14 @@
             if (navigator.vibrate) {
                 navigator.vibrate([300, 150, 300]);
             }
+        }
+
+        async function reloadMultiDoctorsList() {
+            try {
+                const docsRes = await fetch(`${API_BASE}/api/clinic-doctors/${INITIAL_CLINIC_SLUG}`);
+                clinicDoctorsList = await docsRes.json();
+                renderMultiDoctorsList();
+            } catch (e) {}
         }
 
         async function initPatientPortal() {
@@ -753,10 +840,11 @@
             wrapper.style.display = 'block';
             container.innerHTML = clinicDoctorsList.map(d => {
                 const isAct = d.slug === activeDocSlug ? 'active' : '';
+                const presIcon = d.doctor_present ? '🟢' : '🟠';
                 return `
                     <button class="doc-item-btn ${isAct}" onclick="switchSelectedDoctor('${d.slug}')">
                         <div>
-                            <strong style="font-size:1rem;">👨‍⚕️ ${d.name}</strong>
+                            <strong style="font-size:1rem;">${presIcon} 👨‍⚕️ ${d.name}</strong>
                             <div style="font-size:0.8rem; color:var(--accent); font-weight:700;">🩺 ${d.specialty || 'طب عام'}</div>
                         </div>
                         <span style="font-weight:800; color:var(--muted);">#${(d.last_issued || 0) + 1}</span>
@@ -780,6 +868,7 @@
 
         async function refreshBookingPreview() {
             try {
+                const todayStr = getFormattedDateOffset(0).dateStr;
                 const statusRes = await fetch(`${API_BASE}/api/queue-status/${activeDocSlug}`);
                 if (statusRes.status === 404) {
                     document.getElementById('stepLang').style.display = 'none';
@@ -798,15 +887,26 @@
                     ? `🏥 ${statusData.clinic_name} — 📍 ${statusData.clinic_address}`
                     : `🏥 ${statusData.clinic_name || ''}`;
 
+                const isViewingToday = (selectedDateStr === todayStr);
+                updateHoursAndPresenceElements('book', statusData.open_time, statusData.close_time, Boolean(statusData.doctor_present), isViewingToday);
+
                 const prevRes = await fetch(`${API_BASE}/api/directory/preview/${activeDocSlug}?date=${selectedDateStr}`);
                 if (!prevRes.ok) return;
                 const prevData = await prevRes.json();
 
                 document.getElementById('previewCurrentActive').innerText = prevData.current_number === 0 ? '--' : prevData.current_number;
-                document.getElementById('previewNextTicket').innerText = `#${prevData.prospective_number}`;
+                document.getElementById('previewNextTicket').innerText = prevData.prospective_number > 0 ? `#${prevData.prospective_number}` : '--';
 
                 const limitBanner = document.getElementById('bookingLimitBanner');
                 const cutBtn = document.getElementById('btnCutTicket');
+
+                if (prevData.status === 'friday_off') {
+                    limitBanner.style.display = 'none';
+                    cutBtn.disabled = true;
+                    cutBtn.innerText = dict[currentLang].fridayOffMsg;
+                    cutBtn.style.background = 'var(--danger)';
+                    return;
+                }
 
                 if (prevData.max_tickets && prevData.max_tickets > 0) {
                     limitBanner.style.display = 'block';
@@ -902,6 +1002,9 @@
                 document.getElementById('ticketClinicAddress').innerText = statusData.clinic_address
                     ? `🏥 ${statusData.clinic_name} — 📍 ${statusData.clinic_address}`
                     : `🏥 ${statusData.clinic_name || ''}`;
+
+                const isTicketForToday = (activeTicketData.date === todayStr);
+                updateHoursAndPresenceElements('ticket', statusData.open_time, statusData.close_time, Boolean(statusData.doctor_present), isTicketForToday);
 
                 const queueRes = await fetch(`${API_BASE}/api/reception/tickets/${targetDocSlug}?date=${activeTicketData.date}`);
                 if (queueRes.ok) {
@@ -1024,6 +1127,7 @@
 
         const socket = io(API_BASE);
         socket.on('new_ticket', () => {
+            reloadMultiDoctorsList();
             if (activeTicketData) refreshLiveTicketTracking();
             else refreshBookingPreview();
         });
@@ -1041,6 +1145,15 @@
         });
         socket.on('ticket_status_updated', () => {
             if (activeTicketData) refreshLiveTicketTracking();
+        });
+        socket.on('doctor_presence_changed', () => {
+            reloadMultiDoctorsList();
+            if (activeTicketData) refreshLiveTicketTracking();
+            else refreshBookingPreview();
+        });
+        socket.on('clinic_hours_changed', () => {
+            if (activeTicketData) refreshLiveTicketTracking();
+            else refreshBookingPreview();
         });
         socket.on('doctor_deleted', (data) => {
             if (data.clinic_slug === activeDocSlug) {
