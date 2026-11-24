@@ -13,6 +13,69 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
+// أيقونة سماعة الطبيب لتطبيقات سطح المكتب
+app.get('/icons/stethoscope.svg', (req, res) => {
+    res.setHeader('Content-Type', 'image/svg+xml');
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    res.send(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+      <defs>
+        <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#10b981"/>
+          <stop offset="100%" stop-color="#047857"/>
+        </linearGradient>
+      </defs>
+      <rect width="512" height="512" rx="112" fill="url(#bgGrad)"/>
+      <g fill="none" stroke="#ffffff" stroke-width="26" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M150 105 h-22 a14 14 0 0 0 -14 14 v75 c0 66 52 118 116 118 s116 -52 116 -118 v-75 a14 14 0 0 0 -14 -14 h-22"/>
+        <path d="M230 312 v44 c0 44 36 80 80 80 s80 -36 80 -80 v-74"/>
+      </g>
+      <circle cx="155" cy="105" r="14" fill="#ffffff"/>
+      <circle cx="305" cy="105" r="14" fill="#ffffff"/>
+      <circle cx="390" cy="260" r="38" fill="#ffffff"/>
+      <circle cx="390" cy="260" r="18" fill="#059669"/>
+    </svg>`);
+});
+
+// تعريف مستقل لتطبيق الاستقبال (يسمح بتثبيته بجانب تطبيق الطبيب بدون ملف .bat)
+app.get('/manifest/reception.json', (req, res) => {
+    const clinic = req.query.clinic || 'default-clinic';
+    res.setHeader('Content-Type', 'application/manifest+json');
+    res.json({
+        id: `/reception-app-${clinic}`,
+        name: `ClinicFlow - الاستقبال (${clinic})`,
+        short_name: 'الاستقبال',
+        start_url: `/reception.html?clinic=${encodeURIComponent(clinic)}`,
+        scope: '/',
+        display: 'standalone',
+        background_color: '#0f172a',
+        theme_color: '#10b981',
+        icons: [
+            { src: '/icons/stethoscope.svg', sizes: '192x192', type: 'image/svg+xml', purpose: 'any' },
+            { src: '/icons/stethoscope.svg', sizes: '512x512', type: 'image/svg+xml', purpose: 'any' }
+        ]
+    });
+});
+
+// تعريف مستقل لتطبيق الطبيب
+app.get('/manifest/doctor.json', (req, res) => {
+    const clinic = req.query.clinic || 'default-clinic';
+    res.setHeader('Content-Type', 'application/manifest+json');
+    res.json({
+        id: `/doctor-app-${clinic}`,
+        name: `ClinicFlow - الطبيب (${clinic})`,
+        short_name: 'لوحة الطبيب',
+        start_url: `/doctor.html?clinic=${encodeURIComponent(clinic)}`,
+        scope: '/',
+        display: 'standalone',
+        background_color: '#0f172a',
+        theme_color: '#10b981',
+        icons: [
+            { src: '/icons/stethoscope.svg', sizes: '192x192', type: 'image/svg+xml', purpose: 'any' },
+            { src: '/icons/stethoscope.svg', sizes: '512x512', type: 'image/svg+xml', purpose: 'any' }
+        ]
+    });
+});
+
 // مسار فحص حالة السيرفر وقاعدة البيانات
 app.get('/api/health', async (req, res) => {
     try {

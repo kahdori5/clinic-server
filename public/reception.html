@@ -4,8 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>تطبيق مكتب الاستقبال - Reception App</title>
-    <link rel="manifest" href="/manifest.json">
-    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/3063/3063063.png">
+    <link rel="icon" type="image/svg+xml" href="/icons/stethoscope.svg">
+    <script>
+        (function() {
+            const slug = new URLSearchParams(window.location.search).get('clinic') || localStorage.getItem('saved_rec_clinic_slug') || 'default-clinic';
+            const link = document.createElement('link');
+            link.rel = 'manifest';
+            link.href = '/manifest/reception.json?clinic=' + encodeURIComponent(slug);
+            document.head.appendChild(link);
+        })();
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -1034,25 +1042,8 @@
                     deferredPrompt = null;
                 });
             } else {
-                downloadDesktopLauncher('Reception_App_' + MAIN_CLINIC_SLUG, window.location.href);
+                alert('لتثبيت التطبيق بأيقونة سماعة الطبيب وبدون شاشة Run:\n\nاضغط على أيقونة التثبيت (🖥️) الموجودة في أعلى شريط العنوان بمتصفح Chrome أو Edge، ثم اضغط "تثبيت / Install".');
             }
-        }
-
-        function downloadDesktopLauncher(appName, targetUrl) {
-            const batContent = [
-                '@echo off',
-                'start msedge --app="' + targetUrl + '" || start chrome --app="' + targetUrl + '" || start "" "' + targetUrl + '"',
-                'exit'
-            ].join('\r\n');
-
-            const blob = new Blob([batContent], { type: 'application/bat;charset=utf-8' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = appName + '.bat';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            showToast('✔️ تم تحميل مشغل تطبيق الاستقبال لسطح المكتب! افتحه لتشغيله كبرنامج مستقل.');
         }
 
         async function loadReceptionData(forceInputSync = false) {
