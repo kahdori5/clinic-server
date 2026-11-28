@@ -18,40 +18,76 @@
         return '';
     }
 
-    function injectPrintStyles() {
+    function injectSecurityStyles() {
         if (document.getElementById('cf-sec-styles')) return;
         const style = document.createElement('style');
         style.id = 'cf-sec-styles';
         style.textContent = `
-            #cf-sec-toolbar {
-                position: fixed;
-                bottom: 16px;
-                right: 16px;
-                z-index: 9400;
-                display: flex;
-                gap: 8px;
-                flex-wrap: wrap;
-                direction: rtl;
+            #cf-settings-security-card {
+                background: var(--card, #ffffff);
+                color: var(--text, #1e293b);
+                border: 1px solid var(--border, #e2e8f0);
+                border-radius: 20px;
+                padding: 22px;
+                margin-top: 20px;
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
                 font-family: 'Tajawal', Arial, sans-serif;
+                text-align: start;
             }
-            .cf-sec-chip {
-                background: #1e293b;
-                color: #f8fafc;
-                border: 1px solid #334155;
-                border-radius: 999px;
-                padding: 8px 14px;
+            #cf-settings-security-card h3 {
+                margin: 0 0 14px;
+                color: var(--accent, #10b981);
+                font-size: 1.15rem;
+                border-bottom: 2px dashed var(--border, #e2e8f0);
+                padding-bottom: 10px;
+            }
+            .cf-sec-card-actions {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            .cf-sec-action-btn {
+                flex: 1;
+                min-width: 180px;
+                padding: 13px 16px;
+                border: none;
+                border-radius: 12px;
                 font-family: inherit;
-                font-size: 0.8rem;
+                font-size: 0.96rem;
                 font-weight: 800;
                 cursor: pointer;
-                box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+                color: #ffffff;
+                transition: 0.2s;
             }
-            .cf-sec-chip:hover { filter: brightness(1.12); }
-            .cf-sec-chip.pass { border-color: #10b981; }
-            .cf-sec-chip.reset { border-color: #3b82f6; }
-            .cf-sec-chip.lock { border-color: #ef4444; }
+            .cf-sec-action-btn:hover { filter: brightness(1.08); transform: translateY(-1px); }
+            .cf-sec-action-btn.pass { background: #10b981; }
+            .cf-sec-action-btn.reset { background: #3b82f6; }
+            .cf-sec-action-btn.lock { background: #ef4444; }
+            #cf-header-settings-btn {
+                background: var(--bg, #f4f7f6);
+                border: 1px solid var(--border, #e2e8f0);
+                color: var(--text, #1e293b);
+                padding: 9px 15px;
+                border-radius: 12px;
+                cursor: pointer;
+                font-weight: 800;
+                font-family: inherit;
+                font-size: 0.92rem;
+                transition: 0.2s;
+            }
+            #cf-header-settings-btn:hover {
+                border-color: var(--accent, #10b981);
+                color: var(--accent, #10b981);
+            }
             @media print {
-                #cf-sec-toolbar, #cf-sec-overlay, #cf-pass-modal { display: none !important; }
+                #cf-sec-overlay,
+                #cf-pass-modal,
+                #cf-settings-hub,
+                #cf-settings-security-card,
+                #cf-header-settings-btn,
+                #cf-nav-settings-item {
+                    display: none !important;
+                }
             }
         `;
         document.head.appendChild(style);
@@ -62,9 +98,21 @@
         if (old) old.remove();
     }
 
+    async function doLogout() {
+        try {
+            await originalFetch('/api/auth/logout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({ page: PAGE_TYPE })
+            });
+        } catch (e) {}
+        window.location.reload();
+    }
+
     // شاشة تسجيل الدخول أو إنشاء كلمة المرور لأول مرة
     function showAuthOverlay({ needsSetup, reasonMsg }) {
-        injectPrintStyles();
+        injectSecurityStyles();
         removeExistingOverlay();
 
         const labels = {
@@ -195,6 +243,50 @@
             });
         }
         setTimeout(() => passInput.focus(), 80);
+    }
+
+    // نافذة الإعدادات والأمان (تُفتح من زر الإعدادات في الاستقبال والأدمن)
+    function openSettingsHubModal() {
+        const oldHub = document.getElementById('cf-settings-hub');
+        if (oldHub) oldHub.remove();
+
+        const hub = document.createElement('div');
+        hub.id = 'cf-settings-hub';
+        hub.setAttribute('dir', 'rtl');
+        hub.style.cssText =
+            'position:fixed;inset:0;z-index:999997;background:rgba(15,23,42,0.78);backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;padding:20px;font-family:Tajawal,Arial,sans-serif;';
+
+        const adminResetBtnHtml = isAdminPage
+            ? `<button id="cf-hub-reset" style="width:100%;padding:13px;margin-bottom:10px;border:none;border-radius:12px;background:#3b82f6;color:#fff;font-size:1rem;font-weight:800;cursor:pointer;font-family:inherit;">🛠️ تعيين كلمة سر طبيب أو استقبال</button>`
+            : '';
+
+        hub.innerHTML = `
+            <div style="background:#1e293b;color:#f8fafc;border:2px solid #10b981;border-radius:20px;padding:26px 22px;width:100%;max-width:400px;text-align:center;position:relative;box-shadow:0 20px 50px rgba(0,0,0,0.45);">
+                <button id="cf-hub-close" style="position:absolute;top:14px;left:14px;background:#0f172a;color:#fff;border:1px solid #334155;width:32px;height:32px;border-radius:50%;cursor:pointer;font-weight:bold;">✕</button>
+                <div style="font-size:2.1rem;margin-bottom:6px;">⚙️</div>
+                <h3 style="margin:0 0 18px;color:#10b981;font-size:1.25rem;">إعدادات الأمان والجلسة</h3>
+                <button id="cf-hub-pass" style="width:100%;padding:13px;margin-bottom:10px;border:none;border-radius:12px;background:#10b981;color:#fff;font-size:1rem;font-weight:800;cursor:pointer;font-family:inherit;">🔑 تغيير كلمة المرور</button>
+                ${adminResetBtnHtml}
+                <button id="cf-hub-lock" style="width:100%;padding:13px;border:none;border-radius:12px;background:#ef4444;color:#fff;font-size:1rem;font-weight:800;cursor:pointer;font-family:inherit;">🔒 قفل الجلسة (تسجيل الخروج)</button>
+            </div>
+        `;
+
+        document.body.appendChild(hub);
+
+        document.getElementById('cf-hub-close').onclick = () => hub.remove();
+        hub.addEventListener('click', (e) => { if (e.target === hub) hub.remove(); });
+
+        document.getElementById('cf-hub-pass').onclick = () => {
+            hub.remove();
+            openChangePasswordModal();
+        };
+        if (isAdminPage) {
+            document.getElementById('cf-hub-reset').onclick = () => {
+                hub.remove();
+                openAdminResetModal();
+            };
+        }
+        document.getElementById('cf-hub-lock').onclick = () => doLogout();
     }
 
     // نافذة تغيير كلمة المرور الخاصة بهذه الصفحة
@@ -378,43 +470,84 @@
         });
     }
 
-    function addSecurityToolbar() {
-        if (document.getElementById('cf-sec-toolbar')) return;
-        injectPrintStyles();
+    // البحث عن قسم الإعدادات الموجود في الصفحة (مثل تبويب الإعدادات في صفحة الطبيب)
+    function findExistingSettingsContainer() {
+        const candidates = document.querySelectorAll(
+            '#settings, #settingsSection, #settings-section, #settingsTab, #tab-settings, #sec-settings, #view-settings, #settingsView, [id*="setting" i]'
+        );
+        for (const el of candidates) {
+            if (!el) continue;
+            if (el.tagName !== 'DIV' && el.tagName !== 'SECTION') continue;
+            if (el.classList.contains('nav-item')) continue;
+            if (el.closest('.sidebar, header, #cf-sec-overlay, #cf-pass-modal, #cf-settings-hub')) continue;
+            if (el.children.length > 0) return el;
+        }
+        return null;
+    }
 
-        const bar = document.createElement('div');
-        bar.id = 'cf-sec-toolbar';
+    // وضع أزرار الأمان داخل جهة الإعدادات بدل الواجهة العائمة
+    function mountSecurityInSettings() {
+        injectSecurityStyles();
 
-        const changeBtn = document.createElement('button');
-        changeBtn.className = 'cf-sec-chip pass';
-        changeBtn.textContent = '🔑 تغيير كلمة المرور';
-        changeBtn.addEventListener('click', openChangePasswordModal);
-        bar.appendChild(changeBtn);
+        // 1) إذا وجد قسم إعدادات فعلي داخل الصفحة (مثل صفحة الطبيب) نضع البطاقة بداخله مباشرة
+        const settingsContainer = findExistingSettingsContainer();
+        if (settingsContainer) {
+            if (document.getElementById('cf-settings-security-card')) return;
 
-        if (isAdminPage) {
-            const resetBtn = document.createElement('button');
-            resetBtn.className = 'cf-sec-chip reset';
-            resetBtn.textContent = '🛠️ كلمة سر طبيب/استقبال';
-            resetBtn.addEventListener('click', openAdminResetModal);
-            bar.appendChild(resetBtn);
+            const card = document.createElement('div');
+            card.id = 'cf-settings-security-card';
+            card.innerHTML = `
+                <h3>🔐 الأمان وكلمة المرور وإدارة الجلسة</h3>
+                <div class="cf-sec-card-actions">
+                    <button type="button" class="cf-sec-action-btn pass" id="cf-card-change-pass">🔑 تغيير كلمة المرور</button>
+                    ${isAdminPage ? '<button type="button" class="cf-sec-action-btn reset" id="cf-card-reset-staff">🛠️ كلمة سر طبيب/استقبال</button>' : ''}
+                    <button type="button" class="cf-sec-action-btn lock" id="cf-card-lock-session">🔒 قفل الجلسة (تسجيل الخروج)</button>
+                </div>
+            `;
+            settingsContainer.appendChild(card);
+
+            document.getElementById('cf-card-change-pass').addEventListener('click', openChangePasswordModal);
+            if (isAdminPage) {
+                document.getElementById('cf-card-reset-staff').addEventListener('click', openAdminResetModal);
+            }
+            document.getElementById('cf-card-lock-session').addEventListener('click', doLogout);
+            return;
         }
 
-        const lockBtn = document.createElement('button');
-        lockBtn.className = 'cf-sec-chip lock';
-        lockBtn.textContent = '🔒 قفل الجلسة';
-        lockBtn.addEventListener('click', async () => {
-            await originalFetch('/api/auth/logout', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'same-origin',
-                body: JSON.stringify({ page: PAGE_TYPE })
-            });
-            window.location.reload();
-        });
-        bar.appendChild(lockBtn);
+        // 2) إذا كانت الصفحة تحتوي على قائمة جانبية بدون تبويب إعدادات (مثل صفحة الاستقبال) نضيف خيار الإعدادات داخل القائمة
+        const firstNavItem = document.querySelector('.sidebar .nav-item');
+        if (firstNavItem && firstNavItem.parentElement) {
+            if (document.getElementById('cf-nav-settings-item')) return;
+            const navItem = document.createElement('div');
+            navItem.id = 'cf-nav-settings-item';
+            navItem.className = 'nav-item';
+            navItem.textContent = '⚙️ الإعدادات والأمان';
+            navItem.addEventListener('click', openSettingsHubModal);
+            firstNavItem.parentElement.appendChild(navItem);
+            return;
+        }
 
-        document.body.appendChild(bar);
+        // 3) في صفحات الهيدر العلوي بدون قائمة جانبية (مثل صفحة الأدمن) نضع زر الإعدادات داخل شريط الأدوات العلوي
+        const headerTarget = document.querySelector('header .controls, .controls, header');
+        if (headerTarget) {
+            if (document.getElementById('cf-header-settings-btn')) return;
+            const btn = document.createElement('button');
+            btn.id = 'cf-header-settings-btn';
+            btn.type = 'button';
+            btn.textContent = '⚙️ الإعدادات';
+            btn.addEventListener('click', openSettingsHubModal);
+            headerTarget.appendChild(btn);
+        }
     }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const hub = document.getElementById('cf-settings-hub');
+            const pm = document.getElementById('cf-pass-modal');
+            if (pm) pm.remove();
+            else if (hub) hub.remove();
+        }
+    });
 
     const originalFetch = window.fetch.bind(window);
     window.fetch = async function (input, init) {
@@ -450,7 +583,7 @@
                     reasonMsg: reasonMsg || ''
                 });
             } else {
-                addSecurityToolbar();
+                mountSecurityInSettings();
             }
         } catch (e) {
             showAuthOverlay({ needsSetup: false, reasonMsg: 'تعذر التحقق من الجلسة.' });
