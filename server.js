@@ -42,17 +42,15 @@ const SESSION_SECRET =
     process.env.SESSION_SECRET ||
     crypto
         .createHash('sha256')
-        .update((process.env.DATABASE_URL || 'clinicflow-fallback') + '::session-key-v1')
+        .update((process.env.DATABASE_URL || 'clinicflow-fallback') + '::session-key-v2')
         .digest('hex');
 
-if (!process.env.SESSION_SECRET) {
-    console.warn('⚠️ يُنصح بإضافة متغير SESSION_SECRET في إعدادات Render لتقوية توقيع الجلسات.');
-}
-if (!process.env.ADMIN_PASSWORD) {
-    console.warn('⚠️ متغير ADMIN_PASSWORD غير مضبوط؛ لوحة الأدمن مغلقة تلقائياً لحين إضافته في Render.');
-}
+const COOKIE_NAMES = {
+    admin: 'cf_admin_session',
+    doctor: 'cf_doctor_session',
+    reception: 'cf_reception_session'
+};
 
-const SESSION_COOKIE_NAME = 'cf_session';
 const SESSION_TTL_MS = 12 * 60 * 60 * 1000; // 12 ساعة
 
 function safeEqualStr(a, b) {
@@ -80,7 +78,6 @@ function verifyPassword(plain, stored) {
         if (derivedBuf.length !== storedBuf.length) return { valid: false, needsUpgrade: false };
         return { valid: crypto.timingSafeEqual(derivedBuf, storedBuf), needsUpgrade: false };
     }
-    // دعم الترقية التلقائية لكلمات المرور القديمة المخزنة كنص عادي
     const valid = safeEqualStr(plain, stored);
     return { valid, needsUpgrade: valid };
 }
@@ -92,7 +89,7 @@ function signSession(payload) {
     return `${encoded}.${sig}`;
 }
 
-function verifySession(token) {
+function verifySession(token, expectedRole) {
     if (!token || typeof token !== 'string') return null;
     const parts = token.split('.');
     if (parts.length !== 2) return null;
@@ -102,6 +99,7 @@ function verifySession(token) {
     try {
         const parsed = JSON.parse(Buffer.from(encoded, 'base64url').toString('utf8'));
         if (!parsed.exp || Date.now() > parsed.exp) return null;
+        if (expectedRole && parsed.role !== expectedRole) return null;
         return parsed;
     } catch {
         return null;
@@ -127,31 +125,46 @@ function parseCookies(req) {
     return list;
 }
 
-function setSessionCookie(req, res, payload) {
-    const token = signSession(payload);
+function appendSetCookie(res, cookieStr) {
+    const prev = res.getHeader('Set-Cookie');
+    if (!prev) {
+        res.setHeader('Set-Cookie', cookieStr);
+    } else if (Array.isArray(prev)) {
+        res.setHeader('Set-Cookie', [...prev, cookieStr]);
+    } else {
+        res.setHeader('Set-Cookie', [prev, cookieStr]);
+    }
+}
+
+function setRoleCookie(req, res, role, payload) {
+    const cookieName = COOKIE_NAMES[role];
+    if (!cookieName) return;
+    const token = signSession({ ...payload, role });
     const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
     const parts = [
-        `${SESSION_COOKIE_NAME}=${encodeURIComponent(token)}`,
+        `${cookieName}=${encodeURIComponent(token)}`,
         'Path=/',
         'HttpOnly',
         'SameSite=Lax',
         `Max-Age=${Math.floor(SESSION_TTL_MS / 1000)}`
     ];
     if (isSecure) parts.push('Secure');
-    res.setHeader('Set-Cookie', parts.join('; '));
+    appendSetCookie(res, parts.join('; '));
 }
 
-function clearSessionCookie(req, res) {
+function clearRoleCookie(req, res, role) {
+    const cookieName = COOKIE_NAMES[role];
+    if (!cookieName) return;
     const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
     const parts = [
-        `${SESSION_COOKIE_NAME}=`,
+        `${cookieName}=`,
         'Path=/',
         'HttpOnly',
         'SameSite=Lax',
         'Max-Age=0'
     ];
     if (isSecure) parts.push('Secure');
-    res.setHeader('Set-Cookie', parts.join('; '));
+    appendSetCookie(res, parts.join('; '));
 }
 
 function makeCancelToken(clinicSlug, bookingDate, ticketNumber) {
@@ -161,7 +174,6 @@ function makeCancelToken(clinicSlug, bookingDate, ticketNumber) {
         .digest('base64url');
 }
 
-// تنظيف النصوص ضد XSS وتضخم البيانات
 function cleanText(val, maxLen = 120) {
     if (val === null || val === undefined) return '';
     return String(val)
@@ -193,7 +205,6 @@ function cleanTime(val, fallback) {
     return /^([01]\d|2[0-3]):[0-5]\d$/.test(str) ? str : fallback;
 }
 
-// حماية ضد هجمات الإغراق وتخمين كلمات السر (Rate Limiter)
 function createRateLimiter({ windowMs, max, message, skip }) {
     const hits = new Map();
     setInterval(() => {
@@ -232,7 +243,7 @@ const globalApiLimiter = createRateLimiter({
 
 const authBruteForceLimiter = createRateLimiter({
     windowMs: 15 * 60 * 1000,
-    max: 6,
+    max: 8,
     message: 'تم حظر محاولات الدخول مؤقتاً لمدة 15 دقيقة بسبب تكرار المحاولات الخاطئة.'
 });
 
@@ -240,10 +251,10 @@ const publicBookingLimiter = createRateLimiter({
     windowMs: 15 * 60 * 1000,
     max: 5,
     message: 'لقد وصلت للحد الأقصى من الحجوزات المسموح بها من هذا الجهاز مؤقتاً.',
-    skip: (req) => Boolean(req.auth && (req.auth.role === 'admin' || req.auth.role === 'staff'))
+    skip: (req) => Boolean(req.sessions && (req.sessions.reception || req.sessions.doctor))
 });
 
-// ترويسات الأمان HTTP ضد الاختراقات والذكاء الاصطناعي الآلي
+// ترويسات الأمان HTTP
 app.use((req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
@@ -269,14 +280,18 @@ app.use(
 
 app.use(express.json({ limit: '50kb' }));
 
-// قراءة الجلسة إن وجدت
+// قراءة الجلسات الثلاث المستقلة
 app.use((req, res, next) => {
     const cookies = parseCookies(req);
-    req.auth = verifySession(cookies[SESSION_COOKIE_NAME]);
+    req.sessions = {
+        admin: verifySession(cookies[COOKIE_NAMES.admin], 'admin'),
+        doctor: verifySession(cookies[COOKIE_NAMES.doctor], 'doctor'),
+        reception: verifySession(cookies[COOKIE_NAMES.reception], 'reception')
+    };
     next();
 });
 
-// حماية CSRF للطلبات التعديلية عبر التحقق من الأصل
+// حماية CSRF للطلبات التعديلية
 app.use('/api', (req, res, next) => {
     if (req.method === 'POST' || req.method === 'DELETE') {
         const origin = req.headers.origin;
@@ -292,41 +307,48 @@ app.use('/api', (req, res, next) => {
 
 app.use('/api', globalApiLimiter);
 
-function hasAccessToSlug(auth, slug) {
-    if (!auth) return false;
-    if (auth.role === 'admin') return true;
-    return Array.isArray(auth.slugs) && auth.slugs.includes(slug);
+function hasDoctorAccess(req, slug) {
+    return Boolean(req.sessions.doctor && Array.isArray(req.sessions.doctor.slugs) && req.sessions.doctor.slugs.includes(slug));
+}
+
+function hasReceptionAccess(req, slug) {
+    return Boolean(req.sessions.reception && Array.isArray(req.sessions.reception.slugs) && req.sessions.reception.slugs.includes(slug));
+}
+
+function hasDoctorOrReceptionAccess(req, slug) {
+    return hasDoctorAccess(req, slug) || hasReceptionAccess(req, slug);
 }
 
 function requireAdmin(req, res, next) {
-    if (!process.env.ADMIN_PASSWORD) {
-        return res.status(503).json({ error: 'يرجى إضافة متغير ADMIN_PASSWORD في إعدادات Render لتفعيل لوحة الأدمن.' });
-    }
-    if (!req.auth || req.auth.role !== 'admin') {
+    if (!req.sessions.admin) {
         return res.status(401).json({ error: 'يلزم تسجيل دخول الأدمن أولاً.' });
     }
     next();
 }
 
-function requireStaffForSlug(getSlugFn) {
+function requireDoctorForSlug(getSlugFn) {
+    return (req, res, next) => {
+        const slug = getSlugFn(req);
+        if (!slug) return res.status(400).json({ error: 'معرف الطبيب مطلوب.' });
+        if (!hasDoctorAccess(req, slug)) {
+            return res.status(401).json({ error: 'يلزم تسجيل الدخول بكلمة مرور الطبيب.' });
+        }
+        next();
+    };
+}
+
+function requireDoctorOrReceptionForSlug(getSlugFn) {
     return (req, res, next) => {
         const slug = getSlugFn(req);
         if (!slug) return res.status(400).json({ error: 'معرف العيادة مطلوب.' });
-        if (!hasAccessToSlug(req.auth, slug)) {
+        if (!hasDoctorOrReceptionAccess(req, slug)) {
             return res.status(401).json({ error: 'غير مصرح بالوصول، يرجى تسجيل الدخول.' });
         }
         next();
     };
 }
 
-function requireAnyStaff(req, res, next) {
-    if (!req.auth || (req.auth.role !== 'admin' && req.auth.role !== 'staff')) {
-        return res.status(401).json({ error: 'غير مصرح بالوصول، يرجى تسجيل الدخول.' });
-    }
-    next();
-}
-
-// حقن حارس الأمان تلقائياً في صفحات الأدمن والطبيب والاستقبال بدون تعديلها يدوياً
+// حقن حارس الأمان قبل آخر </body> فقط حتى لا تتأثر أكواد الطباعة
 app.get(['/admin.html', '/doctor.html', '/reception.html'], (req, res, next) => {
     const filePath = path.join(__dirname, 'public', path.basename(req.path));
     fs.readFile(filePath, 'utf8', (err, html) => {
@@ -426,6 +448,11 @@ app.get('/api/health', async (req, res) => {
 const initDB = async (retries = 3) => {
     try {
         await db.query(`
+            CREATE TABLE IF NOT EXISTS app_settings (
+                key VARCHAR(100) PRIMARY KEY,
+                value TEXT NOT NULL,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
             CREATE TABLE IF NOT EXISTS clinics (
                 id SERIAL PRIMARY KEY,
                 name VARCHAR(255) NOT NULL,
@@ -438,6 +465,7 @@ const initDB = async (retries = 3) => {
                 email VARCHAR(255) DEFAULT '',
                 address VARCHAR(255) DEFAULT '',
                 password VARCHAR(255) DEFAULT NULL,
+                reception_password VARCHAR(255) DEFAULT NULL,
                 specialty VARCHAR(255) DEFAULT 'طب عام',
                 max_daily_tickets INTEGER DEFAULT 0,
                 open_time VARCHAR(10) DEFAULT '08:00',
@@ -483,6 +511,7 @@ const initDB = async (retries = 3) => {
             `ALTER TABLE clinics ADD COLUMN IF NOT EXISTS email VARCHAR(255) DEFAULT '';`,
             `ALTER TABLE clinics ADD COLUMN IF NOT EXISTS address VARCHAR(255) DEFAULT '';`,
             `ALTER TABLE clinics ADD COLUMN IF NOT EXISTS password VARCHAR(255) DEFAULT NULL;`,
+            `ALTER TABLE clinics ADD COLUMN IF NOT EXISTS reception_password VARCHAR(255) DEFAULT NULL;`,
             `ALTER TABLE clinics ADD COLUMN IF NOT EXISTS specialty VARCHAR(255) DEFAULT 'طب عام';`,
             `ALTER TABLE clinics ADD COLUMN IF NOT EXISTS max_daily_tickets INTEGER DEFAULT 0;`,
             `ALTER TABLE clinics ADD COLUMN IF NOT EXISTS open_time VARCHAR(10) DEFAULT '08:00';`,
@@ -499,7 +528,7 @@ const initDB = async (retries = 3) => {
         await db.query(`CREATE INDEX IF NOT EXISTS idx_queues_clinic_date ON queues(clinic_id, queue_date);`);
         await db.query(`CREATE INDEX IF NOT EXISTS idx_records_slug ON patient_records(clinic_slug);`);
 
-        console.log('🚀 قاعدة البيانات جاهزة ومُحمية بالكامل!');
+        console.log('🚀 قاعدة البيانات جاهزة مع فصل كامل لكلمات المرور!');
     } catch (e) {
         console.error('❌ خطأ في تهيئة قاعدة البيانات:', e.message);
         if (retries > 0) {
@@ -509,115 +538,346 @@ const initDB = async (retries = 3) => {
 };
 initDB();
 
-// ======================== مسارات تسجيل الدخول والأمان ========================
+// ======================== دوال مساعدة لكلمات المرور المنفصلة ========================
 
-async function getAuthorizedSlugsForClinic(clinicRow) {
-    const slugs = new Set([clinicRow.slug]);
-    if (clinicRow.is_main) {
-        const subDocs = await db.query('SELECT slug FROM clinics WHERE parent_id::text = $1::text', [clinicRow.id]);
-        for (const d of subDocs.rows) slugs.add(d.slug);
+async function getAdminPasswordRecord() {
+    try {
+        const res = await db.query(`SELECT value FROM app_settings WHERE key = 'admin_password'`);
+        if (res.rows.length > 0 && res.rows[0].value) {
+            return { source: 'db', value: res.rows[0].value };
+        }
+    } catch (e) {}
+    if (process.env.ADMIN_PASSWORD) {
+        return { source: 'env', value: process.env.ADMIN_PASSWORD };
     }
+    return null;
+}
+
+async function verifyAdminPassword(plain) {
+    const rec = await getAdminPasswordRecord();
+    if (!rec) return { configured: false, valid: false };
+    if (rec.source === 'db') {
+        return { configured: true, valid: verifyPassword(plain, rec.value).valid };
+    }
+    return { configured: true, valid: safeEqualStr(plain, rec.value) };
+}
+
+async function resolveMainClinicRow(clinicRow) {
+    if (!clinicRow) return null;
+    if (!clinicRow.is_main && clinicRow.parent_id) {
+        const parentRes = await db.query(
+            'SELECT id, slug, is_main, parent_id, password, reception_password FROM clinics WHERE id::text = $1::text',
+            [clinicRow.parent_id]
+        );
+        if (parentRes.rows.length > 0) return parentRes.rows[0];
+    }
+    return clinicRow;
+}
+
+async function getReceptionAllowedSlugs(mainRow) {
+    const slugs = new Set([mainRow.slug]);
+    const subDocs = await db.query('SELECT slug FROM clinics WHERE parent_id::text = $1::text', [mainRow.id]);
+    for (const d of subDocs.rows) slugs.add(d.slug);
     return Array.from(slugs);
 }
 
-app.get('/api/auth/me', (req, res) => {
-    const slug = cleanSlug(req.query.clinic);
-    if (!req.auth) {
-        return res.json({ authenticated: false, role: null, authorized: false });
+// ======================== مسارات الدخول وتغيير كلمة المرور لكل صفحة ========================
+
+app.get('/api/auth/me', async (req, res) => {
+    try {
+        const page = String(req.query.page || '').trim().toLowerCase();
+        const slug = cleanSlug(req.query.clinic);
+
+        if (page === 'admin') {
+            const adminRec = await getAdminPasswordRecord();
+            return res.json({
+                page: 'admin',
+                authorized: Boolean(req.sessions.admin),
+                needsSetup: false,
+                adminConfigured: Boolean(adminRec)
+            });
+        }
+
+        if (page === 'doctor') {
+            if (!slug) return res.json({ page: 'doctor', authorized: false, needsSetup: false, notFound: true });
+            const cRes = await db.query('SELECT id, slug, password FROM clinics WHERE slug = $1', [slug]);
+            if (cRes.rows.length === 0) {
+                return res.json({ page: 'doctor', authorized: false, needsSetup: false, notFound: true });
+            }
+            const hasPass = Boolean(cRes.rows[0].password && cRes.rows[0].password.length > 0);
+            return res.json({
+                page: 'doctor',
+                authorized: hasDoctorAccess(req, slug),
+                needsSetup: !hasPass
+            });
+        }
+
+        if (page === 'reception') {
+            if (!slug) return res.json({ page: 'reception', authorized: false, needsSetup: false, notFound: true });
+            const cRes = await db.query('SELECT id, slug, is_main, parent_id, reception_password FROM clinics WHERE slug = $1', [slug]);
+            if (cRes.rows.length === 0) {
+                return res.json({ page: 'reception', authorized: false, needsSetup: false, notFound: true });
+            }
+            const mainRow = await resolveMainClinicRow(cRes.rows[0]);
+            const hasRecPass = Boolean(mainRow && mainRow.reception_password && mainRow.reception_password.length > 0);
+            return res.json({
+                page: 'reception',
+                authorized: hasReceptionAccess(req, slug),
+                needsSetup: !hasRecPass
+            });
+        }
+
+        res.json({ authorized: false, needsSetup: false });
+    } catch (err) {
+        console.error('/api/auth/me error:', err.message);
+        res.status(500).json({ authorized: false, error: 'تعذر التحقق من الجلسة.' });
     }
-    const authorized = slug ? hasAccessToSlug(req.auth, slug) : true;
-    res.json({
-        authenticated: true,
-        role: req.auth.role,
-        authorized
-    });
 });
 
 app.post('/api/auth/logout', (req, res) => {
-    clearSessionCookie(req, res);
+    const page = String((req.body && req.body.page) || '').trim().toLowerCase();
+    if (COOKIE_NAMES[page]) {
+        clearRoleCookie(req, res, page);
+    } else {
+        clearRoleCookie(req, res, 'admin');
+        clearRoleCookie(req, res, 'doctor');
+        clearRoleCookie(req, res, 'reception');
+    }
     res.json({ ok: true });
 });
 
-app.post('/api/admin/login', authBruteForceLimiter, (req, res) => {
-    if (!process.env.ADMIN_PASSWORD) {
-        return res.status(503).json({ error: 'يرجى إضافة متغير ADMIN_PASSWORD في إعدادات Render أولاً.' });
+// 1) دخول الأدمن (بكود الأدمن فقط)
+app.post('/api/admin/login', authBruteForceLimiter, async (req, res) => {
+    try {
+        const password = req.body && req.body.password;
+        if (typeof password !== 'string' || !password) {
+            return res.status(400).json({ error: 'يرجى إدخال كلمة مرور الأدمن.' });
+        }
+        const check = await verifyAdminPassword(password);
+        if (!check.configured) {
+            return res.status(503).json({ error: 'يرجى إضافة متغير ADMIN_PASSWORD في إعدادات Render أولاً.' });
+        }
+        if (!check.valid) {
+            return res.status(401).json({ error: 'كلمة مرور الأدمن غير صحيحة.' });
+        }
+        setRoleCookie(req, res, 'admin', { slugs: ['*'] });
+        res.json({ success: true, role: 'admin' });
+    } catch (err) {
+        console.error('admin/login error:', err.message);
+        res.status(500).json({ error: 'تعذر تسجيل الدخول.' });
     }
-    const { password } = req.body || {};
-    if (typeof password !== 'string' || !safeEqualStr(password, process.env.ADMIN_PASSWORD)) {
-        return res.status(401).json({ error: 'كلمة مرور الأدمن غير صحيحة.' });
-    }
-    setSessionCookie(req, res, { role: 'admin', slugs: ['*'] });
-    res.json({ success: true, role: 'admin' });
 });
 
-app.post('/api/auth/staff-login', authBruteForceLimiter, async (req, res) => {
+// 2) دخول الطبيب (بكود الطبيب فقط — لا يقبل كود الأدمن ولا الاستقبال)
+app.post('/api/auth/doctor-login', authBruteForceLimiter, async (req, res) => {
     try {
         const slug = cleanSlug(req.body && req.body.clinic_slug);
         const password = req.body && req.body.password;
-        if (!password || typeof password !== 'string') {
-            return res.status(400).json({ error: 'يرجى إدخال كلمة المرور.' });
+        if (!slug || typeof password !== 'string' || !password) {
+            return res.status(400).json({ error: 'بيانات الدخول غير صالحة.' });
         }
 
-        // السماح للأدمن بالدخول إلى أي لوحة طبيب أو استقبال بكلمة مرور الأدمن
-        if (process.env.ADMIN_PASSWORD && safeEqualStr(password, process.env.ADMIN_PASSWORD)) {
-            setSessionCookie(req, res, { role: 'admin', slugs: ['*'] });
-            return res.json({ success: true, role: 'admin' });
+        const cRes = await db.query('SELECT id, slug, password FROM clinics WHERE slug = $1', [slug]);
+        if (cRes.rows.length === 0) {
+            return res.status(404).json({ error: 'الطبيب غير موجود.' });
+        }
+        const row = cRes.rows[0];
+        if (!row.password) {
+            return res.status(400).json({ error: 'لم يتم تعيين كلمة مرور لهذا الطبيب بعد.' });
         }
 
-        if (!slug) return res.status(400).json({ error: 'معرف العيادة غير صالح.' });
-
-        const clinicRes = await db.query(
-            'SELECT id, slug, is_main, parent_id, password FROM clinics WHERE slug = $1',
-            [slug]
-        );
-        if (clinicRes.rows.length === 0) {
-            return res.status(401).json({ error: 'بيانات الدخول غير صحيحة.' });
+        const check = verifyPassword(password, row.password);
+        if (!check.valid) {
+            return res.status(401).json({ error: 'كلمة مرور الطبيب غير صحيحة.' });
+        }
+        if (check.needsUpgrade) {
+            await db.query('UPDATE clinics SET password = $1 WHERE id = $2', [hashPassword(password), row.id]);
         }
 
-        const cRow = clinicRes.rows[0];
-        let matched = false;
-        let allowedSlugs = [cRow.slug];
-
-        // 1. فحص كلمة مرور الطبيب أو العيادة نفسها
-        if (cRow.password) {
-            const check = verifyPassword(password, cRow.password);
-            if (check.valid) {
-                matched = true;
-                if (check.needsUpgrade) {
-                    await db.query('UPDATE clinics SET password = $1 WHERE id = $2', [hashPassword(password), cRow.id]);
-                }
-                allowedSlugs = await getAuthorizedSlugsForClinic(cRow);
-            }
-        }
-
-        // 2. إذا كان طبيباً فرعياً، نسمح أيضاً بكلمة مرور العيادة الرئيسية (لمكتب الاستقبال)
-        if (!matched && cRow.parent_id) {
-            const parentRes = await db.query(
-                'SELECT id, slug, is_main, password FROM clinics WHERE id::text = $1::text',
-                [cRow.parent_id]
-            );
-            if (parentRes.rows.length > 0 && parentRes.rows[0].password) {
-                const pRow = parentRes.rows[0];
-                const pCheck = verifyPassword(password, pRow.password);
-                if (pCheck.valid) {
-                    matched = true;
-                    if (pCheck.needsUpgrade) {
-                        await db.query('UPDATE clinics SET password = $1 WHERE id = $2', [hashPassword(password), pRow.id]);
-                    }
-                    allowedSlugs = await getAuthorizedSlugsForClinic(pRow);
-                }
-            }
-        }
-
-        if (!matched) {
-            return res.status(401).json({ error: 'كلمة المرور غير صحيحة أو لم يتم تعيين كلمة مرور للعيادة بعد.' });
-        }
-
-        setSessionCookie(req, res, { role: 'staff', slugs: allowedSlugs });
-        res.json({ success: true, role: 'staff' });
+        setRoleCookie(req, res, 'doctor', { slugs: [row.slug] });
+        res.json({ success: true, role: 'doctor' });
     } catch (err) {
-        console.error('Staff login error:', err.message);
-        res.status(500).json({ error: 'حدث خطأ أثناء التحقق من الدخول.' });
+        console.error('doctor-login error:', err.message);
+        res.status(500).json({ error: 'تعذر التحقق من الدخول.' });
+    }
+});
+
+// 3) دخول مكتب الاستقبال (بكود الاستقبال فقط — لا يقبل كود الأدمن ولا الطبيب)
+app.post('/api/auth/reception-login', authBruteForceLimiter, async (req, res) => {
+    try {
+        const slug = cleanSlug(req.body && req.body.clinic_slug);
+        const password = req.body && req.body.password;
+        if (!slug || typeof password !== 'string' || !password) {
+            return res.status(400).json({ error: 'بيانات الدخول غير صالحة.' });
+        }
+
+        const cRes = await db.query('SELECT id, slug, is_main, parent_id, reception_password FROM clinics WHERE slug = $1', [slug]);
+        if (cRes.rows.length === 0) {
+            return res.status(404).json({ error: 'العيادة غير موجودة.' });
+        }
+
+        const mainRow = await resolveMainClinicRow(cRes.rows[0]);
+        if (!mainRow || !mainRow.reception_password) {
+            return res.status(400).json({ error: 'لم يتم تعيين كلمة مرور لمكتب الاستقبال بعد.' });
+        }
+
+        const check = verifyPassword(password, mainRow.reception_password);
+        if (!check.valid) {
+            return res.status(401).json({ error: 'كلمة مرور مكتب الاستقبال غير صحيحة.' });
+        }
+        if (check.needsUpgrade) {
+            await db.query('UPDATE clinics SET reception_password = $1 WHERE id = $2', [hashPassword(password), mainRow.id]);
+        }
+
+        const allowedSlugs = await getReceptionAllowedSlugs(mainRow);
+        setRoleCookie(req, res, 'reception', { slugs: allowedSlugs, main_id: mainRow.id });
+        res.json({ success: true, role: 'reception' });
+    } catch (err) {
+        console.error('reception-login error:', err.message);
+        res.status(500).json({ error: 'تعذر التحقق من الدخول.' });
+    }
+});
+
+// 4) تعيين كلمة مرور لأول مرة لطبيب أو استقبال جديد (تعمل فقط إذا لم توجد كلمة مرور مسبقة)
+app.post('/api/auth/setup-password', authBruteForceLimiter, async (req, res) => {
+    try {
+        const page = String((req.body && req.body.page) || '').trim().toLowerCase();
+        const slug = cleanSlug(req.body && req.body.clinic_slug);
+        const newPassword = req.body && req.body.new_password;
+
+        if (page !== 'doctor' && page !== 'reception') {
+            return res.status(400).json({ error: 'نوع الصفحة غير صالح.' });
+        }
+        if (!slug) return res.status(400).json({ error: 'معرف العيادة غير صالح.' });
+        if (typeof newPassword !== 'string' || newPassword.length < 6 || newPassword.length > 128) {
+            return res.status(400).json({ error: 'يجب أن تكون كلمة المرور بين 6 و 128 حرفاً.' });
+        }
+
+        const cRes = await db.query('SELECT id, slug, is_main, parent_id, password, reception_password FROM clinics WHERE slug = $1', [slug]);
+        if (cRes.rows.length === 0) return res.status(404).json({ error: 'العيادة أو الطبيب غير موجود.' });
+
+        if (page === 'doctor') {
+            const docRow = cRes.rows[0];
+            if (docRow.password && docRow.password.length > 0) {
+                return res.status(403).json({ error: 'تم تعيين كلمة مرور الطبيب مسبقاً، يرجى تسجيل الدخول.' });
+            }
+            await db.query('UPDATE clinics SET password = $1 WHERE id = $2', [hashPassword(newPassword), docRow.id]);
+            setRoleCookie(req, res, 'doctor', { slugs: [docRow.slug] });
+            return res.json({ success: true, message: 'تم حفظ كلمة مرور الطبيب بنجاح.' });
+        }
+
+        if (page === 'reception') {
+            const mainRow = await resolveMainClinicRow(cRes.rows[0]);
+            if (mainRow.reception_password && mainRow.reception_password.length > 0) {
+                return res.status(403).json({ error: 'تم تعيين كلمة مرور الاستقبال مسبقاً، يرجى تسجيل الدخول.' });
+            }
+            await db.query('UPDATE clinics SET reception_password = $1 WHERE id = $2', [hashPassword(newPassword), mainRow.id]);
+            const allowedSlugs = await getReceptionAllowedSlugs(mainRow);
+            setRoleCookie(req, res, 'reception', { slugs: allowedSlugs, main_id: mainRow.id });
+            return res.json({ success: true, message: 'تم حفظ كلمة مرور الاستقبال بنجاح.' });
+        }
+    } catch (err) {
+        console.error('setup-password error:', err.message);
+        res.status(500).json({ error: 'تعذر تعيين كلمة المرور.' });
+    }
+});
+
+// 5) تغيير كلمة المرور مباشرة من داخل كل صفحة (أدمن / طبيب / استقبال)
+app.post('/api/auth/change-password', authBruteForceLimiter, async (req, res) => {
+    try {
+        const page = String((req.body && req.body.page) || '').trim().toLowerCase();
+        const slug = cleanSlug(req.body && req.body.clinic_slug);
+        const currentPassword = req.body && req.body.current_password;
+        const newPassword = req.body && req.body.new_password;
+
+        if (!['admin', 'doctor', 'reception'].includes(page)) {
+            return res.status(400).json({ error: 'نوع الصفحة غير صالح.' });
+        }
+        if (typeof currentPassword !== 'string' || !currentPassword) {
+            return res.status(400).json({ error: 'يرجى إدخال كلمة المرور الحالية.' });
+        }
+        if (typeof newPassword !== 'string' || newPassword.length < 6 || newPassword.length > 128) {
+            return res.status(400).json({ error: 'يجب أن تكون كلمة المرور الجديدة 6 أحرف على الأقل.' });
+        }
+
+        if (page === 'admin') {
+            if (!req.sessions.admin) return res.status(401).json({ error: 'يلزم تسجيل دخول الأدمن.' });
+            const check = await verifyAdminPassword(currentPassword);
+            if (!check.valid) return res.status(401).json({ error: 'كلمة مرور الأدمن الحالية غير صحيحة.' });
+
+            await db.query(
+                `INSERT INTO app_settings (key, value, updated_at) VALUES ('admin_password', $1, CURRENT_TIMESTAMP)
+                 ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = CURRENT_TIMESTAMP`,
+                [hashPassword(newPassword)]
+            );
+            setRoleCookie(req, res, 'admin', { slugs: ['*'] });
+            return res.json({ success: true, message: 'تم تغيير وتشفير كلمة مرور الأدمن بنجاح.' });
+        }
+
+        if (page === 'doctor') {
+            if (!slug || !hasDoctorAccess(req, slug)) {
+                return res.status(401).json({ error: 'يلزم تسجيل دخول الطبيب.' });
+            }
+            const cRes = await db.query('SELECT id, slug, password FROM clinics WHERE slug = $1', [slug]);
+            if (cRes.rows.length === 0) return res.status(404).json({ error: 'الطبيب غير موجود.' });
+            const check = verifyPassword(currentPassword, cRes.rows[0].password);
+            if (!check.valid) return res.status(401).json({ error: 'كلمة مرور الطبيب الحالية غير صحيحة.' });
+
+            await db.query('UPDATE clinics SET password = $1 WHERE id = $2', [hashPassword(newPassword), cRes.rows[0].id]);
+            setRoleCookie(req, res, 'doctor', { slugs: [cRes.rows[0].slug] });
+            return res.json({ success: true, message: 'تم تغيير وتشفير كلمة مرور الطبيب بنجاح.' });
+        }
+
+        if (page === 'reception') {
+            if (!slug || !hasReceptionAccess(req, slug)) {
+                return res.status(401).json({ error: 'يلزم تسجيل دخول مكتب الاستقبال.' });
+            }
+            const cRes = await db.query('SELECT id, slug, is_main, parent_id, reception_password FROM clinics WHERE slug = $1', [slug]);
+            if (cRes.rows.length === 0) return res.status(404).json({ error: 'العيادة غير موجودة.' });
+            const mainRow = await resolveMainClinicRow(cRes.rows[0]);
+            const check = verifyPassword(currentPassword, mainRow.reception_password);
+            if (!check.valid) return res.status(401).json({ error: 'كلمة مرور الاستقبال الحالية غير صحيحة.' });
+
+            await db.query('UPDATE clinics SET reception_password = $1 WHERE id = $2', [hashPassword(newPassword), mainRow.id]);
+            const allowedSlugs = await getReceptionAllowedSlugs(mainRow);
+            setRoleCookie(req, res, 'reception', { slugs: allowedSlugs, main_id: mainRow.id });
+            return res.json({ success: true, message: 'تم تغيير وتشفير كلمة مرور مكتب الاستقبال بنجاح.' });
+        }
+    } catch (err) {
+        console.error('change-password error:', err.message);
+        res.status(500).json({ error: 'تعذر تغيير كلمة المرور.' });
+    }
+});
+
+// 6) مساعدة للأدمن لإعادة تعيين كلمة مرور طبيب أو استقبال في حال نسيانها
+app.post('/api/admin/reset-staff-password', requireAdmin, async (req, res) => {
+    try {
+        const targetType = String((req.body && req.body.target_type) || '').trim().toLowerCase();
+        const slug = cleanSlug(req.body && req.body.clinic_slug);
+        const newPassword = req.body && req.body.new_password;
+
+        if (!['doctor', 'reception'].includes(targetType)) {
+            return res.status(400).json({ error: 'يرجى اختيار نوع الحساب (طبيب أو استقبال).' });
+        }
+        if (!slug) return res.status(400).json({ error: 'يرجى إدخال رابط (slug) العيادة أو الطبيب.' });
+        if (typeof newPassword !== 'string' || newPassword.length < 6 || newPassword.length > 128) {
+            return res.status(400).json({ error: 'يجب أن تكون كلمة المرور الجديدة 6 أحرف على الأقل.' });
+        }
+
+        const cRes = await db.query('SELECT id, slug, name, is_main, parent_id FROM clinics WHERE slug = $1', [slug]);
+        if (cRes.rows.length === 0) return res.status(404).json({ error: 'لم يتم العثور على عيادة أو طبيب بهذا الرابط.' });
+
+        if (targetType === 'doctor') {
+            await db.query('UPDATE clinics SET password = $1 WHERE id = $2', [hashPassword(newPassword), cRes.rows[0].id]);
+            return res.json({ success: true, message: `تم تحديث كلمة مرور الطبيب (${cRes.rows[0].name}) بنجاح.` });
+        }
+
+        const mainRow = await resolveMainClinicRow(cRes.rows[0]);
+        await db.query('UPDATE clinics SET reception_password = $1 WHERE id = $2', [hashPassword(newPassword), mainRow.id]);
+        return res.json({ success: true, message: `تم تحديث كلمة مرور مكتب الاستقبال للعيادة (${mainRow.slug}) بنجاح.` });
+    } catch (err) {
+        console.error('reset-staff-password error:', err.message);
+        res.status(500).json({ error: 'تعذر إعادة تعيين كلمة المرور.' });
     }
 });
 
@@ -638,7 +898,7 @@ app.get('/api/doctor/auth-status/:slug', async (req, res) => {
         if (clinic.rows.length === 0) return res.status(404).json({ error: 'deleted' });
         const row = clinic.rows[0];
         const passwordConfigured = Boolean(row.password && row.password.length > 0);
-        const isAlreadyAuthed = hasAccessToSlug(req.auth, slug);
+        const isAlreadyAuthed = hasDoctorAccess(req, slug);
         res.json({
             hasPassword: isAlreadyAuthed ? false : passwordConfigured,
             passwordConfigured,
@@ -663,13 +923,7 @@ app.post('/api/doctor/verify-password', authBruteForceLimiter, async (req, res) 
         if (!slug || typeof password !== 'string') {
             return res.status(400).json({ error: 'بيانات غير صالحة.' });
         }
-
-        if (process.env.ADMIN_PASSWORD && safeEqualStr(password, process.env.ADMIN_PASSWORD)) {
-            setSessionCookie(req, res, { role: 'admin', slugs: ['*'] });
-            return res.json({ success: true });
-        }
-
-        const clinic = await db.query('SELECT id, slug, is_main, password FROM clinics WHERE slug = $1', [slug]);
+        const clinic = await db.query('SELECT id, slug, password FROM clinics WHERE slug = $1', [slug]);
         if (clinic.rows.length === 0) return res.status(404).json({ error: 'deleted' });
 
         const cRow = clinic.rows[0];
@@ -679,8 +933,7 @@ app.post('/api/doctor/verify-password', authBruteForceLimiter, async (req, res) 
         if (check.needsUpgrade) {
             await db.query('UPDATE clinics SET password = $1 WHERE id = $2', [hashPassword(password), cRow.id]);
         }
-        const slugs = await getAuthorizedSlugsForClinic(cRow);
-        setSessionCookie(req, res, { role: 'staff', slugs });
+        setRoleCookie(req, res, 'doctor', { slugs: [cRow.slug] });
         res.json({ success: true });
     } catch (err) {
         console.error('verify-password error:', err.message);
@@ -690,7 +943,7 @@ app.post('/api/doctor/verify-password', authBruteForceLimiter, async (req, res) 
 
 app.post(
     '/api/doctor/set-password',
-    requireStaffForSlug((req) => cleanSlug(req.body && req.body.clinic_slug)),
+    requireDoctorForSlug((req) => cleanSlug(req.body && req.body.clinic_slug)),
     async (req, res) => {
         try {
             const slug = cleanSlug(req.body.clinic_slug);
@@ -698,9 +951,8 @@ app.post(
             if (!newPassword || typeof newPassword !== 'string' || newPassword.length < 6) {
                 return res.status(400).json({ error: 'يجب أن تكون كلمة المرور 6 أحرف على الأقل لحماية ملفات المرضى.' });
             }
-            const hashed = hashPassword(newPassword);
-            await db.query('UPDATE clinics SET password = $1 WHERE slug = $2', [hashed, slug]);
-            res.json({ message: 'تم تشفير وحفظ كلمة المرور بنجاح' });
+            await db.query('UPDATE clinics SET password = $1 WHERE slug = $2', [hashPassword(newPassword), slug]);
+            res.json({ message: 'تم تشفير وحفظ كلمة مرور الطبيب بنجاح' });
         } catch (err) {
             console.error('set-password error:', err.message);
             res.status(500).json({ error: 'تعذر تحديث كلمة المرور.' });
@@ -710,7 +962,7 @@ app.post(
 
 app.post(
     '/api/doctor/set-specialty',
-    requireStaffForSlug((req) => cleanSlug(req.body && req.body.clinic_slug)),
+    requireDoctorForSlug((req) => cleanSlug(req.body && req.body.clinic_slug)),
     async (req, res) => {
         try {
             const slug = cleanSlug(req.body.clinic_slug);
@@ -726,7 +978,7 @@ app.post(
 
 app.post(
     '/api/clinic/set-hours',
-    requireStaffForSlug((req) => cleanSlug(req.body && req.body.clinic_slug)),
+    requireDoctorOrReceptionForSlug((req) => cleanSlug(req.body && req.body.clinic_slug)),
     async (req, res) => {
         try {
             const slug = cleanSlug(req.body.clinic_slug);
@@ -762,7 +1014,7 @@ app.post(
 
 app.post(
     '/api/doctor/toggle-presence',
-    requireStaffForSlug((req) => cleanSlug(req.body && req.body.clinic_slug)),
+    requireDoctorOrReceptionForSlug((req) => cleanSlug(req.body && req.body.clinic_slug)),
     async (req, res) => {
         try {
             const slug = cleanSlug(req.body.clinic_slug);
@@ -801,7 +1053,7 @@ app.post(
 
 app.post(
     '/api/queue/set-max-tickets',
-    requireStaffForSlug((req) => cleanSlug(req.body && req.body.clinic_slug)),
+    requireDoctorOrReceptionForSlug((req) => cleanSlug(req.body && req.body.clinic_slug)),
     async (req, res) => {
         try {
             const slug = cleanSlug(req.body.clinic_slug);
@@ -997,7 +1249,6 @@ app.get('/api/directory/preview/:clinic_slug', async (req, res) => {
     }
 });
 
-// مسار آمن للمريض للتحقق من حالة تذكرته فقط (بدون كشف أسماء باقي المرضى)
 app.get('/api/tickets/check/:clinic_slug', async (req, res) => {
     try {
         const slug = cleanSlug(req.params.clinic_slug);
@@ -1032,10 +1283,9 @@ app.get('/api/tickets/check/:clinic_slug', async (req, res) => {
     }
 });
 
-// محمي: لائحة أسماء المرضى المسجلين للممرضة والطبيب والأدمن فقط
 app.get(
     '/api/reception/tickets/:clinic_slug',
-    requireStaffForSlug((req) => cleanSlug(req.params.clinic_slug)),
+    requireDoctorOrReceptionForSlug((req) => cleanSlug(req.params.clinic_slug)),
     async (req, res) => {
         try {
             const slug = cleanSlug(req.params.clinic_slug);
@@ -1124,7 +1374,7 @@ app.get(
 
 app.post(
     '/api/queue/toggle-status',
-    requireStaffForSlug((req) => cleanSlug(req.body && req.body.clinic_slug)),
+    requireDoctorOrReceptionForSlug((req) => cleanSlug(req.body && req.body.clinic_slug)),
     async (req, res) => {
         try {
             const slug = cleanSlug(req.body.clinic_slug);
@@ -1156,7 +1406,6 @@ app.post(
     }
 );
 
-// محمي: إنشاء عيادة جديدة للأدمن فقط
 app.post('/api/clinics', requireAdmin, async (req, res) => {
     try {
         const name = cleanText(req.body.name, 120);
@@ -1180,7 +1429,6 @@ app.post('/api/clinics', requireAdmin, async (req, res) => {
     }
 });
 
-// إصدار التذاكر (محمي ضد الإغراق الآلي + تنظيف الاسم + توليد رمز إلغاء سري)
 app.post('/api/tickets', publicBookingLimiter, async (req, res) => {
     try {
         const slug = cleanSlug(req.body && req.body.clinic_slug);
@@ -1247,7 +1495,6 @@ app.post('/api/tickets', publicBookingLimiter, async (req, res) => {
 
         const cancelToken = makeCancelToken(slug, targetDate, newNumber);
 
-        // عدم بث اسم المريض في قناة Socket العامة لحماية الخصوصية
         io.emit('new_ticket', { clinic_slug: slug, ticket_number: newNumber, booking_date: targetDate });
         res.status(201).json({
             message: `رقمك هو: ${newNumber}`,
@@ -1262,7 +1509,6 @@ app.post('/api/tickets', publicBookingLimiter, async (req, res) => {
     }
 });
 
-// محمي: إلغاء التذكرة برمز سري لصاحب التذكرة أو عبر صلاحية الممرضة/الطبيب/الأدمن
 app.post('/api/tickets/cancel', async (req, res) => {
     try {
         const slug = cleanSlug(req.body && req.body.clinic_slug);
@@ -1282,7 +1528,7 @@ app.post('/api/tickets/cancel', async (req, res) => {
             : await db.query('SELECT CURRENT_DATE::text as d');
         const targetDate = dateRes.rows[0].d;
 
-        const isStaff = hasAccessToSlug(req.auth, slug);
+        const isStaff = hasDoctorOrReceptionAccess(req, slug);
         if (!isStaff) {
             const expectedToken = makeCancelToken(slug, targetDate, ticketNumber);
             if (!cancelToken || !safeEqualStr(cancelToken, expectedToken)) {
@@ -1303,10 +1549,9 @@ app.post('/api/tickets/cancel', async (req, res) => {
     }
 });
 
-// محمي: مناداة المريض التالي للطبيب/الموظف/الأدمن فقط
 app.post(
     '/api/call-next',
-    requireStaffForSlug((req) => cleanSlug(req.body && req.body.clinic_slug)),
+    requireDoctorForSlug((req) => cleanSlug(req.body && req.body.clinic_slug)),
     async (req, res) => {
         try {
             const slug = cleanSlug(req.body.clinic_slug);
@@ -1338,11 +1583,11 @@ app.post(
     }
 );
 
-// ======================== ملفات المرضى الطبية (محمية بالكامل ضد IDOR) ========================
+// ======================== ملفات المرضى الطبية (للطبيب فقط) ========================
 
 app.post(
     '/api/patient/get',
-    requireStaffForSlug((req) => cleanSlug(req.body && req.body.clinic_slug)),
+    requireDoctorForSlug((req) => cleanSlug(req.body && req.body.clinic_slug)),
     async (req, res) => {
         try {
             const slug = cleanSlug(req.body.clinic_slug);
@@ -1359,7 +1604,7 @@ app.post(
 
 app.post(
     '/api/patient/save',
-    requireStaffForSlug((req) => cleanSlug(req.body && req.body.clinic_slug)),
+    requireDoctorForSlug((req) => cleanSlug(req.body && req.body.clinic_slug)),
     async (req, res) => {
         try {
             const slug = cleanSlug(req.body.clinic_slug);
@@ -1392,18 +1637,16 @@ app.post(
     }
 );
 
-app.delete('/api/patients/delete/:id', requireAnyStaff, async (req, res) => {
+app.delete('/api/patients/delete/:id', async (req, res) => {
     try {
-        const recordId = String(req.params.id || '').trim();
-        if (req.auth.role === 'admin') {
-            await db.query('DELETE FROM patient_records WHERE id::text = $1::text', [recordId]);
-        } else {
-            // منع طبيب من حذف ملفات طبيب آخر (حماية IDOR)
-            await db.query(
-                'DELETE FROM patient_records WHERE id::text = $1::text AND clinic_slug = ANY($2::text[])',
-                [recordId, req.auth.slugs || []]
-            );
+        if (!req.sessions.doctor) {
+            return res.status(401).json({ error: 'يلزم تسجيل الدخول بكلمة مرور الطبيب.' });
         }
+        const recordId = String(req.params.id || '').trim();
+        await db.query(
+            'DELETE FROM patient_records WHERE id::text = $1::text AND clinic_slug = ANY($2::text[])',
+            [recordId, req.sessions.doctor.slugs || []]
+        );
         res.json({ message: 'تم حذف المريض من الأرشيف بنجاح' });
     } catch (err) {
         console.error('patients/delete error:', err.message);
@@ -1413,7 +1656,7 @@ app.delete('/api/patients/delete/:id', requireAnyStaff, async (req, res) => {
 
 app.get(
     '/api/patients/all/:clinic_slug',
-    requireStaffForSlug((req) => cleanSlug(req.params.clinic_slug)),
+    requireDoctorForSlug((req) => cleanSlug(req.params.clinic_slug)),
     async (req, res) => {
         try {
             const slug = cleanSlug(req.params.clinic_slug);
@@ -1487,14 +1730,13 @@ app.get('/api/queue-status/:clinic_slug', async (req, res) => {
             ? parseInt(qRow.max_tickets, 10)
             : defaultMax;
 
-        // اسم المريض الحالي يظهر للطبيب/الموظف المسجّل الدخول فقط لحماية الخصوصية
         let currentPatientName = '';
         let currentTicketStatus = 'waiting';
         if (currentNum > 0) {
             const t = await db.query('SELECT patient_name, status FROM tickets WHERE queue_id = $1 AND ticket_number = $2', [qId, currentNum]);
             if (t.rows.length > 0) {
                 currentTicketStatus = t.rows[0].status;
-                if (hasAccessToSlug(req.auth, slug)) {
+                if (hasDoctorOrReceptionAccess(req, slug)) {
                     currentPatientName = t.rows[0].patient_name;
                 }
             }
@@ -1552,7 +1794,7 @@ app.get('/api/queue-status/:clinic_slug', async (req, res) => {
 
 app.get(
     '/api/doctor-stats/:clinic_slug',
-    requireStaffForSlug((req) => cleanSlug(req.params.clinic_slug)),
+    requireDoctorForSlug((req) => cleanSlug(req.params.clinic_slug)),
     async (req, res) => {
         try {
             const slug = cleanSlug(req.params.clinic_slug);
@@ -1684,7 +1926,7 @@ app.get('/api/clinic-doctors/:main_slug', async (req, res) => {
     }
 });
 
-// ======================== مسارات الأدمن (محمية بالكامل) ========================
+// ======================== مسارات الأدمن (محمية بكود الأدمن فقط) ========================
 
 app.get('/api/admin/clinics', requireAdmin, async (req, res) => {
     try {
@@ -1743,11 +1985,10 @@ app.post('/api/admin/add-doctor', requireAdmin, async (req, res) => {
     }
 });
 
-// مصحّح بالكامل ضد ثغرة SQL Injection
 app.post('/api/admin/renew', requireAdmin, async (req, res) => {
     try {
         const months = parseInt(req.body && req.body.months, 10);
-        const clinicId = String(req.body && req.body.clinic_id || '').trim();
+        const clinicId = String((req.body && req.body.clinic_id) || '').trim();
         if (!clinicId || !Number.isInteger(months) || months < 1 || months > 60) {
             return res.status(400).json({ error: 'عدد الأشهر أو معرف العيادة غير صالح.' });
         }
@@ -1811,7 +2052,7 @@ app.get('/api/admin/clinic-doctors-links/:main_id', requireAdmin, async (req, re
 
 app.post(
     '/api/tickets/status',
-    requireStaffForSlug((req) => cleanSlug(req.body && req.body.clinic_slug)),
+    requireDoctorOrReceptionForSlug((req) => cleanSlug(req.body && req.body.clinic_slug)),
     async (req, res) => {
         try {
             const slug = cleanSlug(req.body.clinic_slug);
