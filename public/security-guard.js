@@ -110,7 +110,6 @@
         window.location.reload();
     }
 
-    // شاشة تسجيل الدخول أو إنشاء كلمة المرور لأول مرة
     function showAuthOverlay({ needsSetup, reasonMsg }) {
         injectSecurityStyles();
         removeExistingOverlay();
@@ -245,7 +244,6 @@
         setTimeout(() => passInput.focus(), 80);
     }
 
-    // نافذة الإعدادات والأمان (تُفتح من زر الإعدادات في الاستقبال والأدمن)
     function openSettingsHubModal() {
         const oldHub = document.getElementById('cf-settings-hub');
         if (oldHub) oldHub.remove();
@@ -289,7 +287,6 @@
         document.getElementById('cf-hub-lock').onclick = () => doLogout();
     }
 
-    // نافذة تغيير كلمة المرور الخاصة بهذه الصفحة
     function openChangePasswordModal() {
         const existing = document.getElementById('cf-pass-modal');
         if (existing) existing.remove();
@@ -388,7 +385,6 @@
         });
     }
 
-    // نافذة مساعدة للأدمن فقط لإعادة تعيين كلمة مرور طبيب أو استقبال عند النسيان
     function openAdminResetModal() {
         const existing = document.getElementById('cf-pass-modal');
         if (existing) existing.remove();
@@ -470,7 +466,6 @@
         });
     }
 
-    // البحث عن قسم الإعدادات الموجود في الصفحة (مثل تبويب الإعدادات في صفحة الطبيب)
     function findExistingSettingsContainer() {
         const candidates = document.querySelectorAll(
             '#settings, #settingsSection, #settings-section, #settingsTab, #tab-settings, #sec-settings, #view-settings, #settingsView, [id*="setting" i]'
@@ -485,13 +480,53 @@
         return null;
     }
 
-    // وضع أزرار الأمان داخل جهة الإعدادات بدل الواجهة العائمة
+    // إخفاء لوحة كلمة المرور القديمة المكررة في صفحة الطبيب مع الحفاظ على باقي الإعدادات
+    function hideOldDoctorPasswordPanel(container) {
+        if (!isDoctorPage || !container) return;
+
+        const allControls = Array.from(container.querySelectorAll('input, select, textarea'))
+            .filter((el) => !el.closest('#cf-settings-security-card'));
+
+        const passInputs = allControls.filter((el) => {
+            if (el.tagName !== 'INPUT') return false;
+            if (el.type === 'password') return true;
+            const meta = `${el.id || ''} ${el.name || ''} ${el.placeholder || ''}`;
+            return /pass|كلمة\s*(السر|المرور)/i.test(meta);
+        });
+
+        const passSet = new Set(passInputs);
+        const hiddenNodes = new Set();
+
+        for (const inp of passInputs) {
+            let target = inp;
+            let curr = inp.parentElement;
+
+            while (curr && curr !== container && curr !== document.body) {
+                if (curr.id === 'cf-settings-security-card') break;
+                const controls = Array.from(curr.querySelectorAll('input, select, textarea'));
+                const hasOtherControls = controls.some((c) => !passSet.has(c) && c.type !== 'hidden');
+                if (hasOtherControls) break;
+
+                if (curr.querySelectorAll('button').length > 3) break;
+
+                target = curr;
+                curr = curr.parentElement;
+            }
+
+            if (target && target !== container && !hiddenNodes.has(target)) {
+                target.style.display = 'none';
+                hiddenNodes.add(target);
+            }
+        }
+    }
+
     function mountSecurityInSettings() {
         injectSecurityStyles();
 
-        // 1) إذا وجد قسم إعدادات فعلي داخل الصفحة (مثل صفحة الطبيب) نضع البطاقة بداخله مباشرة
         const settingsContainer = findExistingSettingsContainer();
         if (settingsContainer) {
+            hideOldDoctorPasswordPanel(settingsContainer);
+
             if (document.getElementById('cf-settings-security-card')) return;
 
             const card = document.createElement('div');
@@ -514,7 +549,6 @@
             return;
         }
 
-        // 2) إذا كانت الصفحة تحتوي على قائمة جانبية بدون تبويب إعدادات (مثل صفحة الاستقبال) نضيف خيار الإعدادات داخل القائمة
         const firstNavItem = document.querySelector('.sidebar .nav-item');
         if (firstNavItem && firstNavItem.parentElement) {
             if (document.getElementById('cf-nav-settings-item')) return;
@@ -527,7 +561,6 @@
             return;
         }
 
-        // 3) في صفحات الهيدر العلوي بدون قائمة جانبية (مثل صفحة الأدمن) نضع زر الإعدادات داخل شريط الأدوات العلوي
         const headerTarget = document.querySelector('header .controls, .controls, header');
         if (headerTarget) {
             if (document.getElementById('cf-header-settings-btn')) return;
