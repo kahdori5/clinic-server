@@ -332,9 +332,15 @@ app.get(['/admin.html', '/doctor.html', '/reception.html'], (req, res, next) => 
     fs.readFile(filePath, 'utf8', (err, html) => {
         if (err) return next();
         const guardTag = '<script src="/security-guard.js"></script>';
-        const out = html.includes('/security-guard.js')
-            ? html
-            : html.replace(/<\/body>/i, `    ${guardTag}\n</body>`);
+        let out = html;
+        if (!html.includes('/security-guard.js')) {
+            const lastBodyIdx = html.toLowerCase().lastIndexOf('</body>');
+            if (lastBodyIdx !== -1) {
+                out = html.slice(0, lastBodyIdx) + `    ${guardTag}\n` + html.slice(lastBodyIdx);
+            } else {
+                out = html + `\n${guardTag}\n`;
+            }
+        }
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
         res.setHeader('Cache-Control', 'no-store');
         res.send(out);
