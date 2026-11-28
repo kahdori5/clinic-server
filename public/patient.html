@@ -500,7 +500,7 @@
                 fridayOffMsg: "🏖️ يوم الجمعة عطلة أسبوعية، لا يوجد عمل",
                 queuePausedMsg: "⏸️ استقبال التذاكر متوقف مؤقتاً لهذا اليوم",
                 queueFullMsg: "🚫 اكتمل العدد الأقصى للتذاكر لهذا اليوم",
-                nearTurnMsg: "🔔 اقترب دورك! لم يتبقَّ قبلك سوى {n} في الانتظار، يرجى التواجد بالعيادة.",
+                nearTurnMsg: "🔔 اقترب دورك! لم يتبقَّ قبلك سوى {n} في الانتظار، يرجى التواجد بالعيادة.",
                 yourTurnNowMsg: "🎉 حان دورك الآن! تفضل بالدخول إلى غرفة الطبيب.",
                 turnPassedMsg: "✔️ تم النداء على رقمك وانتهى دور هذه التذكرة.",
                 futureTicketMsg: "📅 موعدك محجوز ومؤكد ليوم {d}. ستبدأ متابعة الطابور الحي في يوم موعدك.",
@@ -615,14 +615,15 @@
             document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:01 GMT;path=/;SameSite=Lax`;
         }
 
-        function savePatientTicketToStorage(docSlug, ticketNumber, patientName, bookingDate) {
+        function savePatientTicketToStorage(docSlug, ticketNumber, patientName, bookingDate, cancelToken) {
             const cleanDate = String(bookingDate || getFormattedDateOffset(0).dateStr).slice(0, 10);
             const payload = {
                 docSlug: docSlug,
                 mainSlug: INITIAL_CLINIC_SLUG,
                 ticket: parseInt(ticketNumber),
                 name: patientName,
-                date: cleanDate
+                date: cleanDate,
+                cancelToken: cancelToken || ''
             };
             const jsonStr = JSON.stringify(payload);
 
@@ -653,7 +654,8 @@
                             docSlug: parsed.docSlug || slugToCheck,
                             ticket: parseInt(parsed.ticket),
                             name: parsed.name || 'مريض',
-                            date: cleanDate
+                            date: cleanDate,
+                            cancelToken: parsed.cancelToken || ''
                         };
                     }
                 } catch (e) {}
@@ -668,9 +670,10 @@
                     docSlug: slugToCheck,
                     ticket: parseInt(legacyTicket),
                     name: legacyName,
-                    date: legacyDate
+                    date: legacyDate,
+                    cancelToken: ''
                 };
-                savePatientTicketToStorage(slugToCheck, restored.ticket, restored.name, restored.date);
+                savePatientTicketToStorage(slugToCheck, restored.ticket, restored.name, restored.date, restored.cancelToken);
                 return restored;
             }
 
@@ -955,12 +958,13 @@
                 if (!res.ok) return alert(data.error || 'تعذر الحجز');
 
                 const bookedDate = String(data.booking_date || selectedDateStr).slice(0, 10);
-                savePatientTicketToStorage(activeDocSlug, data.ticket_number, pName, bookedDate);
+                savePatientTicketToStorage(activeDocSlug, data.ticket_number, pName, bookedDate, data.cancel_token);
                 activeTicketData = {
                     docSlug: activeDocSlug,
                     ticket: parseInt(data.ticket_number),
                     name: pName,
-                    date: bookedDate
+                    date: bookedDate,
+                    cancelToken: data.cancel_token || ''
                 };
                 lastNotifiedState = '';
 
@@ -1006,12 +1010,10 @@
                 const isTicketForToday = (activeTicketData.date === todayStr);
                 updateHoursAndPresenceElements('ticket', statusData.open_time, statusData.close_time, Boolean(statusData.doctor_present), isTicketForToday);
 
-                const queueRes = await fetch(`${API_BASE}/api/reception/tickets/${targetDocSlug}?date=${activeTicketData.date}`);
-                if (queueRes.ok) {
-                    const queueData = await queueRes.json();
-                    const foundTicket = (queueData.tickets || []).find(t => parseInt(t.ticket_number) === parseInt(activeTicketData.ticket));
-
-                    if (!foundTicket || foundTicket.status === 'cancelled') {
+                const checkRes = await fetch(`${API_BASE}/api/tickets/check/${targetDocSlug}?date=${activeTicketData.date}&ticket=${activeTicketData.ticket}`);
+                if (checkRes.ok) {
+                    const checkData = await checkRes.json();
+                    if (!checkData.exists || checkData.status === 'cancelled') {
                         clearPatientTicketStorage(targetDocSlug);
                         document.getElementById('stepTicketView').style.display = 'none';
                         document.getElementById('stepBooking').style.display = 'block';
@@ -1100,7 +1102,8 @@
                     body: JSON.stringify({
                         clinic_slug: targetDocSlug,
                         ticket_number: activeTicketData.ticket,
-                        booking_date: activeTicketData.date
+                        booking_date: activeTicketData.date,
+                        cancel_token: activeTicketData.cancelToken || ''
                     })
                 });
                 clearPatientTicketStorage(targetDocSlug);

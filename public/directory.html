@@ -453,7 +453,8 @@
                     mainSlug: activeDoctor.slug,
                     ticket: parseInt(data.ticket_number),
                     name: pName,
-                    date: cleanDate
+                    date: cleanDate,
+                    cancelToken: data.cancel_token || ''
                 });
 
                 localStorage.setItem(`cf_ticket_obj_${activeDoctor.slug}`, payload);
