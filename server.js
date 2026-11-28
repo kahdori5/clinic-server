@@ -205,7 +205,7 @@ function cleanTime(val, fallback) {
     return /^([01]\d|2[0-3]):[0-5]\d$/.test(str) ? str : fallback;
 }
 
-function createRateLimiter({ windowMs, max, message, skip }) {
+function createRateLimiter({ windowMs, max, message, skip, keyGenerator, onlyCountFailures }) {
     const hits = new Map();
     setInterval(() => {
         const now = Date.now();
@@ -217,11 +217,43 @@ function createRateLimiter({ windowMs, max, message, skip }) {
     return (req, res, next) => {
         if (skip && skip(req)) return next();
         const ip = req.ip || req.socket.remoteAddress || 'unknown';
+        const key = keyGenerator ? keyGenerator(req, ip) : ip;
         const now = Date.now();
-        let entry = hits.get(ip);
-        if (!entry || now > entry.resetAt) {
+        let entry = hits.get(key);
+
+        if (entry && now > entry.resetAt) {
+            hits.delete(key);
+            entry = null;
+        }
+
+        if (onlyCountFailures) {
+            if (entry && entry.count >= max) {
+                const retrySec = Math.ceil((entry.resetAt - now) / 1000);
+                res.setHeader('Retry-After', String(retrySec));
+                return res.status(429).json({
+                    error: message || 'طلبات كثيرة جداً من جهازك، يرجى الانتظار قليلاً ثم المحاولة مرة أخرى.'
+                });
+            }
+
+            res.on('finish', () => {
+                if (res.statusCode === 401 || res.statusCode === 403) {
+                    const t = Date.now();
+                    let cur = hits.get(key);
+                    if (!cur || t > cur.resetAt) {
+                        cur = { count: 0, resetAt: t + windowMs };
+                        hits.set(key, cur);
+                    }
+                    cur.count += 1;
+                } else if (res.statusCode < 400) {
+                    hits.delete(key);
+                }
+            });
+            return next();
+        }
+
+        if (!entry) {
             entry = { count: 0, resetAt: now + windowMs };
-            hits.set(ip, entry);
+            hits.set(key, entry);
         }
         entry.count += 1;
         if (entry.count > max) {
@@ -244,7 +276,22 @@ const globalApiLimiter = createRateLimiter({
 const authBruteForceLimiter = createRateLimiter({
     windowMs: 15 * 60 * 1000,
     max: 8,
-    message: 'تم حظر محاولات الدخول مؤقتاً لمدة 15 دقيقة بسبب تكرار المحاولات الخاطئة.'
+    onlyCountFailures: true,
+    keyGenerator: (req, ip) => {
+        const body = req.body || {};
+        const slug = cleanSlug(body.clinic_slug) || 'global';
+        const page = cleanSlug(body.page) || '';
+        const scope =
+            req.path === '/api/admin/login'
+                ? 'admin'
+                : req.path === '/api/auth/reception-login'
+                ? 'reception'
+                : req.path === '/api/auth/doctor-login' || req.path === '/api/doctor/verify-password'
+                ? 'doctor'
+                : `${req.path}:${page}`;
+        return `${ip}::${scope}::${slug}`;
+    },
+    message: 'تم حظر محاولات الدخول لهذا الحساب مؤقتاً لمدة 15 دقيقة بسبب تكرار كلمة المرور الخاطئة.'
 });
 
 const publicBookingLimiter = createRateLimiter({
